@@ -2,6 +2,15 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Create a local environment file before running the app:
+
+```bash
+cp .env.example .env.local
+```
+
+Set `NEXT_PUBLIC_BACKEND_API_BASE_URL` to the Spring Boot backend host. Keep `.env.local`
+out of Git; only `.env.example` is intended to be committed.
+
 First, run the development server:
 
 ```bash
