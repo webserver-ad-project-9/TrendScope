@@ -1,0 +1,11 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+logging:
+  level:
+    org.hibernate.SQL: info
