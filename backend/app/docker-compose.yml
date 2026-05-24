@@ -1,0 +1,53 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: trendpulse-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: trendpulse
+      MYSQL_USER: trendpulse
+      MYSQL_PASSWORD: trendpulse
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - trendpulse-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trendpulse-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8080
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: trendpulse
+      MYSQL_USERNAME: trendpulse
+      MYSQL_PASSWORD: trendpulse
+      JWT_SECRET: mjyw123123
+      JWT_ACCESS_TOKEN_EXPIRATION: 3600000
+      JWT_STATIC_TOKEN: mjyw123123123
+      JWT_STATIC_USER_EMAIL: dev@trendpulse.local
+      FRONTEND_REDIRECT_URL: http://localhost:3000/oauth/callback
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "8080:8080"
+
+volumes:
+  trendpulse-mysql-data:
