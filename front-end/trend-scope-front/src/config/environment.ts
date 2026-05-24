@@ -17,6 +17,7 @@ export interface FrontendEnvironment {
   readonly accessTokenStorageKey: string;
   readonly accessTokenCookieKey: string;
   readonly accessTokenCookieMaxAgeSeconds: number;
+  readonly developmentAccessToken: string | null;
 }
 
 /**
@@ -32,6 +33,9 @@ export function getFrontendEnvironment(): FrontendEnvironment {
     accessTokenCookieMaxAgeSeconds: readPositiveIntegerEnvironmentValue(
       process.env.NEXT_PUBLIC_ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS,
       DEFAULT_ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS,
+    ),
+    developmentAccessToken: readOptionalEnvironmentValue(
+      process.env.NEXT_PUBLIC_BACKEND_DEVELOPMENT_ACCESS_TOKEN,
     ),
   };
 }
@@ -57,4 +61,12 @@ function readPositiveIntegerEnvironmentValue(
   const parsedValue = Number.parseInt(value, 10);
 
   return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallbackValue;
+}
+
+function readOptionalEnvironmentValue(value: string | undefined): string | null {
+  if (value === undefined || value.trim().length === 0) {
+    return null;
+  }
+
+  return value.trim();
 }

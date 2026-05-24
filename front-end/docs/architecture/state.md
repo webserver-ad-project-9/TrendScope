@@ -68,6 +68,7 @@
 
 ## 인증 상태
 - Token은 React state에 복제하지 않고 `apiClient`가 환경변수로 지정한 브라우저 저장소 key와 cookie key를 읽고 쓴다.
+- 보호 API 호출 시 token 소스는 localStorage, `accessToken` 쿠키, 로컬 개발용 token 환경변수 순서로 확인한다. 쿠키나 개발용 token을 사용하면 `apiClient`가 localStorage와 cookie를 다시 동기화한다.
 - Role은 `currentUser.role`로 표시 가능한 view model에만 보관하며, 프론트 권한 분기에는 아직 사용하지 않는다.
 - Refresh token 또는 자동 갱신 계약은 없다.
 - 백엔드 host, 외부 key, 개발용 token은 코드에 하드코딩하지 않는다.

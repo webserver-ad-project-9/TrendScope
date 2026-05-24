@@ -8,9 +8,10 @@
 - 공통 실패 응답: `{ success: false, errorCode, message }`
 - 보호 API 인증: `Authorization: Bearer {token}` header와 `accessToken` cookie가 모두 필요하다.
 - 브라우저 cookie 전송: 프론트 API client는 `credentials: "include"`를 사용한다.
-- Token 저장: OAuth callback query의 `token` 값을 환경변수로 지정한 storage key와 cookie key에 저장한다.
-- Token 값은 코드와 프로젝트 문서에 직접 기록하지 않는다.
-- Local env: 실제 값은 `front-end/trend-scope-front/.env.local`에 둔다. Git에는 `.env.example`만 커밋한다.
+- Token 준비 순서: localStorage, `accessToken` cookie, 로컬 개발용 token 환경변수 순서로 확인한다.
+- Token 저장: OAuth callback query의 `token` 값을 환경변수로 지정한 storage key와 cookie key에 저장한다. localStorage가 비어 있고 cookie가 있으면 cookie 값을 storage에 동기화한다.
+- Token 값은 코드와 프로젝트 문서에 직접 기록하지 않는다. 로컬 개발용 static token도 `.env.local`에만 둔다.
+- Local env: 실제 값은 `front-end/trend-scope-front/.env.local`에 둔다. Git에는 실제 token/secret 없이 `.env.example`만 커밋한다.
 
 ## 프론트 라우트
 ### GET `/oauth/callback`
@@ -35,6 +36,9 @@
 - Status codes:
   - `302`: Google OAuth 인증 페이지로 redirect
 - Error cases: 백엔드 OAuth 설정 오류는 백엔드 redirect/error 화면에서 처리된다.
+- Notes:
+  - 백엔드의 Spring Security OAuth 시작 URL인 `/oauth2/authorization/google`도 같은 로그인 흐름을 시작할 수 있으나, 프론트 기본 진입점은 `/api/auth`다.
+  - 백엔드 OAuth 내부 callback인 `/api/auth/login/callback`은 Google과 백엔드 사이의 callback이므로 프론트에서 직접 호출하지 않는다.
 
 ### POST `/api/auth/logout`
 - 설명: 현재 사용자 로그아웃을 요청한다. 프론트는 응답 성공/실패와 관계없이 로컬 token과 cookie를 정리한다.
@@ -73,6 +77,7 @@
   - `401`: 인증 실패
   - `404`: 사용자 없음
 - Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
   - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
   - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
   - `EXPIRED_JWT_TOKEN`: token 만료
@@ -94,6 +99,7 @@
   - `200`: 조회 성공
   - `401`: 인증 실패
 - Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
   - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
   - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
   - `EXPIRED_JWT_TOKEN`: token 만료
@@ -118,6 +124,7 @@
   - `409`: 중복 키워드
 - Error cases:
   - `INVALID_REQUEST`: 키워드 누락
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
   - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
   - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
   - `EXPIRED_JWT_TOKEN`: token 만료

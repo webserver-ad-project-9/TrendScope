@@ -78,7 +78,7 @@ export async function requestBackendApi<TData>(
   }
 
   if (options.isAuthenticated !== false) {
-    const accessToken = readStoredAccessToken();
+    const accessToken = readAvailableAccessToken();
 
     if (accessToken === null) {
       throw new ApiClientError({
@@ -124,15 +124,33 @@ export async function requestBackendApi<TData>(
   return payload.data;
 }
 
-function readStoredAccessToken(): string | null {
+function readAvailableAccessToken(): string | null {
   if (!isBrowserRuntime()) {
     return null;
   }
 
-  const { accessTokenStorageKey } = getFrontendEnvironment();
+  const { accessTokenStorageKey, developmentAccessToken } = getFrontendEnvironment();
   const storedToken = window.localStorage.getItem(accessTokenStorageKey);
 
-  return storedToken === null || storedToken.trim().length === 0 ? null : storedToken;
+  if (storedToken !== null && storedToken.trim().length > 0) {
+    return storedToken;
+  }
+
+  const cookieToken = readAccessTokenCookie();
+
+  if (cookieToken !== null) {
+    window.localStorage.setItem(accessTokenStorageKey, cookieToken);
+
+    return cookieToken;
+  }
+
+  if (developmentAccessToken !== null) {
+    storeAccessToken(developmentAccessToken);
+
+    return developmentAccessToken;
+  }
+
+  return null;
 }
 
 function writeAccessTokenCookie(accessToken: string): void {
@@ -145,6 +163,34 @@ function writeAccessTokenCookie(accessToken: string): void {
   document.cookie = `${accessTokenCookieKey}=${encodeURIComponent(
     accessToken,
   )}; path=/; max-age=${accessTokenCookieMaxAgeSeconds}`;
+}
+
+function readAccessTokenCookie(): string | null {
+  if (!isBrowserRuntime()) {
+    return null;
+  }
+
+  const { accessTokenCookieKey } = getFrontendEnvironment();
+  const cookieEntry = document.cookie
+    .split(";")
+    .map((entry) => entry.trim())
+    .find((entry) => entry.startsWith(`${accessTokenCookieKey}=`));
+
+  if (cookieEntry === undefined) {
+    return null;
+  }
+
+  const rawCookieValue = cookieEntry.slice(accessTokenCookieKey.length + 1);
+
+  let cookieToken: string;
+
+  try {
+    cookieToken = decodeURIComponent(rawCookieValue);
+  } catch {
+    return null;
+  }
+
+  return cookieToken.trim().length === 0 ? null : cookieToken;
 }
 
 async function readApiResponsePayload<TData>(

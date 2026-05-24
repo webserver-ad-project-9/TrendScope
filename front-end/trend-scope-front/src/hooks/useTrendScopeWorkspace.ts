@@ -212,6 +212,14 @@ export function useTrendScopeWorkspace(
       return;
     }
 
+    if (currentUser === null) {
+      setAuthStatus("anonymous");
+      setKeywordSyncStatus("error");
+      setKeywordSyncMessage("로그인 후 키워드를 등록할 수 있습니다.");
+
+      return;
+    }
+
     setKeywordSyncStatus("saving");
     setKeywordSyncMessage(null);
 
