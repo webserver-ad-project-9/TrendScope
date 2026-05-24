@@ -29,6 +29,8 @@ spring:
 jwt:
   secret: ${JWT_SECRET:mjyw123123}
   access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:3600000}
+  static-token: ${JWT_STATIC_TOKEN:mjyw123123123}
+  static-user-email: ${JWT_STATIC_USER_EMAIL:dev@trendpulse.local}
 
 server:
   port: ${SERVER_PORT:8080}

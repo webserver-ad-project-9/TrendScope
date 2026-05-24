@@ -42,6 +42,7 @@ Swagger Authorize 입력창에는 `Bearer` 없이 JWT 값만 입력한다.
 | Group | Method | Endpoint | Auth | 구현 상태 |
 | --- | --- | --- | --- | --- |
 | Auth | GET | `/oauth2/authorization/google` | Public | Spring Security 기본 엔드포인트 |
+| Auth | GET | `/api/auth` | Public | 구현됨 |
 | Auth | GET | `/api/auth/login` | Public | 구현됨 |
 | Auth | POST | `/api/auth/logout` | Required | 구현됨 |
 | User | GET | `/api/users/me` | Required | 구현됨 |
@@ -80,6 +81,12 @@ Google OAuth 로그인을 시작한다.
 ### `GET /api/auth/login`
 
 Spring Security OAuth 엔드포인트로 redirect한다.
+
+> Bearer Token 불필요
+
+### `GET /api/auth`
+
+프론트엔드 로그인 버튼에서 사용할 수 있는 Google OAuth 로그인 진입점이다.
 
 > Bearer Token 불필요
 

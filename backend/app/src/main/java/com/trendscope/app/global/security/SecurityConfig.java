@@ -6,6 +6,7 @@ import com.trendscope.app.global.security.oauth.OAuthFailureHandler;
 import com.trendscope.app.global.security.oauth.OAuthSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,10 +25,11 @@ public class SecurityConfig {
             OAuthFailureHandler failureHandler
     ) throws Exception {
         return http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/error", "/actuator/health", "/api/auth/login", "/oauth2/**", "/api/auth/login/callback").permitAll()
+                        .requestMatchers("/", "/error", "/actuator/health", "/api/auth", "/api/auth/login", "/oauth2/**", "/api/auth/login/callback").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

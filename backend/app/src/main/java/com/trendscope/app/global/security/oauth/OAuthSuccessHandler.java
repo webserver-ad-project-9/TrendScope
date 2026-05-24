@@ -3,6 +3,7 @@ package com.trendscope.app.global.security.oauth;
 import com.trendscope.app.domain.auth.dto.TokenResponse;
 import com.trendscope.app.domain.auth.service.TokenService;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -29,9 +30,19 @@ public class OAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
             throws IOException, ServletException {
         OAuth2UserPrincipal principal = (OAuth2UserPrincipal) authentication.getPrincipal();
         TokenResponse token = tokenService.issue(principal.user());
+        addAccessTokenCookie(response, token.accessToken());
         String targetUrl = frontendRedirectUrl
                 + "?token=" + encode(token.accessToken());
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    }
+
+    private void addAccessTokenCookie(HttpServletResponse response, String accessToken) {
+        Cookie cookie = new Cookie("accessToken", accessToken);
+        cookie.setHttpOnly(false);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60);
+        response.addCookie(cookie);
     }
 
     private String encode(String value) {

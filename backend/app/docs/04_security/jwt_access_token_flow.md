@@ -61,6 +61,14 @@ Host: localhost:8080
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 ```
 
+프론트 연동 테스트에서는 아래 static bearer token도 사용할 수 있다.
+
+```http
+Authorization: Bearer mjyw123123123
+```
+
+이 토큰은 JWT가 아니라 로컬 개발용 우회 인증 토큰이다.
+
 성공 응답:
 
 ```json

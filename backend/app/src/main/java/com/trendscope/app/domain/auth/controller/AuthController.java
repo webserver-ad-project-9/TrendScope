@@ -26,7 +26,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @GetMapping("/login")
+    @GetMapping({"", "/login"})
     @Operation(
             summary = "Google OAuth 로그인 진입",
             description = "프론트엔드가 호출하면 Spring Security 기본 엔드포인트인 /oauth2/authorization/google 로 redirect합니다."
