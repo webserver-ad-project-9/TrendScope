@@ -16,7 +16,7 @@
 - Permission behavior: public
 - Retry or recovery: 새로고침
 - Side effects: 없음
-- Related API: 클라이언트 hydration 후 저장 token이 있으면 `GET /api/users/me`, `GET /api/onboarding/keywords`
+- Related API: 클라이언트 hydration 후 사용 가능한 token이 있으면 `GET /api/users/me`, `GET /api/onboarding/keywords`
 - Related DB tables: 없음
 
 ## 로그인 및 사용자 확인
@@ -33,7 +33,7 @@
 - Validation: token query가 없으면 저장하지 않고 홈으로 복귀
 - Empty state: token이 없으면 익명 상태 유지
 - Error state: 현재 사용자 조회 실패 시 `authStatus=error`
-- Permission behavior: 로그인 전 보호 API는 호출하지 않고 `MISSING_ACCESS_TOKEN`으로 정규화
+- Permission behavior: 로그인 전 보호 API는 호출하지 않고 `MISSING_ACCESS_TOKEN`으로 정규화. localStorage가 비어 있어도 `accessToken` 쿠키나 로컬 개발용 token 환경변수가 있으면 Bearer token으로 동기화한 뒤 보호 API를 호출한다.
 - Retry or recovery: 다시 Google 로그인 시도
 - Side effects: 브라우저 token/cookie 저장
 - Related API: `GET /api/auth`, `GET /api/users/me`, `GET /api/onboarding/keywords`
@@ -65,12 +65,12 @@
   1. 로그인 상태 확인 성공 후 `GET /api/onboarding/keywords`가 내 키워드를 불러온다.
   2. 사용자가 새 키워드를 입력한다.
   3. 등록 submit이 `useTrendScopeWorkspace.addKeyword()`를 호출한다.
-  4. hook이 빈 문자열을 제외하고 keyword service에 생성 요청을 보낸다.
+  4. hook이 빈 문자열과 익명 상태를 제외하고 keyword service에 생성 요청을 보낸다.
   5. `POST /api/onboarding/keywords` 응답 DTO를 `KeywordViewModel`로 변환해 목록에 반영한다.
 - Validation: trim 후 빈 문자열은 추가하지 않음
 - Empty state: 백엔드 목록이 비어 있으면 빈 목록 메시지 표시
 - Error state: API 실패 시 `keywordSyncStatus=error`, `keywordSyncMessage` 표시
-- Permission behavior: token이 없으면 등록하지 않고 로그인 필요 메시지 표시
+- Permission behavior: 로그인 사용자가 확인되지 않았거나 token이 없으면 등록하지 않고 로그인 필요 메시지 표시
 - Retry or recovery: token 저장 후 다시 등록하거나 새로고침
 - Side effects: 백엔드 keyword 생성, 클라이언트 keyword state 갱신
 - Related API: `GET /api/onboarding/keywords`, `POST /api/onboarding/keywords`

@@ -7,7 +7,7 @@ AI 기반 뉴스 트렌드 분석 서비스의 프론트엔드다. 현재 구현
 - 프로젝트 루트: `front-end`
 - 앱 루트: `front-end/trend-scope-front`
 - 스택: Next.js App Router, React, TypeScript, Tailwind CSS
-- 인증 사용: Google OAuth redirect, OAuth callback token 저장, 현재 사용자 조회, 로그아웃 연동
+- 인증 사용: Google OAuth redirect, OAuth callback token 저장, `accessToken` 쿠키 동기화, 현재 사용자 조회, 로그아웃 연동
 - 외부 API 연동: Spring Boot 백엔드 Auth/User/Keyword API 연동. Naver News API/OpenAI API 계약은 미확정이므로 미구현
 
 ## 계층 방향
@@ -31,7 +31,7 @@ app/page.tsx
 ## 데이터 흐름
 - 초기 렌더링 시 `getTrendDashboardSnapshot()`이 참조용 대시보드 데이터를 반환한다.
 - `TrendScopeApp`은 초기 데이터를 props로 받아 하위 섹션 컴포넌트에 전달한다.
-- 클라이언트 hydration 후 `useTrendScopeWorkspace`가 `fetchCurrentUser()`로 로그인 상태를 확인한다.
+- 클라이언트 hydration 후 `useTrendScopeWorkspace`가 `fetchCurrentUser()`로 로그인 상태를 확인한다. 이때 `apiClient`는 localStorage, `accessToken` 쿠키, 로컬 개발용 token 환경변수 순서로 Bearer token을 준비한다.
 - 로그인 사용자가 확인되면 `fetchOnboardingKeywords()`가 백엔드 키워드 목록을 조회하고 UI view model로 변환한다.
 - 키워드 생성은 `createOnboardingKeyword()`로 백엔드에 저장한 뒤 응답 DTO를 UI view model로 반영한다.
 - 키워드 검색 결과 브리핑, 커뮤니티 게시판 필터, 작성 게시글, 커뮤니티 상세 화면은 아직 API 계약이 없어 `useTrendScopeWorkspace`의 클라이언트 상태로 관리한다.
@@ -41,7 +41,8 @@ app/page.tsx
 - 백엔드는 OAuth 성공 후 `/oauth/callback?token={token}`으로 프론트를 redirect한다.
 - `app/oauth/callback/page.tsx`는 Suspense 경계 안에서 `OAuthCallbackClient`를 렌더링한다.
 - `OAuthCallbackClient`는 token query를 auth service에 전달해 환경변수로 지정한 브라우저 저장소와 cookie key에 저장하고 `/`로 이동한다.
-- 보호 API 호출은 `apiClient`가 `Authorization` header와 `credentials: "include"`를 설정한다.
+- 보호 API 호출은 `apiClient`가 `Authorization` header와 `credentials: "include"`를 설정한다. localStorage에 token이 없고 `accessToken` 쿠키가 있으면 쿠키 값을 localStorage에 동기화해 Bearer token으로 사용한다.
+- 백엔드 Google OAuth 내부 callback인 `/api/auth/login/callback`은 프론트에서 직접 호출하지 않는다.
 - 로그아웃은 `POST /api/auth/logout` 호출 후 로컬 token과 cookie를 제거한다.
 
 ## API 흐름
@@ -52,7 +53,7 @@ app/page.tsx
 
 ## 저장 흐름
 - OAuth token은 환경변수로 지정한 브라우저 storage key와 cookie key에 저장한다.
-- 백엔드 host와 token 저장 key/cookie key는 앱 루트의 `.env.local`에서 관리한다.
+- 백엔드 host, token 저장 key/cookie key, 로컬 개발용 token fallback은 앱 루트의 `.env.local`에서 관리한다.
 - 온보딩 키워드는 백엔드 저장소를 source of truth로 사용한다.
 - 게시판 필터, 작성 게시글, 게시글 상세 전환은 브라우저 메모리 상태다.
 
@@ -71,3 +72,4 @@ app/page.tsx
 | 2026-05-25 | 커뮤니티를 분야별 게시판과 별도 글쓰기 화면으로 분리 | 게시글 목록 탐색과 작성 책임 분리 | 경제/사회/IT/정치/문화/세계 필터, `writePost` 섹션, 클라이언트 작성 게시글 상태 추가 |
 | 2026-05-25 | Auth/User/Keyword API를 service/client 경계로 연동 | 백엔드 계약이 확인됨 | OAuth callback route, auth service, keyword service, API DTO 분리 추가 |
 | 2026-05-25 | 백엔드 host와 외부 key 설정을 env 파일로 분리 | 환경별 설정과 secret을 Git 추적에서 제외 | `.env.local` ignore, `.env.example` template, `src/config/environment.ts` 추가 |
+| 2026-05-25 | 보호 API token 준비 순서를 localStorage, `accessToken` 쿠키, 로컬 개발용 env token으로 정규화 | 백엔드 수정 명세가 Bearer token과 로그인 쿠키 동시 전송 및 개발용 static token 흐름을 정의함 | `apiClient`가 Bearer header와 cookie 동기화를 담당하고 UI는 service/hook 경계만 호출 |
