@@ -1,4 +1,11 @@
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: local-google-client-id
+            client-secret: local-google-client-secret
   jpa:
     show-sql: true
     hibernate:
