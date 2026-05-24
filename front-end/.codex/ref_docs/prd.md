@@ -1,4 +1,4 @@
-# TrendPulse PRD
+# TrendScope PRD
 
 ## AI 기반 뉴스 키워드 트렌드 분석 플랫폼
 
@@ -8,7 +8,7 @@
 
 ## 프로젝트명
 
-TrendPulse
+TrendScope
 
 ## 한줄 소개
 
