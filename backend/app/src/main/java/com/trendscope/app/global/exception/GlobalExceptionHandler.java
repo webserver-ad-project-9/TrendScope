@@ -1,6 +1,7 @@
 package com.trendscope.app.global.exception;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,6 +22,12 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getDefaultMessage())
                 .orElse("Invalid request");
         return ResponseEntity.badRequest().body(new ErrorResponse(false, "INVALID_REQUEST", message));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleNotReadableException(HttpMessageNotReadableException exception) {
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse(false, "INVALID_REQUEST_BODY", "요청 JSON 형식이 올바르지 않습니다."));
     }
 
     @ExceptionHandler(Exception.class)
