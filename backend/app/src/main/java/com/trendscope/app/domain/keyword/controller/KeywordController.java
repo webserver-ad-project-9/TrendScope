@@ -1,5 +1,6 @@
 package com.trendscope.app.domain.keyword.controller;
 
+import com.trendscope.app.domain.keyword.dto.KeywordBulkCreateRequest;
 import com.trendscope.app.domain.keyword.dto.KeywordCreateRequest;
 import com.trendscope.app.domain.keyword.dto.KeywordResponse;
 import com.trendscope.app.domain.keyword.service.KeywordService;
@@ -50,6 +51,24 @@ public class KeywordController {
             )
             @Valid @RequestBody KeywordCreateRequest request) {
         return ApiResponse.ok(keywordService.create(principal.userId(), request));
+    }
+
+    @PostMapping("/bulk")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "온보딩 키워드 일괄 생성", description = "프론트 토글 UI에서 선택한 여러 관심 키워드를 한 번에 저장합니다. 이미 저장된 키워드는 건너뜁니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "키워드 일괄 생성 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청값 검증 실패")
+    })
+    public ApiResponse<List<KeywordResponse>> createBulk(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails principal,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "일괄 생성할 온보딩 키워드 목록",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = KeywordBulkCreateRequest.class))
+            )
+            @Valid @RequestBody KeywordBulkCreateRequest request) {
+        return ApiResponse.ok(keywordService.createBulk(principal.userId(), request));
     }
 
     @GetMapping

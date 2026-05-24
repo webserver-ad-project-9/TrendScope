@@ -401,6 +401,88 @@ Cookie: accessToken={token}
 
 ---
 
+## 8. 온보딩 키워드 일괄 생성
+
+### `POST /api/onboarding/keywords/bulk`
+
+프론트 토글 UI에서 선택한 여러 관심 키워드를 한 번에 저장한다.
+
+이미 저장된 키워드는 중복 저장하지 않고 건너뛴다.
+
+> Bearer Token 필요, 로그인 쿠키 필요
+
+### Request Header
+
+```http
+Authorization: Bearer {token}
+Cookie: accessToken={token}
+Content-Type: application/json
+```
+
+### Request Body
+
+```json
+{
+  "names": ["AI 반도체", "경제", "스포츠"]
+}
+```
+
+| 필드 | 타입 | 필수 | 설명 |
+| --- | --- | --- | --- |
+| `names` | string[] | O | 사용자가 토글로 선택한 관심 키워드 목록 |
+
+### Response `200`
+
+새로 저장된 키워드만 반환한다.
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "6823e9eb-3d76-47ec-9243-cd62589db5aa",
+      "name": "ai 반도체"
+    },
+    {
+      "id": "4bf8a3c6-1744-42ea-a861-6e9d105a7a77",
+      "name": "경제"
+    },
+    {
+      "id": "29d84c2d-efcb-4110-9067-26302c5d64ec",
+      "name": "스포츠"
+    }
+  ],
+  "message": "요청 성공"
+}
+```
+
+### 개발용 호출 예시
+
+```powershell
+$jsonPath = "$env:TEMP\keywords-bulk.json"
+
+@'
+{
+  "names": ["AI 반도체", "경제", "스포츠"]
+}
+'@ | Set-Content -Path $jsonPath -Encoding utf8
+
+curl.exe -i -X POST "http://localhost:8080/api/onboarding/keywords/bulk" `
+  -H "Authorization: Bearer mjyw123123123" `
+  -H "Cookie: accessToken=mjyw123123123" `
+  -H "Content-Type: application/json; charset=utf-8" `
+  --data-binary "@$jsonPath"
+```
+
+### 에러
+
+| Status | 상황 | Response |
+| --- | --- | --- |
+| `400` | names가 비어 있음 | `{"success": false, "errorCode": "INVALID_REQUEST", "message": "키워드 목록은 필수입니다."}` |
+| `401` | 인증 실패 | `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "유효하지 않은 토큰입니다."}` |
+
+---
+
 ## API 인증 정리
 
 | API | Bearer Token | 로그인 쿠키 | 설명 |
@@ -411,6 +493,7 @@ Cookie: accessToken={token}
 | `POST /api/auth/logout` | O | O | 로그아웃 |
 | `GET /api/users/me` | O | O | 현재 사용자 조회 |
 | `POST /api/onboarding/keywords` | O | O | 온보딩 키워드 생성 |
+| `POST /api/onboarding/keywords/bulk` | O | O | 온보딩 키워드 일괄 생성 |
 | `GET /api/onboarding/keywords` | O | O | 내 온보딩 키워드 목록 조회 |
 
 ## 프론트 전달 요약
