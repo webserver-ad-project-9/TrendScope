@@ -29,6 +29,10 @@ export function TrendScopeApp({ initialSnapshot }: TrendScopeAppProps) {
     <div className="app-shell">
       <TrendScopeHeader
         activeSection={workspace.activeSection}
+        authStatus={workspace.authStatus}
+        currentUser={workspace.currentUser}
+        onLogin={workspace.login}
+        onLogout={workspace.logout}
         onNavigate={workspace.goToSection}
       />
 
@@ -54,12 +58,13 @@ export function TrendScopeApp({ initialSnapshot }: TrendScopeAppProps) {
           onSearchDraftChange={workspace.setSearchDraft}
         />
         <MyPageSection
+          currentUser={workspace.currentUser}
           isActive={workspace.activeSection === "mypage"}
           keywordDraft={workspace.keywordDraft}
+          keywordSyncMessage={workspace.keywordSyncMessage ?? workspace.authMessage}
+          keywordSyncStatus={workspace.keywordSyncStatus}
           keywords={workspace.keywords}
           onAddKeyword={workspace.addKeyword}
-          onDeleteKeyword={workspace.deleteKeyword}
-          onEditKeyword={workspace.editKeyword}
           onKeywordDraftChange={workspace.setKeywordDraft}
         />
         <CommunitySection

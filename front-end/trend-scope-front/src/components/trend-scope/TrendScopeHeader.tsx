@@ -1,4 +1,5 @@
 import { Button } from "@/src/components/ui/Button";
+import type { AuthStatus, CurrentUserViewModel } from "@/src/types/auth";
 import type { TrendScopeSection } from "@/src/types/trend";
 
 interface NavigationItem {
@@ -8,6 +9,10 @@ interface NavigationItem {
 
 interface TrendScopeHeaderProps {
   readonly activeSection: TrendScopeSection;
+  readonly authStatus: AuthStatus;
+  readonly currentUser: CurrentUserViewModel | null;
+  readonly onLogin: () => void;
+  readonly onLogout: () => Promise<void>;
   readonly onNavigate: (section: TrendScopeSection) => void;
 }
 
@@ -19,7 +24,14 @@ const navigationItems: readonly NavigationItem[] = [
   { label: "커뮤니티", section: "community" },
 ];
 
-export function TrendScopeHeader({ activeSection, onNavigate }: TrendScopeHeaderProps) {
+export function TrendScopeHeader({
+  activeSection,
+  authStatus,
+  currentUser,
+  onLogin,
+  onLogout,
+  onNavigate,
+}: TrendScopeHeaderProps) {
   return (
     <header className="topbar">
       <button
@@ -48,13 +60,24 @@ export function TrendScopeHeader({ activeSection, onNavigate }: TrendScopeHeader
         ))}
       </nav>
 
-      <div className="flex flex-wrap gap-2">
-        <Button variant="ghost" onClick={() => onNavigate("mypage")}>
-          로그인
-        </Button>
-        <Button variant="primary" onClick={() => onNavigate("mypage")}>
-          시작하기
-        </Button>
+      <div className="auth-actions">
+        {currentUser === null ? (
+          <>
+            <Button disabled={authStatus === "checking"} variant="ghost" onClick={onLogin}>
+              {authStatus === "checking" ? "확인 중" : "Google 로그인"}
+            </Button>
+            <Button variant="primary" onClick={() => onNavigate("mypage")}>
+              시작하기
+            </Button>
+          </>
+        ) : (
+          <>
+            <span className="user-pill">{currentUser.name}</span>
+            <Button variant="ghost" onClick={() => void onLogout()}>
+              로그아웃
+            </Button>
+          </>
+        )}
       </div>
     </header>
   );

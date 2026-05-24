@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { Button } from "@/src/components/ui/Button";
+import type { CurrentUserViewModel, KeywordSyncStatus } from "@/src/types/auth";
 import type {
   BoardPostViewModel,
   BriefingViewModel,
@@ -47,12 +48,13 @@ interface SearchSectionProps {
 
 interface MyPageSectionProps {
   readonly isActive: boolean;
+  readonly currentUser: CurrentUserViewModel | null;
   readonly keywords: readonly KeywordViewModel[];
   readonly keywordDraft: string;
+  readonly keywordSyncMessage: string | null;
+  readonly keywordSyncStatus: KeywordSyncStatus;
   readonly onKeywordDraftChange: (value: string) => void;
-  readonly onAddKeyword: () => void;
-  readonly onEditKeyword: (keywordId: string) => void;
-  readonly onDeleteKeyword: (keywordId: string) => void;
+  readonly onAddKeyword: () => Promise<void>;
 }
 
 interface CommunitySectionProps {
@@ -238,17 +240,18 @@ export function SearchSection({
 }
 
 export function MyPageSection({
+  currentUser,
   isActive,
   keywordDraft,
+  keywordSyncMessage,
+  keywordSyncStatus,
   keywords,
   onAddKeyword,
-  onDeleteKeyword,
-  onEditKeyword,
   onKeywordDraftChange,
 }: MyPageSectionProps) {
   function submitKeyword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onAddKeyword();
+    void onAddKeyword();
   }
 
   return (
@@ -260,6 +263,16 @@ export function MyPageSection({
 
       <article className="card manage-card">
         <h3 className="card-title">내 키워드 관리</h3>
+        <div className="account-strip">
+          {currentUser === null ? (
+            <span className="muted">로그인 후 백엔드 키워드와 동기화됩니다.</span>
+          ) : (
+            <>
+              <strong>{currentUser.name}</strong>
+              <span className="muted">{currentUser.email}</span>
+            </>
+          )}
+        </div>
         <form className="input-row" onSubmit={submitKeyword}>
           <input
             className="input"
@@ -268,25 +281,32 @@ export function MyPageSection({
             value={keywordDraft}
             onChange={(event) => onKeywordDraftChange(event.target.value)}
           />
-          <Button type="submit" variant="primary">
-            등록
+          <Button disabled={keywordSyncStatus === "saving"} type="submit" variant="primary">
+            {keywordSyncStatus === "saving" ? "등록 중" : "등록"}
           </Button>
         </form>
 
+        {keywordSyncMessage !== null ? (
+          <p className="sync-message" data-state={keywordSyncStatus}>
+            {keywordSyncMessage}
+          </p>
+        ) : null}
+
         <div className="keyword-list">
-          {keywords.map((keyword) => (
-            <div className="keyword-row" key={keyword.id}>
-              <strong>{keyword.label}</strong>
-              <div className="keyword-actions">
-                <Button variant="ghost" onClick={() => onEditKeyword(keyword.id)}>
-                  수정
-                </Button>
-                <Button variant="danger" onClick={() => onDeleteKeyword(keyword.id)}>
-                  삭제
-                </Button>
-              </div>
+          {keywords.length === 0 ? (
+            <div className="keyword-row">
+              <span className="muted">등록된 키워드가 없습니다.</span>
             </div>
-          ))}
+          ) : (
+            keywords.map((keyword) => (
+              <div className="keyword-row" key={keyword.id}>
+                <strong>{keyword.label}</strong>
+                <span className="keyword-state">
+                  {keywordSyncStatus === "ready" ? "서버 동기화" : "로컬 표시"}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </article>
     </section>
