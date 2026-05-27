@@ -7,6 +7,7 @@ import type {
   CommunityBoardFilterId,
   CommunityBoardSectionViewModel,
   CommunityPostDraftViewModel,
+  CommunitySyncStatus,
   KeywordSearchBriefingViewModel,
   KeywordViewModel,
   MetricViewModel,
@@ -57,7 +58,7 @@ interface OnboardingSectionProps {
   readonly onKeywordDraftChange: (value: string) => void;
   readonly onNavigate: (section: TrendScopeSection) => void;
   readonly onSkipKeywords: () => void;
-  readonly onStartLogin: () => void;
+  readonly onStartLogin: () => Promise<void>;
   readonly onToggleKeyword: (keywordName: string) => void;
 }
 
@@ -78,6 +79,8 @@ interface CommunitySectionProps {
   readonly boardSections: readonly CommunityBoardSectionViewModel[];
   readonly allBoardPosts: readonly BoardPostViewModel[];
   readonly boardPosts: readonly BoardPostViewModel[];
+  readonly syncMessage: string | null;
+  readonly syncStatus: CommunitySyncStatus;
   readonly onBoardSectionChange: (sectionId: CommunityBoardFilterId) => void;
   readonly onOpenPost: (postId: string) => void;
   readonly onNavigate: (section: TrendScopeSection) => void;
@@ -89,14 +92,21 @@ interface WritePostSectionProps {
   readonly postDraft: CommunityPostDraftViewModel;
   readonly canSubmitPostDraft: boolean;
   readonly onDraftFieldChange: (field: keyof CommunityPostDraftViewModel, value: string) => void;
-  readonly onSubmitPostDraft: () => void;
+  readonly onSubmitPostDraft: () => Promise<void>;
   readonly onNavigate: (section: TrendScopeSection) => void;
 }
 
 interface PostSectionProps {
   readonly isActive: boolean;
   readonly post: BoardPostViewModel | null;
+  readonly canSubmitComment: boolean;
+  readonly commentDraft: string;
+  readonly syncMessage: string | null;
+  readonly syncStatus: CommunitySyncStatus;
+  readonly onCommentDraftChange: (value: string) => void;
   readonly onNavigate: (section: TrendScopeSection) => void;
+  readonly onSubmitComment: () => Promise<void>;
+  readonly onToggleLike: () => Promise<void>;
 }
 
 interface BriefingContentProps {
@@ -283,7 +293,7 @@ export function OnboardingSection({
             First briefing
           </span>
           <h2 className="section-title">첫 브리핑 키워드</h2>
-          <p className="body-copy">로그인과 동시에 저장할 관심 키워드를 정합니다.</p>
+          <p className="body-copy">처음 가입한 계정의 관심 키워드를 저장합니다.</p>
         </div>
         <Button variant="ghost" onClick={() => onNavigate("home")}>
           돌아가기
@@ -347,8 +357,12 @@ export function OnboardingSection({
             )}
           </div>
           <div className="onboarding-actions">
-            <Button disabled={!canSubmitKeywords} variant="primary" onClick={onStartLogin}>
-              선택한 키워드로 Google 로그인
+            <Button
+              disabled={!canSubmitKeywords}
+              variant="primary"
+              onClick={() => void onStartLogin()}
+            >
+              선택한 키워드 저장
             </Button>
             <Button variant="ghost" onClick={onSkipKeywords}>
               나중에 설정
@@ -440,6 +454,8 @@ export function CommunitySection({
   boardPosts,
   boardSections,
   isActive,
+  syncMessage,
+  syncStatus,
   onBoardSectionChange,
   onNavigate,
   onOpenPost,
@@ -489,6 +505,12 @@ export function CommunitySection({
         </div>
       </div>
 
+      {syncMessage !== null ? (
+        <p className="sync-message community-sync-message" data-state={syncStatus}>
+          {syncMessage}
+        </p>
+      ) : null}
+
       <div className="community-layout">
         <aside className="community-board-panel">
           <div className="community-panel-heading">
@@ -531,7 +553,12 @@ export function CommunitySection({
             <span className="muted">{boardPosts.length}개 글</span>
           </div>
 
-          {boardPosts.length === 0 ? (
+          {syncStatus === "loading" && allBoardPosts.length === 0 ? (
+            <div className="community-empty">
+              <h3 className="card-title">게시글을 불러오는 중입니다</h3>
+              <p className="body-copy">백엔드 게시판 API에서 목록을 가져오고 있습니다.</p>
+            </div>
+          ) : boardPosts.length === 0 ? (
             <div className="community-empty">
               <h3 className="card-title">아직 게시글이 없습니다</h3>
               <p className="body-copy">첫 게시글을 작성해 이 섹션의 흐름을 시작하세요.</p>
@@ -550,8 +577,10 @@ export function CommunitySection({
                   </span>
                   <span className="discussion-main">
                     <span className="discussion-meta">
-                      <span>{post.category}</span>
                       <span>{post.author}</span>
+                      <span>조회 {post.viewCount}</span>
+                      <span>좋아요 {post.likeCount}</span>
+                      <span>{post.createdAt}</span>
                     </span>
                     <strong>{post.title}</strong>
                   </span>
@@ -580,7 +609,8 @@ export function CommunitySection({
               </span>
               <strong>{featuredPost.title}</strong>
               <span className="muted">
-                {featuredPost.author} · 댓글 {featuredPost.commentCount}
+                {featuredPost.author} · 댓글 {featuredPost.commentCount} · 좋아요{" "}
+                {featuredPost.likeCount}
               </span>
             </button>
           )}
@@ -601,8 +631,11 @@ export function WritePostSection({
 }: WritePostSectionProps) {
   function submitPost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmitPostDraft();
+    void onSubmitPostDraft();
   }
+
+  const selectedBoardSection =
+    boardSections.find((section) => section.id === postDraft.boardSectionId) ?? null;
 
   return (
     <section className="page" data-active={isActive} id="write-post">
@@ -632,20 +665,6 @@ export function WritePostSection({
                       {section.label}
                     </option>
                   ))}
-                </select>
-              </label>
-
-              <label className="field">
-                <span>말머리</span>
-                <select
-                  className="input"
-                  value={postDraft.category}
-                  onChange={(event) => onDraftFieldChange("category", event.target.value)}
-                >
-                  <option value="토론">토론</option>
-                  <option value="질문">질문</option>
-                  <option value="후기">후기</option>
-                  <option value="정보">정보</option>
                 </select>
               </label>
             </div>
@@ -683,7 +702,7 @@ export function WritePostSection({
         </article>
 
         <aside className="post-preview">
-          <span className="badge">{postDraft.category}</span>
+          <span className="badge">{selectedBoardSection?.label ?? "게시판"}</span>
           <h3>{postDraft.title.trim() || "게시글 제목"}</h3>
           <p>{postDraft.body.trim() || "작성 중인 내용이 여기에 미리 표시됩니다."}</p>
         </aside>
@@ -692,13 +711,34 @@ export function WritePostSection({
   );
 }
 
-export function PostSection({ isActive, onNavigate, post }: PostSectionProps) {
+export function PostSection({
+  canSubmitComment,
+  commentDraft,
+  isActive,
+  onCommentDraftChange,
+  onNavigate,
+  onSubmitComment,
+  onToggleLike,
+  post,
+  syncMessage,
+  syncStatus,
+}: PostSectionProps) {
+  function submitComment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void onSubmitComment();
+  }
+
   if (post === null) {
     return (
       <section className="page" data-active={isActive} id="post">
         <Button variant="ghost" onClick={() => onNavigate("community")}>
           목록으로
         </Button>
+        {syncStatus === "loading" ? (
+          <div className="post-empty">
+            <h2 className="section-title">게시글을 불러오는 중입니다</h2>
+          </div>
+        ) : null}
       </section>
     );
   }
@@ -715,21 +755,55 @@ export function PostSection({ isActive, onNavigate, post }: PostSectionProps) {
             <span className="badge">{post.category}</span>
             <h2 className="section-title">{post.title}</h2>
             <p className="muted">
-              {post.author} · 댓글 {post.commentCount}
+              {post.author} · 조회 {post.viewCount} · 댓글 {post.commentCount} ·{" "}
+              {post.createdAt}
             </p>
+            <div className="post-action-row">
+              <Button variant={post.likedByMe ? "primary" : "ghost"} onClick={() => void onToggleLike()}>
+                좋아요 {post.likeCount}
+              </Button>
+            </div>
           </div>
           <p className="post-body">{post.body}</p>
         </article>
 
         <section className="comment-panel">
-          <h3 className="card-title">댓글</h3>
+          <div className="comment-panel-heading">
+            <h3 className="card-title">댓글</h3>
+            <span className="muted">{post.comments.length}개</span>
+          </div>
+          {syncMessage !== null ? (
+            <p className="sync-message" data-state={syncStatus}>
+              {syncMessage}
+            </p>
+          ) : null}
+          <form className="comment-form" onSubmit={submitComment}>
+            <textarea
+              className="textarea"
+              placeholder="댓글을 입력하세요"
+              value={commentDraft}
+              onChange={(event) => onCommentDraftChange(event.target.value)}
+            />
+            <div className="form-actions">
+              <Button disabled={!canSubmitComment} type="submit" variant="primary">
+                댓글 등록
+              </Button>
+            </div>
+          </form>
           <div className="comment-list">
-            {post.comments.map((comment) => (
-              <article className="comment-item" key={comment.id}>
-                <strong>{comment.author}</strong>
-                <p>{comment.body}</p>
-              </article>
-            ))}
+            {post.comments.length === 0 ? (
+              <div className="comment-empty">아직 댓글이 없습니다.</div>
+            ) : (
+              post.comments.map((comment) => (
+                <article className="comment-item" key={comment.id}>
+                  <div className="comment-meta">
+                    <strong>{comment.author}</strong>
+                    <span>{comment.createdAt}</span>
+                  </div>
+                  <p>{comment.body}</p>
+                </article>
+              ))
+            )}
           </div>
         </section>
       </div>

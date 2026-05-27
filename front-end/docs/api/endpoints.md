@@ -9,4 +9,12 @@
 | GET | `/api/users/me` | Bearer token + `accessToken` cookie | 현재 사용자 조회 |
 | GET | `/api/onboarding/keywords` | Bearer token + `accessToken` cookie | 내 온보딩 키워드 목록 조회 |
 | POST | `/api/onboarding/keywords` | Bearer token + `accessToken` cookie | 내 온보딩 키워드 생성 |
-| POST | `/api/onboarding/keywords/bulk` | Bearer token + `accessToken` cookie | 최초 로그인 온보딩 키워드 일괄 생성 |
+| POST | `/api/onboarding/keywords/bulk` | Bearer token + `accessToken` cookie | 신규 가입 온보딩 키워드 일괄 생성 |
+| GET | `/api/community/categories` | public | 게시판 카테고리 목록 조회 |
+| GET | `/api/posts` | optional Bearer token + `accessToken` cookie | 게시글 목록 조회 |
+| POST | `/api/posts` | Bearer token + `accessToken` cookie | 게시글 생성 |
+| GET | `/api/posts/{postId}` | optional Bearer token + `accessToken` cookie | 게시글 상세 조회 |
+| GET | `/api/posts/{postId}/comments` | optional Bearer token + `accessToken` cookie | 게시글 댓글 목록 조회 |
+| POST | `/api/posts/{postId}/comments` | Bearer token + `accessToken` cookie | 게시글 댓글 생성 |
+| POST | `/api/posts/{postId}/likes` | Bearer token + `accessToken` cookie | 게시글 좋아요 생성 |
+| DELETE | `/api/posts/{postId}/likes` | Bearer token + `accessToken` cookie | 게시글 좋아요 취소 |

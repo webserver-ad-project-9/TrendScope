@@ -19,10 +19,15 @@
 - 인증: public
 - Query params:
   - `token`: string, optional, 백엔드가 발급한 access token
+  - `isNewUser`: boolean/string, optional, 신규 가입 여부 hint. `true`, `1`, `yes`, `signup`, `new`는 신규 가입으로 처리
+  - `isSignup`: boolean/string, optional, `isNewUser`와 동일한 신규 가입 여부 hint
+  - `newUser`: boolean/string, optional, `isNewUser`와 동일한 신규 가입 여부 hint
+  - `signup`: boolean/string, optional, `isNewUser`와 동일한 신규 가입 여부 hint
 - 동작:
   1. `token`이 있으면 브라우저 저장소와 cookie에 저장한다.
-  2. `/`로 replace navigation 한다.
-  3. `token`이 없으면 저장 없이 `/`로 replace navigation 한다.
+  2. 신규 가입 여부 hint를 sessionStorage에 1회성 값으로 저장한다.
+  3. `/`로 replace navigation 한다.
+  4. `token`이 없으면 저장 없이 `/`로 replace navigation 한다.
 - Error cases: 화면 오류를 노출하지 않고 홈으로 복귀한다.
 
 ## 백엔드 API
@@ -131,7 +136,7 @@
   - `KEYWORD_DUPLICATED`: 이미 등록된 키워드
 
 ### POST `/api/onboarding/keywords/bulk`
-- 설명: 최초 로그인 온보딩에서 선택한 여러 관심 키워드를 한 번에 생성한다. 백엔드는 이미 저장된 키워드는 중복 저장하지 않고 건너뛴다.
+- 설명: 신규 가입 온보딩에서 선택한 여러 관심 키워드를 한 번에 생성한다. 백엔드는 이미 저장된 키워드는 중복 저장하지 않고 건너뛴다.
 - 인증: Bearer token + `accessToken` cookie
 - Path params: 없음
 - Query params: 없음
@@ -154,6 +159,219 @@
   - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
   - `EXPIRED_JWT_TOKEN`: token 만료
 
+### GET `/api/community/categories`
+- 설명: 게시판 카테고리 목록을 조회한다. API 응답의 enum code를 UI 섹션 view model로 변환해 사용한다.
+- 인증: public
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: array, required
+  - `data[].code`: string, required, enum `POLITICS`, `ECONOMY`, `IT_SCIENCE`, `SOCIETY`, `WORLD`, `SPORTS`, `ENTERTAINMENT`
+  - `data[].label`: string, required, 카테고리 표시명
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+- Error cases:
+  - `HTTP_REQUEST_FAILED`: 응답이 공통 실패 형식이 아닌 상태로 실패
+
+### GET `/api/posts`
+- 설명: 게시글 목록을 조회한다. 현재 UI는 첫 페이지 목록을 받아 클라이언트 게시판 탭에서 필터링한다.
+- 인증: optional Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params:
+  - `category`: string, optional, enum `POLITICS`, `ECONOMY`, `IT_SCIENCE`, `SOCIETY`, `WORLD`, `SPORTS`, `ENTERTAINMENT`, 특정 카테고리만 조회할 때 사용
+  - `page`: number, optional, default `0`, 0부터 시작하는 페이지 번호
+  - `size`: number, optional, default `20`, 페이지 크기
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.content`: array, required, 없으면 `[]`
+  - `data.content[].id`: string, required, 게시글 ID
+  - `data.content[].category`: string, required, 카테고리 enum
+  - `data.content[].title`: string, required, 제목
+  - `data.content[].writerName`: string, required, 작성자 표시명
+  - `data.content[].likeCount`: number, required, 좋아요 수
+  - `data.content[].commentCount`: number, required, 댓글 수
+  - `data.content[].viewCount`: number, required, 조회 수
+  - `data.content[].createdAt`: string, required, ISO-8601 생성 시각
+  - `data.content[].isMine`: boolean, required, 로그인 사용자의 작성글 여부
+  - `data.page`: number, required
+  - `data.size`: number, required
+  - `data.totalElements`: number, required
+  - `data.totalPages`: number, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `400`: category 값 오류
+- Error cases:
+  - `INVALID_CATEGORY`: 지원하지 않는 카테고리
+
+### POST `/api/posts`
+- 설명: 로그인 사용자가 게시글을 생성한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body:
+  - `category`: string, required, enum `POLITICS`, `ECONOMY`, `IT_SCIENCE`, `SOCIETY`, `WORLD`, `SPORTS`, `ENTERTAINMENT`
+  - `title`: string, required, 1~150자, 제목
+  - `content`: string, required, 본문
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.id`: string, required, 생성된 게시글 ID
+  - `message`: string, required
+- Status codes:
+  - `200`: 생성 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_REQUEST`: category, title, content 누락 또는 유효하지 않은 값
+  - `INVALID_CATEGORY`: 지원하지 않는 카테고리
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### GET `/api/posts/{postId}`
+- 설명: 게시글 상세를 조회한다. 조회 성공 시 백엔드가 `viewCount`를 1 증가시킨다.
+- 인증: optional Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.id`: string, required
+  - `data.category`: string, required, 카테고리 enum
+  - `data.title`: string, required
+  - `data.content`: string, required
+  - `data.writer`: object, required
+  - `data.writer.id`: string, required, 작성자 ID
+  - `data.writer.name`: string, required, 작성자 표시명
+  - `data.likeCount`: number, required
+  - `data.commentCount`: number, required
+  - `data.viewCount`: number, required
+  - `data.likedByMe`: boolean, required, 로그인 사용자의 좋아요 여부
+  - `data.isMine`: boolean, required, 로그인 사용자의 작성글 여부
+  - `data.createdAt`: string, required, ISO-8601 생성 시각
+  - `data.updatedAt`: string, required, ISO-8601 수정 시각
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `404`: 게시글 없음
+- Error cases:
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+
+### GET `/api/posts/{postId}/comments`
+- 설명: 게시글 댓글 목록을 조회한다.
+- 인증: optional Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: array, required, 없으면 `[]`
+  - `data[].id`: string, required, 댓글 ID
+  - `data[].content`: string, required, 댓글 내용
+  - `data[].writerName`: string, required, 작성자 표시명
+  - `data[].isMine`: boolean, required, 로그인 사용자의 작성 댓글 여부
+  - `data[].createdAt`: string, required, ISO-8601 생성 시각
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `404`: 게시글 없음
+- Error cases:
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+
+### POST `/api/posts/{postId}/comments`
+- 설명: 로그인 사용자가 게시글에 댓글을 작성한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body:
+  - `content`: string, required, 1~1000자, 댓글 내용
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.id`: string, required, 댓글 ID
+  - `data.content`: string, required
+  - `data.writerName`: string, required
+  - `data.isMine`: boolean, required
+  - `data.createdAt`: string, required, ISO-8601 생성 시각
+  - `message`: string, required
+- Status codes:
+  - `200`: 생성 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+  - `404`: 게시글 없음
+- Error cases:
+  - `INVALID_REQUEST`: content 누락 또는 유효하지 않은 값
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### POST `/api/posts/{postId}/likes`
+- 설명: 로그인 사용자가 게시글 좋아요를 생성한다. 프론트는 응답의 `likeCount`를 최종 표시값으로 사용한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.postId`: string, required
+  - `data.liked`: boolean, required, `true`
+  - `data.likeCount`: number, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 좋아요 성공
+  - `401`: 인증 실패
+  - `404`: 게시글 없음
+  - `409`: 이미 좋아요 상태
+- Error cases:
+  - `LIKE_ALREADY_EXISTS`: 이미 좋아요 상태
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### DELETE `/api/posts/{postId}/likes`
+- 설명: 로그인 사용자가 게시글 좋아요를 취소한다. 프론트는 응답의 `likeCount`를 최종 표시값으로 사용한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.postId`: string, required
+  - `data.liked`: boolean, required, `false`
+  - `data.likeCount`: number, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 좋아요 취소 성공
+  - `401`: 인증 실패
+  - `404`: 게시글 또는 좋아요 없음
+- Error cases:
+  - `LIKE_NOT_FOUND`: 취소할 좋아요 없음
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
 ## 미연동 계약
 - 키워드 수정/삭제 API는 현재 백엔드 문서에 정의되어 있지 않아 호출하지 않는다.
-- 뉴스 분석, AI 브리핑, 커뮤니티 API는 현재 백엔드 문서에 정의되어 있지 않아 기존 로컬 view model을 유지한다.
+- 커뮤니티 게시글 수정/삭제, 댓글 수정/삭제 API는 참고자료에는 있으나 현재 UI에서 호출하지 않는다.
+- 뉴스 분석, AI 브리핑 API는 현재 백엔드 문서에 정의되어 있지 않아 기존 로컬 view model을 유지한다.

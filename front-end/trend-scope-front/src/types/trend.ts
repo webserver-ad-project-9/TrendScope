@@ -9,14 +9,17 @@ export type TrendScopeSection =
   | "post";
 
 export type CommunityBoardSectionId =
+  | "politics"
   | "economy"
   | "society"
   | "it"
-  | "politics"
-  | "culture"
-  | "global";
+  | "global"
+  | "sports"
+  | "entertainment";
 
 export type CommunityBoardFilterId = "all" | CommunityBoardSectionId;
+
+export type CommunitySyncStatus = "idle" | "loading" | "saving" | "ready" | "error";
 
 export interface MetricViewModel {
   readonly label: string;
@@ -50,7 +53,12 @@ export interface BoardPostViewModel {
   readonly category: string;
   readonly title: string;
   readonly author: string;
+  readonly likeCount: number;
   readonly commentCount: number;
+  readonly viewCount: number;
+  readonly createdAt: string;
+  readonly isMine: boolean;
+  readonly likedByMe: boolean;
   readonly body: string;
   readonly comments: readonly PostCommentViewModel[];
 }
@@ -59,6 +67,8 @@ export interface PostCommentViewModel {
   readonly id: string;
   readonly author: string;
   readonly body: string;
+  readonly createdAt: string;
+  readonly isMine: boolean;
 }
 
 export interface CommunityBoardSectionViewModel {
@@ -69,7 +79,6 @@ export interface CommunityBoardSectionViewModel {
 
 export interface CommunityPostDraftViewModel {
   readonly boardSectionId: CommunityBoardSectionId;
-  readonly category: string;
   readonly title: string;
   readonly body: string;
 }

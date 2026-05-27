@@ -56,55 +56,7 @@ export async function createOnboardingKeywordsBulk(
 }
 
 /**
- * OAuth redirect 전 선택한 온보딩 키워드를 브라우저 저장소에 임시 보관한다.
- */
-export function storePendingOnboardingKeywordNames(names: readonly string[]): void {
-  if (!isBrowserRuntime()) {
-    return;
-  }
-
-  const normalizedNames = normalizeKeywordNames(names);
-
-  if (normalizedNames.length === 0) {
-    clearPendingOnboardingKeywordNames();
-    return;
-  }
-
-  window.localStorage.setItem(
-    pendingOnboardingKeywordStorageKey,
-    JSON.stringify(normalizedNames),
-  );
-}
-
-/**
- * OAuth 완료 후 백엔드에 반영할 임시 온보딩 키워드를 읽는다.
- */
-export function readPendingOnboardingKeywordNames(): readonly string[] {
-  if (!isBrowserRuntime()) {
-    return [];
-  }
-
-  const rawValue = window.localStorage.getItem(pendingOnboardingKeywordStorageKey);
-
-  if (rawValue === null) {
-    return [];
-  }
-
-  try {
-    const parsedValue = JSON.parse(rawValue) as unknown;
-
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    return normalizeKeywordNames(parsedValue.filter((value): value is string => typeof value === "string"));
-  } catch {
-    return [];
-  }
-}
-
-/**
- * 온보딩 키워드 임시 저장값을 제거한다.
+ * OAuth 전 온보딩을 사용하던 이전 버전의 임시 저장값을 제거한다.
  */
 export function clearPendingOnboardingKeywordNames(): void {
   if (!isBrowserRuntime()) {
