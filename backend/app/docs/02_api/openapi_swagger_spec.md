@@ -1,146 +1,146 @@
-# TrendPulse Swagger/OpenAPI Specification
+﻿# TrendPulse Swagger/OpenAPI Specification
 
-## 1. 작업 기준
+## 1. ?묒뾽 湲곗?
 
-이 문서는 현재 Controller로 구현된 API만 Swagger 문서화 대상으로 관리한다.
+??臾몄꽌???꾩옱 Controller濡?援ы쁽??API留?Swagger 臾몄꽌????곸쑝濡?愿由ы븳??
 
-아직 구현되지 않은 API는 Swagger에 노출하지 않는다.
+?꾩쭅 援ы쁽?섏? ?딆? API??Swagger???몄텧?섏? ?딅뒗??
 
-## 2. Swagger 의존성
+## 2. Swagger ?섏〈??
 
 ```kotlin
 implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 ```
 
-현재 프로젝트는 Spring Boot `4.0.6` 기반이므로 springdoc 3.x starter를 사용한다.
+?꾩옱 ?꾨줈?앺듃??Spring Boot `4.0.6` 湲곕컲?대?濡?springdoc 3.x starter瑜??ъ슜?쒕떎.
 
-## 3. Swagger 접속 URL
+## 3. Swagger ?묒냽 URL
 
 ```text
 Swagger UI: http://localhost:8080/swagger-ui/index.html
 OpenAPI JSON: http://localhost:8080/v3/api-docs
 ```
 
-## 4. 인증 방식
+## 4. ?몄쬆 諛⑹떇
 
-TrendPulse는 Google OAuth 로그인만 지원한다.
+TrendPulse??Google OAuth 濡쒓렇?몃쭔 吏?먰븳??
 
 ```text
 GET /oauth2/authorization/google
 ```
 
-OAuth 성공 후 백엔드는 JWT Access Token을 발급하고, 프론트엔드는 이후 보호 API 요청에 Bearer Token을 붙인다.
+OAuth ?깃났 ??諛깆뿏?쒕뒗 JWT Access Token??諛쒓툒?섍퀬, ?꾨줎?몄뿏?쒕뒗 ?댄썑 蹂댄샇 API ?붿껌??Bearer Token??遺숈씤??
 
 ```http
 Authorization: Bearer {accessToken}
 ```
 
-Swagger Authorize 입력창에는 `Bearer` 없이 JWT 값만 입력한다.
+Swagger Authorize ?낅젰李쎌뿉??`Bearer` ?놁씠 JWT 媛믩쭔 ?낅젰?쒕떎.
 
-## 5. 현재 Swagger 노출 API
+## 5. ?꾩옱 Swagger ?몄텧 API
 
-| Group | Method | Endpoint | Auth | 구현 상태 |
+| Group | Method | Endpoint | Auth | 援ы쁽 ?곹깭 |
 | --- | --- | --- | --- | --- |
-| Auth | GET | `/oauth2/authorization/google` | Public | Spring Security 기본 엔드포인트 |
-| Auth | GET | `/api/auth` | Public | 구현됨 |
-| Auth | GET | `/api/auth/login` | Public | 구현됨 |
-| Auth | POST | `/api/auth/logout` | Required | 구현됨 |
-| User | GET | `/api/users/me` | Required | 구현됨 |
-| Onboarding Keyword | POST | `/api/onboarding/keywords` | Required | 구현됨 |
-| Onboarding Keyword | GET | `/api/onboarding/keywords` | Required | 구현됨 |
-| Post | POST | `/api/posts` | Required | 구현됨 |
+| Auth | GET | `/oauth2/authorization/google` | Public | Spring Security 湲곕낯 ?붾뱶?ъ씤??|
+| Auth | GET | `/api/auth` | Public | 援ы쁽??|
+| Auth | GET | `/api/auth/login` | Public | 援ы쁽??|
+| Auth | POST | `/api/auth/logout` | Required | 援ы쁽??|
+| User | GET | `/api/users/me` | Required | 援ы쁽??|
+| Onboarding Keyword | POST | `/api/onboarding/keywords` | Required | 援ы쁽??|
+| Onboarding Keyword | GET | `/api/onboarding/keywords` | Required | 援ы쁽??|
+| Post | POST | `/api/posts` | Required | 援ы쁽??|
 
-## 6. 공통 성공 응답
+## 6. 怨듯넻 ?깃났 ?묐떟
 
 ```json
 {
   "success": true,
   "data": {},
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-## 7. 공통 실패 응답
+## 7. 怨듯넻 ?ㅽ뙣 ?묐떟
 
 ```json
 {
   "success": false,
   "errorCode": "POST_NOT_FOUND",
-  "message": "게시글을 찾을 수 없습니다."
+  "message": "寃뚯떆湲??李얠쓣 ???놁뒿?덈떎."
 }
 ```
 
-## 8. 구현된 API 요약
+## 8. 援ы쁽??API ?붿빟
 
 ### `GET /oauth2/authorization/google`
 
-Google OAuth 로그인을 시작한다.
+Google OAuth 濡쒓렇?몄쓣 ?쒖옉?쒕떎.
 
-> Bearer Token 불필요
+> Bearer Token 遺덊븘??
 
 ### `GET /api/auth/login`
 
-Spring Security OAuth 엔드포인트로 redirect한다.
+Spring Security OAuth ?붾뱶?ъ씤?몃줈 redirect?쒕떎.
 
-> Bearer Token 불필요
+> Bearer Token 遺덊븘??
 
 ### `GET /api/auth`
 
-프론트엔드 로그인 버튼에서 사용할 수 있는 Google OAuth 로그인 진입점이다.
+?꾨줎?몄뿏??濡쒓렇??踰꾪듉?먯꽌 ?ъ슜?????덈뒗 Google OAuth 濡쒓렇??吏꾩엯?먯씠??
 
-> Bearer Token 불필요
+> Bearer Token 遺덊븘??
 
 ### `POST /api/auth/logout`
 
-Access Token only 구조에서 클라이언트 로그아웃을 처리한다.
+Access Token only 援ъ“?먯꽌 ?대씪?댁뼵??濡쒓렇?꾩썐??泥섎━?쒕떎.
 
-> Bearer Token 필요
+> Bearer Token ?꾩슂
 
 ### `GET /api/users/me`
 
-현재 JWT 인증에 성공한 사용자 정보를 조회한다.
+?꾩옱 JWT ?몄쬆???깃났???ъ슜???뺣낫瑜?議고쉶?쒕떎.
 
-> Bearer Token 필요
+> Bearer Token ?꾩슂
 
 ### `POST /api/onboarding/keywords`
 
-현재 사용자의 온보딩 키워드를 생성한다.
+?꾩옱 ?ъ슜?먯쓽 ?⑤낫???ㅼ썙?쒕? ?앹꽦?쒕떎.
 
-> Bearer Token 필요
+> Bearer Token ?꾩슂
 
 Request:
 
 ```json
 {
-  "name": "AI 반도체"
+  "name": "AI 諛섎룄泥?
 }
 ```
 
 ### `GET /api/onboarding/keywords`
 
-현재 사용자의 온보딩 키워드 목록을 조회한다.
+?꾩옱 ?ъ슜?먯쓽 ?⑤낫???ㅼ썙??紐⑸줉??議고쉶?쒕떎.
 
-> Bearer Token 필요
+> Bearer Token ?꾩슂
 
 ### `POST /api/posts`
 
-카테고리 게시판에 게시글을 작성한다.
+移댄뀒怨좊━ 寃뚯떆?먯뿉 寃뚯떆湲???묒꽦?쒕떎.
 
-> Bearer Token 필요
+> Bearer Token ?꾩슂
 
 Request:
 
 ```json
 {
   "category": "IT_SCIENCE",
-  "title": "AI 반도체 뉴스가 급증하고 있습니다",
-  "content": "대시보드에서 AI 반도체 키워드 트렌드가 상승하는 것이 보여 공유합니다."
+  "title": "AI 諛섎룄泥??댁뒪媛 湲됱쬆?섍퀬 ?덉뒿?덈떎",
+  "content": "??쒕낫?쒖뿉??AI 諛섎룄泥??ㅼ썙???몃젋?쒓? ?곸듅?섎뒗 寃껋씠 蹂댁뿬 怨듭쑀?⑸땲??"
 }
 ```
 
-## 9. 아직 Swagger에 노출하지 않는 API
+## 9. ?꾩쭅 Swagger???몄텧?섏? ?딅뒗 API
 
-아래 API는 MVP 예정 범위이지만 Controller 기능 구현 전까지 Swagger에 작성하지 않는다.
+?꾨옒 API??MVP ?덉젙 踰붿쐞?댁?留?Controller 湲곕뒫 援ы쁽 ?꾧퉴吏 Swagger???묒꽦?섏? ?딅뒗??
 
 ```text
 PATCH /api/onboarding/keywords/{keywordId}
@@ -156,11 +156,12 @@ PATCH /api/comments/{commentId}
 DELETE /api/comments/{commentId}
 ```
 
-## 10. Swagger JWT 테스트 방법
+## 10. Swagger JWT ?뚯뒪??諛⑸쾿
 
-1. 브라우저에서 `/oauth2/authorization/google`로 로그인한다.
-2. OAuth 성공 후 프론트 callback URL의 `token` 값을 복사한다.
-3. `/swagger-ui/index.html`로 접속한다.
-4. 우측 상단 `Authorize` 버튼을 누른다.
-5. `Bearer` 없이 JWT 값만 입력한다.
-6. 보호 API를 호출한다.
+1. 釉뚮씪?곗??먯꽌 `/oauth2/authorization/google`濡?濡쒓렇?명븳??
+2. OAuth ?깃났 ???꾨줎??callback URL??`token` 媛믪쓣 蹂듭궗?쒕떎.
+3. `/swagger-ui/index.html`濡??묒냽?쒕떎.
+4. ?곗륫 ?곷떒 `Authorize` 踰꾪듉???꾨Ⅸ??
+5. `Bearer` ?놁씠 JWT 媛믩쭔 ?낅젰?쒕떎.
+6. 蹂댄샇 API瑜??몄텧?쒕떎.
+

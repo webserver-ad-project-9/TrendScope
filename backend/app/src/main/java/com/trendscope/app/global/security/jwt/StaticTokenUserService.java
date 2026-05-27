@@ -3,6 +3,7 @@ package com.trendscope.app.global.security.jwt;
 import com.trendscope.app.domain.user.entity.User;
 import com.trendscope.app.domain.user.repository.UserRepository;
 import com.trendscope.app.global.security.principal.CustomUserDetails;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,12 +25,21 @@ public class StaticTokenUserService {
     @Transactional
     public CustomUserDetails loadOrCreateStaticUser() {
         User user = userRepository.findByEmail(jwtProperties.staticUserEmail())
-                .orElseGet(() -> userRepository.save(User.googleUser(
-                        jwtProperties.staticUserEmail(),
-                        "TrendPulse Dev User",
-                        null,
-                        "static-token-user"
-                )));
+                .orElseGet(this::createOrLoadStaticUser);
         return CustomUserDetails.from(user);
+    }
+
+    private User createOrLoadStaticUser() {
+        try {
+            return userRepository.saveAndFlush(User.googleUser(
+                    jwtProperties.staticUserEmail(),
+                    "TrendPulse Dev User",
+                    null,
+                    "static-token-user"
+            ));
+        } catch (DataIntegrityViolationException exception) {
+            return userRepository.findByEmail(jwtProperties.staticUserEmail())
+                    .orElseThrow(() -> exception);
+        }
     }
 }
