@@ -1,21 +1,21 @@
-# TrendPulse JWT Access Token Flow
+﻿# TrendPulse JWT Access Token Flow
 
-## 1. 설정
+## 1. ?ㅼ젙
 
 `application.yml`
 
 ```yaml
 jwt:
-  secret: mjyw123123
+  secret: {JWT_SECRET}
   access-token-expiration: 3600000
 ```
 
-## 2. 구현 기준
+## 2. 援ы쁽 湲곗?
 
-- JWT 라이브러리: `jjwt 0.11.5`
-- 알고리즘: HS256
-- 토큰 종류: Access Token only
-- Refresh Token: MVP에서는 제외
+- JWT ?쇱씠釉뚮윭由? `jjwt 0.11.5`
+- ?뚭퀬由ъ쬁: HS256
+- ?좏겙 醫낅쪟: Access Token only
+- Refresh Token: MVP?먯꽌???쒖쇅
 - Payload:
 
 ```json
@@ -25,24 +25,24 @@ jwt:
 }
 ```
 
-## 3. 인증 흐름
+## 3. ?몄쬆 ?먮쫫
 
 ```text
-Google OAuth 로그인
-→ OAuthSuccessHandler 실행
-→ JwtProvider가 Access Token 생성
-→ Frontend callback URL로 token 전달
-→ Frontend localStorage 저장
-→ API 요청 시 Authorization: Bearer {token}
-→ JwtAuthenticationFilter가 Bearer 제거
-→ JwtProvider가 서명/만료 검증
-→ userId 추출
-→ CustomUserDetailsService로 사용자 조회
-→ SecurityContext 인증 저장
-→ /api/users/me 호출 성공
+Google OAuth 濡쒓렇??
+??OAuthSuccessHandler ?ㅽ뻾
+??JwtProvider媛 Access Token ?앹꽦
+??Frontend callback URL濡?token ?꾨떖
+??Frontend localStorage ???
+??API ?붿껌 ??Authorization: Bearer {token}
+??JwtAuthenticationFilter媛 Bearer ?쒓굅
+??JwtProvider媛 ?쒕챸/留뚮즺 寃利?
+??userId 異붿텧
+??CustomUserDetailsService濡??ъ슜??議고쉶
+??SecurityContext ?몄쬆 ???
+??/api/users/me ?몄텧 ?깃났
 ```
 
-## 4. Frontend 저장 예시
+## 4. Frontend ????덉떆
 
 ```ts
 const params = new URLSearchParams(window.location.search);
@@ -53,7 +53,7 @@ if (token) {
 }
 ```
 
-## 5. API 요청 예시
+## 5. API ?붿껌 ?덉떆
 
 ```http
 GET /api/users/me HTTP/1.1
@@ -61,15 +61,15 @@ Host: localhost:8080
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 ```
 
-프론트 연동 테스트에서는 아래 static bearer token도 사용할 수 있다.
+?꾨줎???곕룞 ?뚯뒪?몄뿉?쒕뒗 ?꾨옒 static bearer token???ъ슜?????덈떎.
 
 ```http
-Authorization: Bearer mjyw123123123
+Authorization: Bearer {DEV_STATIC_TOKEN}
 ```
 
-이 토큰은 JWT가 아니라 로컬 개발용 우회 인증 토큰이다.
+???좏겙? JWT媛 ?꾨땲??濡쒖뺄 媛쒕컻???고쉶 ?몄쬆 ?좏겙?대떎.
 
-성공 응답:
+?깃났 ?묐떟:
 
 ```json
 {
@@ -79,13 +79,13 @@ Authorization: Bearer mjyw123123123
   "data": {
     "id": "4f4f9a2d-22e3-4b4e-8d01-83f9959dfc71",
     "email": "user@example.com",
-    "name": "홍길동",
+    "name": "?띻만??,
     "role": "USER"
   }
 }
 ```
 
-## 6. 주요 클래스 위치
+## 6. 二쇱슂 ?대옒???꾩튂
 
 ```text
 src/main/java/com/trendscope/app/global/security/jwt/JwtProvider.java
@@ -94,3 +94,4 @@ src/main/java/com/trendscope/app/global/security/jwt/JwtTokenResolver.java
 src/main/java/com/trendscope/app/global/security/SecurityConfig.java
 src/main/java/com/trendscope/app/global/security/oauth/OAuthSuccessHandler.java
 ```
+

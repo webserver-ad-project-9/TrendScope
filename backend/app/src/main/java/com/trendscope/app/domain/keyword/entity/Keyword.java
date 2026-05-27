@@ -57,4 +57,8 @@ public class Keyword extends BaseEntity {
     public String getName() {
         return keyword;
     }
+
+    public boolean isActive() {
+        return active;
+    }
 }

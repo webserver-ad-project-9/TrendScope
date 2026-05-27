@@ -55,4 +55,20 @@ public class NewsArticle extends BaseEntity {
     public String getTitle() {
         return title;
     }
+
+    public Keyword getKeyword() {
+        return keyword;
+    }
+
+    public String getOriginUrl() {
+        return originUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public LocalDateTime getPublishedAt() {
+        return publishedAt;
+    }
 }

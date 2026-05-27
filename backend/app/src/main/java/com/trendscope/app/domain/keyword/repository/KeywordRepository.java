@@ -11,6 +11,8 @@ public interface KeywordRepository extends JpaRepository<Keyword, UUID> {
 
     List<Keyword> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
+    List<Keyword> findByUserIdAndActiveTrueOrderByCreatedAtDesc(UUID userId);
+
     List<Keyword> findByUserIdAndKeywordIn(UUID userId, List<String> keywords);
 
     List<Keyword> findByActiveTrue();

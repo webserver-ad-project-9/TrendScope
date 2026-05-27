@@ -1,14 +1,13 @@
-# TrendPulse Docker Local Setup
+﻿# TrendPulse Docker Local Setup
 
-## 1. 실행
+## 1. ?ㅽ뻾
 
 ```powershell
 cd C:\Users\lyw01\Documents\GitHub\TrendScope\backend\app
 docker compose up --build
 ```
 
-## 2. 서비스
-
+## 2. ?쒕퉬??
 | Service | URL |
 | --- | --- |
 | Backend | `http://localhost:8080` |
@@ -16,7 +15,7 @@ docker compose up --build
 | OpenAPI JSON | `http://localhost:8080/v3/api-docs` |
 | MySQL | `localhost:3306` |
 
-## 3. MySQL 접속 정보
+## 3. MySQL ?묒냽 ?뺣낫
 
 ```text
 database: trendpulse
@@ -25,40 +24,39 @@ password: trendpulse
 root password: root
 ```
 
-## 4. 개발용 인증 테스트
-
+## 4. 媛쒕컻???몄쬆 ?뚯뒪??
 ```powershell
 curl.exe -i "http://localhost:8080/api/users/me" `
-  -H "Authorization: Bearer mjyw123123123" `
-  -H "Cookie: accessToken=mjyw123123123"
+  -H "Authorization: Bearer {DEV_STATIC_TOKEN}" `
+  -H "Cookie: accessToken={DEV_STATIC_TOKEN}"
 ```
 
-## 5. 키워드 생성 테스트
-
+## 5. ?ㅼ썙???앹꽦 ?뚯뒪??
 ```powershell
 $jsonPath = "$env:TEMP\keyword.json"
 
 @'
 {
-  "name": "AI 반도체"
+  "name": "AI 諛섎룄泥?
 }
 '@ | Set-Content -Path $jsonPath -Encoding utf8
 
 curl.exe -i -X POST "http://localhost:8080/api/onboarding/keywords" `
-  -H "Authorization: Bearer mjyw123123123" `
-  -H "Cookie: accessToken=mjyw123123123" `
+  -H "Authorization: Bearer {DEV_STATIC_TOKEN}" `
+  -H "Cookie: accessToken={DEV_STATIC_TOKEN}" `
   -H "Content-Type: application/json; charset=utf-8" `
   --data-binary "@$jsonPath"
 ```
 
-## 6. 종료
+## 6. 醫낅즺
 
 ```powershell
 docker compose down
 ```
 
-볼륨까지 삭제하려면:
+蹂쇰ⅷ源뚯? ??젣?섎젮硫?
 
 ```powershell
 docker compose down -v
 ```
+

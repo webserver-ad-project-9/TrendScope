@@ -1,6 +1,6 @@
-# TrendPulse 프론트 전달용 Auth / Keyword API 명세서
+﻿# TrendPulse ?꾨줎???꾨떖??Auth / Keyword API 紐낆꽭??
 
-## 공통 사항
+## 怨듯넻 ?ы빆
 
 ### Base URL
 
@@ -8,80 +8,80 @@
 http://localhost:8080
 ```
 
-### 인증 방식
+### ?몄쬆 諛⑹떇
 
-TrendPulse는 일반 이메일/비밀번호 로그인을 사용하지 않는다.
+TrendPulse???쇰컲 ?대찓??鍮꾨?踰덊샇 濡쒓렇?몄쓣 ?ъ슜?섏? ?딅뒗??
 
 ```text
-로그인 방식: Google OAuth
-인증 방식: Bearer Token + 로그인 쿠키
-개발용 고정 토큰: mjyw123123123
-로그인 쿠키 key: accessToken
+濡쒓렇??諛⑹떇: Google OAuth
+?몄쬆 諛⑹떇: Bearer Token + 濡쒓렇??荑좏궎
+媛쒕컻??怨좎젙 ?좏겙: {DEV_STATIC_TOKEN}
+濡쒓렇??荑좏궎 key: accessToken
 ```
 
-보호 API 요청 시 프론트는 아래 두 값을 함께 보내야 한다.
+蹂댄샇 API ?붿껌 ???꾨줎?몃뒗 ?꾨옒 ??媛믪쓣 ?④퍡 蹂대궡???쒕떎.
 
 ```http
 Authorization: Bearer {token}
 Cookie: accessToken={token}
 ```
 
-브라우저에서는 `Cookie` 헤더를 직접 넣지 않고, `withCredentials: true` 설정으로 쿠키가 자동 전송되게 한다.
+釉뚮씪?곗??먯꽌??`Cookie` ?ㅻ뜑瑜?吏곸젒 ?ｌ? ?딄퀬, `withCredentials: true` ?ㅼ젙?쇰줈 荑좏궎媛 ?먮룞 ?꾩넚?섍쾶 ?쒕떎.
 
-### 공통 성공 응답
+### 怨듯넻 ?깃났 ?묐떟
 
 ```json
 {
   "success": true,
   "data": {},
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 공통 에러 응답
+### 怨듯넻 ?먮윭 ?묐떟
 
 ```json
 {
   "success": false,
   "errorCode": "INVALID_JWT_TOKEN",
-  "message": "유효하지 않은 토큰입니다."
+  "message": "?좏슚?섏? ?딆? ?좏겙?낅땲??"
 }
 ```
 
-| Status | 상황 | Response |
+| Status | ?곹솴 | Response |
 | --- | --- | --- |
-| `401` | Bearer Token 없음/불일치 | `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "유효하지 않은 토큰입니다."}` |
-| `401` | 로그인 쿠키 없음 | `{"success": false, "errorCode": "LOGIN_COOKIE_REQUIRED", "message": "로그인 쿠키가 없습니다."}` |
-| `401` | 토큰 만료 | `{"success": false, "errorCode": "EXPIRED_JWT_TOKEN", "message": "토큰이 만료되었습니다."}` |
-| `404` | 사용자 없음 | `{"success": false, "errorCode": "USER_NOT_FOUND", "message": "사용자를 찾을 수 없습니다."}` |
+| `401` | Bearer Token ?놁쓬/遺덉씪移?| `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "?좏슚?섏? ?딆? ?좏겙?낅땲??"}` |
+| `401` | 濡쒓렇??荑좏궎 ?놁쓬 | `{"success": false, "errorCode": "LOGIN_COOKIE_REQUIRED", "message": "濡쒓렇??荑좏궎媛 ?놁뒿?덈떎."}` |
+| `401` | ?좏겙 留뚮즺 | `{"success": false, "errorCode": "EXPIRED_JWT_TOKEN", "message": "?좏겙??留뚮즺?섏뿀?듬땲??"}` |
+| `404` | ?ъ슜???놁쓬 | `{"success": false, "errorCode": "USER_NOT_FOUND", "message": "?ъ슜?먮? 李얠쓣 ???놁뒿?덈떎."}` |
 
 ---
 
-## 1. 로그인
+## 1. 濡쒓렇??
 
 ### `GET /api/auth`
 
-Google OAuth 로그인 페이지로 리다이렉트한다.
+Google OAuth 濡쒓렇???섏씠吏濡?由щ떎?대젆?명븳??
 
-> Bearer Token 불필요, 로그인 쿠키 불필요
+> Bearer Token 遺덊븘?? 濡쒓렇??荑좏궎 遺덊븘??
 
 ### Request Body
 
-없음
+?놁쓬
 
 ### Query Parameters
 
-없음
+?놁쓬
 
 ### Response
 
-`302 Redirect` -> Google OAuth 인증 페이지
+`302 Redirect` -> Google OAuth ?몄쬆 ?섏씠吏
 
 ```http
 Location: /oauth2/authorization/google
 ```
 
-### 프론트 구현 예시
+### ?꾨줎??援ы쁽 ?덉떆
 
 ```ts
 const handleGoogleLogin = () => {
@@ -89,9 +89,9 @@ const handleGoogleLogin = () => {
 };
 ```
 
-### 메모
+### 硫붾え
 
-아래 URL로 직접 이동해도 동일하게 Google OAuth 로그인이 시작된다.
+?꾨옒 URL濡?吏곸젒 ?대룞?대룄 ?숈씪?섍쾶 Google OAuth 濡쒓렇?몄씠 ?쒖옉?쒕떎.
 
 ```http
 GET http://localhost:8080/oauth2/authorization/google
@@ -103,39 +103,39 @@ GET http://localhost:8080/oauth2/authorization/google
 
 ### `GET /api/auth/login/callback`
 
-Google OAuth 인증 완료 후 Google이 호출하는 백엔드 콜백이다.
+Google OAuth ?몄쬆 ?꾨즺 ??Google???몄텧?섎뒗 諛깆뿏??肄쒕갚?대떎.
 
-프론트에서 직접 호출하지 않는다.
+?꾨줎?몄뿉??吏곸젒 ?몄텧?섏? ?딅뒗??
 
-> Bearer Token 불필요, 로그인 쿠키 불필요
+> Bearer Token 遺덊븘?? 濡쒓렇??荑좏궎 遺덊븘??
 
-### 동작
+### ?숈옉
 
-1. Google OAuth 인증 성공
-2. 백엔드가 Google 사용자 정보 조회
-3. email 기준으로 기존 사용자 조회
-4. 사용자가 없으면 자동 생성
-5. JWT Access Token 발급
-6. `accessToken` 로그인 쿠키 발급
-7. 프론트엔드 callback URL로 리다이렉트
+1. Google OAuth ?몄쬆 ?깃났
+2. 諛깆뿏?쒓? Google ?ъ슜???뺣낫 議고쉶
+3. email 湲곗??쇰줈 湲곗〈 ?ъ슜??議고쉶
+4. ?ъ슜?먭? ?놁쑝硫??먮룞 ?앹꽦
+5. JWT Access Token 諛쒓툒
+6. `accessToken` 濡쒓렇??荑좏궎 諛쒓툒
+7. ?꾨줎?몄뿏??callback URL濡?由щ떎?대젆??
 
 ### Redirect URL
 
-백엔드는 로그인 성공 후 프론트로 아래 형식으로 이동시킨다.
+諛깆뿏?쒕뒗 濡쒓렇???깃났 ???꾨줎?몃줈 ?꾨옒 ?뺤떇?쇰줈 ?대룞?쒗궓??
 
 ```text
 http://localhost:3000/oauth/callback?token={JWT}
 ```
 
-예시:
+?덉떆:
 
 ```text
 http://localhost:3000/oauth/callback?token=eyJhbGciOiJIUzI1NiJ9...
 ```
 
-### 발급되는 쿠키
+### 諛쒓툒?섎뒗 荑좏궎
 
-| 항목 | 값 |
+| ??ぉ | 媛?|
 | --- | --- |
 | key | `accessToken` |
 | value | JWT Access Token |
@@ -144,7 +144,7 @@ http://localhost:3000/oauth/callback?token=eyJhbGciOiJIUzI1NiJ9...
 | path | `/` |
 | maxAge | `3600` |
 
-### 프론트 Callback 처리 예시
+### ?꾨줎??Callback 泥섎━ ?덉떆
 
 ```ts
 "use client";
@@ -175,28 +175,28 @@ export default function OAuthCallbackPage() {
 
 ---
 
-## 3. 개발용 Static Token 인증
+## 3. 媛쒕컻??Static Token ?몄쬆
 
-현재 프론트 연동 테스트를 위해 아래 고정 토큰을 허용한다.
+?꾩옱 ?꾨줎???곕룞 ?뚯뒪?몃? ?꾪빐 ?꾨옒 怨좎젙 ?좏겙???덉슜?쒕떎.
 
 ```text
-mjyw123123123
+{DEV_STATIC_TOKEN}
 ```
 
-프론트 요청에는 Bearer Token과 쿠키가 둘 다 들어가야 한다.
+?꾨줎???붿껌?먮뒗 Bearer Token怨?荑좏궎媛 ?????ㅼ뼱媛???쒕떎.
 
 ```http
-Authorization: Bearer mjyw123123123
-Cookie: accessToken=mjyw123123123
+Authorization: Bearer {DEV_STATIC_TOKEN}
+Cookie: accessToken={DEV_STATIC_TOKEN}
 ```
 
-브라우저 콘솔에서 개발용 쿠키를 심는 예시:
+釉뚮씪?곗? 肄섏넄?먯꽌 媛쒕컻??荑좏궎瑜??щ뒗 ?덉떆:
 
 ```ts
-document.cookie = "accessToken=mjyw123123123; path=/; max-age=3600";
+document.cookie = "accessToken={DEV_STATIC_TOKEN}; path=/; max-age=3600";
 ```
 
-Axios 설정 예시:
+Axios ?ㅼ젙 ?덉떆:
 
 ```ts
 import axios from "axios";
@@ -207,26 +207,26 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  config.headers.Authorization = "Bearer mjyw123123123";
+  config.headers.Authorization = "Bearer {DEV_STATIC_TOKEN}";
   return config;
 });
 ```
 
 ---
 
-## 4. 로그아웃
+## 4. 濡쒓렇?꾩썐
 
 ### `POST /api/auth/logout`
 
-프론트에서 저장한 토큰과 쿠키를 제거하여 로그아웃 처리한다.
+?꾨줎?몄뿉????ν븳 ?좏겙怨?荑좏궎瑜??쒓굅?섏뿬 濡쒓렇?꾩썐 泥섎━?쒕떎.
 
-현재 백엔드는 Access Token only 구조라 서버에 저장된 refresh token은 없다.
+?꾩옱 諛깆뿏?쒕뒗 Access Token only 援ъ“???쒕쾭????λ맂 refresh token? ?녿떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
 ### Request Body
 
-없음
+?놁쓬
 
 ### Request Header
 
@@ -241,11 +241,11 @@ Cookie: accessToken={token}
 {
   "success": true,
   "data": null,
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 프론트 처리 예시
+### ?꾨줎??泥섎━ ?덉떆
 
 ```ts
 const logout = async () => {
@@ -258,17 +258,17 @@ const logout = async () => {
 
 ---
 
-## 5. 현재 사용자 조회
+## 5. ?꾩옱 ?ъ슜??議고쉶
 
 ### `GET /api/users/me`
 
-현재 로그인한 사용자의 기본 정보를 조회한다.
+?꾩옱 濡쒓렇?명븳 ?ъ슜?먯쓽 湲곕낯 ?뺣낫瑜?議고쉶?쒕떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
 ### Request Body
 
-없음
+?놁쓬
 
 ### Request Header
 
@@ -285,31 +285,31 @@ Cookie: accessToken={token}
   "data": {
     "id": "4f4f9a2d-22e3-4b4e-8d01-83f9959dfc71",
     "email": "user@example.com",
-    "name": "홍길동",
+    "name": "?띻만??,
     "role": "USER"
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 에러
+### ?먮윭
 
-| Status | 상황 | Response |
+| Status | ?곹솴 | Response |
 | --- | --- | --- |
-| `401` | 토큰 없음/불일치 | `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "유효하지 않은 토큰입니다."}` |
-| `404` | 유저 없음 | `{"success": false, "errorCode": "USER_NOT_FOUND", "message": "사용자를 찾을 수 없습니다."}` |
+| `401` | ?좏겙 ?놁쓬/遺덉씪移?| `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "?좏슚?섏? ?딆? ?좏겙?낅땲??"}` |
+| `404` | ?좎? ?놁쓬 | `{"success": false, "errorCode": "USER_NOT_FOUND", "message": "?ъ슜?먮? 李얠쓣 ???놁뒿?덈떎."}` |
 
 ---
 
-## 6. 온보딩 키워드 생성
+## 6. ?⑤낫???ㅼ썙???앹꽦
 
 ### `POST /api/onboarding/keywords`
 
-현재 로그인한 사용자의 관심 키워드를 생성한다.
+?꾩옱 濡쒓렇?명븳 ?ъ슜?먯쓽 愿???ㅼ썙?쒕? ?앹꽦?쒕떎.
 
-키워드 수집/분석 대상이 되는 데이터이므로 Bearer Token과 로그인 쿠키가 모두 필요하다.
+?ㅼ썙???섏쭛/遺꾩꽍 ??곸씠 ?섎뒗 ?곗씠?곗씠誘濡?Bearer Token怨?濡쒓렇??荑좏궎媛 紐⑤몢 ?꾩슂?섎떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
 ### Request Header
 
@@ -323,13 +323,13 @@ Content-Type: application/json
 
 ```json
 {
-  "name": "AI 반도체"
+  "name": "AI 諛섎룄泥?
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
+| ?꾨뱶 | ???| ?꾩닔 | ?ㅻ챸 |
 | --- | --- | --- | --- |
-| `name` | string | O | 등록할 관심 키워드 |
+| `name` | string | O | ?깅줉??愿???ㅼ썙??|
 
 ### Response `200`
 
@@ -338,44 +338,44 @@ Content-Type: application/json
   "success": true,
   "data": {
     "id": "6f84a524-9621-4d58-a454-75c84a8c5bb8",
-    "name": "AI 반도체"
+    "name": "AI 諛섎룄泥?
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 에러
+### ?먮윭
 
-| Status | 상황 | Response |
+| Status | ?곹솴 | Response |
 | --- | --- | --- |
-| `400` | 키워드 누락 | `{"success": false, "errorCode": "INVALID_REQUEST", "message": "키워드는 필수입니다."}` |
-| `401` | 인증 실패 | `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "유효하지 않은 토큰입니다."}` |
-| `409` | 중복 키워드 | `{"success": false, "errorCode": "KEYWORD_DUPLICATED", "message": "이미 등록된 키워드입니다."}` |
+| `400` | ?ㅼ썙???꾨씫 | `{"success": false, "errorCode": "INVALID_REQUEST", "message": "?ㅼ썙?쒕뒗 ?꾩닔?낅땲??"}` |
+| `401` | ?몄쬆 ?ㅽ뙣 | `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "?좏슚?섏? ?딆? ?좏겙?낅땲??"}` |
+| `409` | 以묐났 ?ㅼ썙??| `{"success": false, "errorCode": "KEYWORD_DUPLICATED", "message": "?대? ?깅줉???ㅼ썙?쒖엯?덈떎."}` |
 
-### 개발용 호출 예시
+### 媛쒕컻???몄텧 ?덉떆
 
 ```http
 POST http://localhost:8080/api/onboarding/keywords
-Authorization: Bearer mjyw123123123
-Cookie: accessToken=mjyw123123123
+Authorization: Bearer {DEV_STATIC_TOKEN}
+Cookie: accessToken={DEV_STATIC_TOKEN}
 Content-Type: application/json
 ```
 
 ```json
 {
-  "name": "AI 반도체"
+  "name": "AI 諛섎룄泥?
 }
 ```
 
 ---
 
-## 7. 내 온보딩 키워드 목록 조회
+## 7. ???⑤낫???ㅼ썙??紐⑸줉 議고쉶
 
 ### `GET /api/onboarding/keywords`
 
-현재 로그인한 사용자가 등록한 온보딩 키워드 목록을 조회한다.
+?꾩옱 濡쒓렇?명븳 ?ъ슜?먭? ?깅줉???⑤낫???ㅼ썙??紐⑸줉??議고쉶?쒕떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
 ### Request Header
 
@@ -392,24 +392,24 @@ Cookie: accessToken={token}
   "data": [
     {
       "id": "6f84a524-9621-4d58-a454-75c84a8c5bb8",
-      "name": "AI 반도체"
+      "name": "AI 諛섎룄泥?
     }
   ],
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
 ---
 
-## 8. 온보딩 키워드 일괄 생성
+## 8. ?⑤낫???ㅼ썙???쇨큵 ?앹꽦
 
 ### `POST /api/onboarding/keywords/bulk`
 
-프론트 토글 UI에서 선택한 여러 관심 키워드를 한 번에 저장한다.
+?꾨줎???좉? UI?먯꽌 ?좏깮???щ윭 愿???ㅼ썙?쒕? ??踰덉뿉 ??ν븳??
 
-이미 저장된 키워드는 중복 저장하지 않고 건너뛴다.
+?대? ??λ맂 ?ㅼ썙?쒕뒗 以묐났 ??ν븯吏 ?딄퀬 嫄대꼫?대떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
 ### Request Header
 
@@ -423,17 +423,17 @@ Content-Type: application/json
 
 ```json
 {
-  "names": ["AI 반도체", "경제", "스포츠"]
+  "names": ["AI 諛섎룄泥?, "寃쎌젣", "?ㅽ룷痢?]
 }
 ```
 
-| 필드 | 타입 | 필수 | 설명 |
+| ?꾨뱶 | ???| ?꾩닔 | ?ㅻ챸 |
 | --- | --- | --- | --- |
-| `names` | string[] | O | 사용자가 토글로 선택한 관심 키워드 목록 |
+| `names` | string[] | O | ?ъ슜?먭? ?좉?濡??좏깮??愿???ㅼ썙??紐⑸줉 |
 
 ### Response `200`
 
-새로 저장된 키워드만 반환한다.
+?덈줈 ??λ맂 ?ㅼ썙?쒕쭔 諛섑솚?쒕떎.
 
 ```json
 {
@@ -441,75 +441,76 @@ Content-Type: application/json
   "data": [
     {
       "id": "6823e9eb-3d76-47ec-9243-cd62589db5aa",
-      "name": "ai 반도체"
+      "name": "ai 諛섎룄泥?
     },
     {
       "id": "4bf8a3c6-1744-42ea-a861-6e9d105a7a77",
-      "name": "경제"
+      "name": "寃쎌젣"
     },
     {
       "id": "29d84c2d-efcb-4110-9067-26302c5d64ec",
-      "name": "스포츠"
+      "name": "?ㅽ룷痢?
     }
   ],
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 개발용 호출 예시
+### 媛쒕컻???몄텧 ?덉떆
 
 ```powershell
 $jsonPath = "$env:TEMP\keywords-bulk.json"
 
 @'
 {
-  "names": ["AI 반도체", "경제", "스포츠"]
+  "names": ["AI 諛섎룄泥?, "寃쎌젣", "?ㅽ룷痢?]
 }
 '@ | Set-Content -Path $jsonPath -Encoding utf8
 
 curl.exe -i -X POST "http://localhost:8080/api/onboarding/keywords/bulk" `
-  -H "Authorization: Bearer mjyw123123123" `
-  -H "Cookie: accessToken=mjyw123123123" `
+  -H "Authorization: Bearer {DEV_STATIC_TOKEN}" `
+  -H "Cookie: accessToken={DEV_STATIC_TOKEN}" `
   -H "Content-Type: application/json; charset=utf-8" `
   --data-binary "@$jsonPath"
 ```
 
-### 에러
+### ?먮윭
 
-| Status | 상황 | Response |
+| Status | ?곹솴 | Response |
 | --- | --- | --- |
-| `400` | names가 비어 있음 | `{"success": false, "errorCode": "INVALID_REQUEST", "message": "키워드 목록은 필수입니다."}` |
-| `401` | 인증 실패 | `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "유효하지 않은 토큰입니다."}` |
+| `400` | names媛 鍮꾩뼱 ?덉쓬 | `{"success": false, "errorCode": "INVALID_REQUEST", "message": "?ㅼ썙??紐⑸줉? ?꾩닔?낅땲??"}` |
+| `401` | ?몄쬆 ?ㅽ뙣 | `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "?좏슚?섏? ?딆? ?좏겙?낅땲??"}` |
 
 ---
 
-## API 인증 정리
+## API ?몄쬆 ?뺣━
 
-| API | Bearer Token | 로그인 쿠키 | 설명 |
+| API | Bearer Token | 濡쒓렇??荑좏궎 | ?ㅻ챸 |
 | --- | --- | --- | --- |
-| `GET /api/auth` | - | - | Google OAuth 로그인 시작 |
-| `GET /oauth2/authorization/google` | - | - | Spring Security OAuth 로그인 시작 |
+| `GET /api/auth` | - | - | Google OAuth 濡쒓렇???쒖옉 |
+| `GET /oauth2/authorization/google` | - | - | Spring Security OAuth 濡쒓렇???쒖옉 |
 | `GET /api/auth/login/callback` | - | - | Google OAuth callback |
-| `POST /api/auth/logout` | O | O | 로그아웃 |
-| `GET /api/users/me` | O | O | 현재 사용자 조회 |
-| `POST /api/onboarding/keywords` | O | O | 온보딩 키워드 생성 |
-| `POST /api/onboarding/keywords/bulk` | O | O | 온보딩 키워드 일괄 생성 |
-| `GET /api/onboarding/keywords` | O | O | 내 온보딩 키워드 목록 조회 |
+| `POST /api/auth/logout` | O | O | 濡쒓렇?꾩썐 |
+| `GET /api/users/me` | O | O | ?꾩옱 ?ъ슜??議고쉶 |
+| `POST /api/onboarding/keywords` | O | O | ?⑤낫???ㅼ썙???앹꽦 |
+| `POST /api/onboarding/keywords/bulk` | O | O | ?⑤낫???ㅼ썙???쇨큵 ?앹꽦 |
+| `GET /api/onboarding/keywords` | O | O | ???⑤낫???ㅼ썙??紐⑸줉 議고쉶 |
 
-## 프론트 전달 요약
+## ?꾨줎???꾨떖 ?붿빟
 
 ```text
-로그인 시작:
+濡쒓렇???쒖옉:
 GET http://localhost:8080/api/auth
 
-로그인 성공 후 이동:
+濡쒓렇???깃났 ???대룞:
 http://localhost:3000/oauth/callback?token={JWT}
 
-보호 API 요청:
+蹂댄샇 API ?붿껌:
 Authorization: Bearer {JWT}
 Cookie: accessToken={JWT}
 
-개발용 테스트 값:
-Authorization: Bearer mjyw123123123
-Cookie: accessToken=mjyw123123123
+媛쒕컻???뚯뒪??媛?
+Authorization: Bearer {DEV_STATIC_TOKEN}
+Cookie: accessToken={DEV_STATIC_TOKEN}
 ```
+

@@ -1,6 +1,6 @@
-# TrendPulse Community Frontend API Spec
+﻿# TrendPulse Community Frontend API Spec
 
-## 1. 공통 사항
+## 1. 怨듯넻 ?ы빆
 
 ### Base URL
 
@@ -8,93 +8,93 @@
 http://localhost:8080
 ```
 
-### 공통 응답 구조
+### 怨듯넻 ?묐떟 援ъ“
 
-성공 응답:
+?깃났 ?묐떟:
 
 ```json
 {
   "success": true,
   "data": {},
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-실패 응답:
+?ㅽ뙣 ?묐떟:
 
 ```json
 {
   "success": false,
   "errorCode": "POST_NOT_FOUND",
-  "message": "게시글을 찾을 수 없습니다."
+  "message": "寃뚯떆湲??李얠쓣 ???놁뒿?덈떎."
 }
 ```
 
-### 인증 Header
+### ?몄쬆 Header
 
-보호 API는 Bearer Token과 로그인 쿠키를 함께 사용한다.
+蹂댄샇 API??Bearer Token怨?濡쒓렇??荑좏궎瑜??④퍡 ?ъ슜?쒕떎.
 
 ```http
 Authorization: Bearer {token}
 Cookie: accessToken={token}
 ```
 
-개발용 테스트 값:
+媛쒕컻???뚯뒪??媛?
 
 ```http
-Authorization: Bearer mjyw123123123
-Cookie: accessToken=mjyw123123123
+Authorization: Bearer {DEV_STATIC_TOKEN}
+Cookie: accessToken={DEV_STATIC_TOKEN}
 ```
 
-브라우저에서는 `Cookie` 헤더를 직접 넣지 않고, Axios에 `withCredentials: true`를 설정한다.
+釉뚮씪?곗??먯꽌??`Cookie` ?ㅻ뜑瑜?吏곸젒 ?ｌ? ?딄퀬, Axios??`withCredentials: true`瑜??ㅼ젙?쒕떎.
 
 ---
 
-## 2. Nullable / Count / 정렬 기준
+## 2. Nullable / Count / ?뺣젹 湲곗?
 
-### Nullable 기준
+### Nullable 湲곗?
 
-| 타입 | 기준 |
+| ???| 湲곗? |
 | --- | --- |
-| 필수 문자열 | `null` 불가, 빈 문자열 불가 |
-| 선택 문자열 | 값이 없으면 `null` |
-| 배열 | 값이 없으면 `[]`, `null` 반환 금지 |
-| count 숫자 | `null` 불가, 값이 없으면 `0` |
-| boolean | `null` 불가, 기본 `false` |
-| 날짜 | ISO-8601 문자열 |
+| ?꾩닔 臾몄옄??| `null` 遺덇?, 鍮?臾몄옄??遺덇? |
+| ?좏깮 臾몄옄??| 媛믪씠 ?놁쑝硫?`null` |
+| 諛곗뿴 | 媛믪씠 ?놁쑝硫?`[]`, `null` 諛섑솚 湲덉? |
+| count ?レ옄 | `null` 遺덇?, 媛믪씠 ?놁쑝硫?`0` |
+| boolean | `null` 遺덇?, 湲곕낯 `false` |
+| ?좎쭨 | ISO-8601 臾몄옄??|
 
-날짜 예시:
+?좎쭨 ?덉떆:
 
 ```text
 2026-05-27T10:30:00
 ```
 
-### Count 처리 기준
+### Count 泥섎━ 湲곗?
 
-| 필드 | 기준 |
+| ?꾨뱶 | 湲곗? |
 | --- | --- |
-| `likeCount` | 좋아요 테이블 기준 count, 취소된 좋아요 제외 |
-| `commentCount` | 삭제되지 않은 댓글만 count |
-| `viewCount` | 게시글 상세 조회 성공 시 1 증가 |
+| `likeCount` | 醫뗭븘???뚯씠釉?湲곗? count, 痍⑥냼??醫뗭븘???쒖쇅 |
+| `commentCount` | ??젣?섏? ?딆? ?볤?留?count |
+| `viewCount` | 寃뚯떆湲 ?곸꽭 議고쉶 ?깃났 ??1 利앷? |
 
-프론트는 count를 직접 계산하지 않는다.  
-항상 백엔드 응답의 `likeCount`, `commentCount`, `viewCount`를 표시한다.
+?꾨줎?몃뒗 count瑜?吏곸젒 怨꾩궛?섏? ?딅뒗??  
+??긽 諛깆뿏???묐떟??`likeCount`, `commentCount`, `viewCount`瑜??쒖떆?쒕떎.
 
-### 정렬 기준
+### ?뺣젹 湲곗?
 
-| 목록 | 정렬 |
+| 紐⑸줉 | ?뺣젹 |
 | --- | --- |
-| 게시글 목록 | `createdAt DESC` |
-| 댓글 목록 | `createdAt ASC` |
+| 寃뚯떆湲 紐⑸줉 | `createdAt DESC` |
+| ?볤? 紐⑸줉 | `createdAt ASC` |
 
-MVP에서는 좋아요순/조회순 정렬을 제공하지 않는다.
+MVP?먯꽌??醫뗭븘?붿닚/議고쉶???뺣젹???쒓났?섏? ?딅뒗??
 
 ---
 
-## 3. 카테고리
+## 3. 移댄뀒怨좊━
 
-API 요청/응답에는 enum code만 사용한다.  
-한글 label은 프론트에서 매핑한다.
+API ?붿껌/?묐떟?먮뒗 enum code留??ъ슜?쒕떎.  
+?쒓? label? ?꾨줎?몄뿉??留ㅽ븨?쒕떎.
 
 ```ts
 export type BoardCategory =
@@ -109,42 +109,42 @@ export type BoardCategory =
 
 ```ts
 export const BOARD_CATEGORY_LABEL: Record<BoardCategory, string> = {
-  POLITICS: "정치",
-  ECONOMY: "경제",
-  IT_SCIENCE: "IT/과학",
-  SOCIETY: "사회",
-  WORLD: "세계",
-  SPORTS: "스포츠",
-  ENTERTAINMENT: "연예",
+  POLITICS: "?뺤튂",
+  ECONOMY: "寃쎌젣",
+  IT_SCIENCE: "IT/怨쇳븰",
+  SOCIETY: "?ы쉶",
+  WORLD: "?멸퀎",
+  SPORTS: "?ㅽ룷痢?,
+  ENTERTAINMENT: "?곗삁",
 };
 ```
 
 ---
 
-## 4. 프론트 페이지 구조
+## 4. ?꾨줎???섏씠吏 援ъ“
 
 ```text
 app/community/page.tsx
-- 전체 게시글 목록
+- ?꾩껜 寃뚯떆湲 紐⑸줉
 
 app/community/[category]/page.tsx
-- 카테고리별 게시글 목록
+- 移댄뀒怨좊━蹂?寃뚯떆湲 紐⑸줉
 
 app/community/posts/new/page.tsx
-- 게시글 작성
+- 寃뚯떆湲 ?묒꽦
 
 app/community/posts/[postId]/page.tsx
-- 게시글 상세
-- 댓글 목록
-- 좋아요 버튼
+- 寃뚯떆湲 ?곸꽭
+- ?볤? 紐⑸줉
+- 醫뗭븘??踰꾪듉
 
 app/community/posts/[postId]/edit/page.tsx
-- 게시글 수정
+- 寃뚯떆湲 ?섏젙
 ```
 
 ---
 
-## 5. TypeScript 타입 정의
+## 5. TypeScript ????뺤쓽
 
 ```ts
 export type BoardCategory =
@@ -244,23 +244,23 @@ export interface LikeResponse {
 
 ---
 
-## 6. API 연동 명세
+## 6. API ?곕룞 紐낆꽭
 
-## 6.1 카테고리 목록 조회
+## 6.1 移댄뀒怨좊━ 紐⑸줉 議고쉶
 
 ### `GET /api/community/categories`
 
-게시판 카테고리 목록을 조회한다.
+寃뚯떆??移댄뀒怨좊━ 紐⑸줉??議고쉶?쒕떎.
 
-> 인증 불필요
+> ?몄쬆 遺덊븘??
 
 ### Request Params
 
-없음
+?놁쓬
 
 ### Request Body
 
-없음
+?놁쓬
 
 ### Response `200`
 
@@ -268,19 +268,19 @@ export interface LikeResponse {
 {
   "success": true,
   "data": [
-    { "code": "POLITICS", "label": "정치" },
-    { "code": "ECONOMY", "label": "경제" },
-    { "code": "IT_SCIENCE", "label": "IT/과학" },
-    { "code": "SOCIETY", "label": "사회" },
-    { "code": "WORLD", "label": "세계" },
-    { "code": "SPORTS", "label": "스포츠" },
-    { "code": "ENTERTAINMENT", "label": "연예" }
+    { "code": "POLITICS", "label": "?뺤튂" },
+    { "code": "ECONOMY", "label": "寃쎌젣" },
+    { "code": "IT_SCIENCE", "label": "IT/怨쇳븰" },
+    { "code": "SOCIETY", "label": "?ы쉶" },
+    { "code": "WORLD", "label": "?멸퀎" },
+    { "code": "SPORTS", "label": "?ㅽ룷痢? },
+    { "code": "ENTERTAINMENT", "label": "?곗삁" }
   ],
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 CategoryTabs
@@ -290,24 +290,24 @@ CategoryTabs
 
 ---
 
-## 6.2 게시글 목록 조회
+## 6.2 寃뚯떆湲 紐⑸줉 議고쉶
 
 ### `GET /api/posts`
 
-게시글 목록을 조회한다. 카테고리 필터와 pagination을 지원한다.
+寃뚯떆湲 紐⑸줉??議고쉶?쒕떎. 移댄뀒怨좊━ ?꾪꽣? pagination??吏?먰븳??
 
-> Bearer Token 선택, 로그인 쿠키 선택
+> Bearer Token ?좏깮, 濡쒓렇??荑좏궎 ?좏깮
 
-로그인한 경우 `isMine` 계산 가능.  
-비로그인 사용자는 `isMine=false`.
+濡쒓렇?명븳 寃쎌슦 `isMine` 怨꾩궛 媛??  
+鍮꾨줈洹몄씤 ?ъ슜?먮뒗 `isMine=false`.
 
 ### Request Params
 
-| 이름 | 타입 | 필수 | 기본값 | 설명 |
+| ?대쫫 | ???| ?꾩닔 | 湲곕낯媛?| ?ㅻ챸 |
 | --- | --- | --- | --- | --- |
-| `category` | BoardCategory | X | 없음 | 카테고리 필터 |
-| `page` | number | X | `0` | 0부터 시작 |
-| `size` | number | X | `10` | 페이지 크기 |
+| `category` | BoardCategory | X | ?놁쓬 | 移댄뀒怨좊━ ?꾪꽣 |
+| `page` | number | X | `0` | 0遺???쒖옉 |
+| `size` | number | X | `10` | ?섏씠吏 ?ш린 |
 
 ### Response `200`
 
@@ -319,8 +319,8 @@ CategoryTabs
       {
         "id": "post-uuid",
         "category": "IT_SCIENCE",
-        "title": "AI 반도체 뉴스가 급증하고 있습니다",
-        "writerName": "홍길동",
+        "title": "AI 諛섎룄泥??댁뒪媛 湲됱쬆?섍퀬 ?덉뒿?덈떎",
+        "writerName": "?띻만??,
         "likeCount": 12,
         "commentCount": 3,
         "viewCount": 45,
@@ -333,21 +333,21 @@ CategoryTabs
     "totalElements": 1,
     "totalPages": 1
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 처리 기준
+### 泥섎━ 湲곗?
 
 ```text
-category 없으면 전체 게시글 조회
-category 있으면 해당 카테고리만 조회
-삭제된 게시글은 제외
-정렬은 createdAt DESC
-content가 없으면 [] 반환
+category ?놁쑝硫??꾩껜 寃뚯떆湲 議고쉶
+category ?덉쑝硫??대떦 移댄뀒怨좊━留?議고쉶
+??젣??寃뚯떆湲? ?쒖쇅
+?뺣젹? createdAt DESC
+content媛 ?놁쑝硫?[] 諛섑솚
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community
@@ -358,22 +358,22 @@ PostCard
 
 ---
 
-## 6.3 게시글 상세 조회
+## 6.3 寃뚯떆湲 ?곸꽭 議고쉶
 
 ### `GET /api/posts/{postId}`
 
-게시글 상세 정보를 조회한다.
+寃뚯떆湲 ?곸꽭 ?뺣낫瑜?議고쉶?쒕떎.
 
-> Bearer Token 선택, 로그인 쿠키 선택
+> Bearer Token ?좏깮, 濡쒓렇??荑좏궎 ?좏깮
 
-로그인한 경우 `likedByMe`, `isMine` 계산 가능.  
-비로그인 사용자는 `likedByMe=false`, `isMine=false`.
+濡쒓렇?명븳 寃쎌슦 `likedByMe`, `isMine` 怨꾩궛 媛??  
+鍮꾨줈洹몄씤 ?ъ슜?먮뒗 `likedByMe=false`, `isMine=false`.
 
 ### Path Variables
 
-| 이름 | 타입 | 설명 |
+| ?대쫫 | ???| ?ㅻ챸 |
 | --- | --- | --- |
-| `postId` | string(UUID) | 게시글 ID |
+| `postId` | string(UUID) | 寃뚯떆湲 ID |
 
 ### Response `200`
 
@@ -383,11 +383,11 @@ PostCard
   "data": {
     "id": "post-uuid",
     "category": "IT_SCIENCE",
-    "title": "AI 반도체 뉴스가 급증하고 있습니다",
-    "content": "본문입니다.",
+    "title": "AI 諛섎룄泥??댁뒪媛 湲됱쬆?섍퀬 ?덉뒿?덈떎",
+    "content": "蹂몃Ц?낅땲??",
     "writer": {
       "id": "user-uuid",
-      "name": "홍길동"
+      "name": "?띻만??
     },
     "likeCount": 12,
     "commentCount": 3,
@@ -397,20 +397,20 @@ PostCard
     "createdAt": "2026-05-27T10:30:00",
     "updatedAt": "2026-05-27T10:30:00"
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 처리 기준
+### 泥섎━ 湲곗?
 
 ```text
-조회 성공 시 viewCount 1 증가
-삭제된 게시글은 404
-댓글은 상세 응답에 포함하지 않음
-댓글은 GET /api/posts/{postId}/comments 로 별도 조회
+議고쉶 ?깃났 ??viewCount 1 利앷?
+??젣??寃뚯떆湲? 404
+?볤?? ?곸꽭 ?묐떟???ы븿?섏? ?딆쓬
+?볤?? GET /api/posts/{postId}/comments 濡?蹂꾨룄 議고쉶
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/[postId]
@@ -420,13 +420,13 @@ CommentList
 
 ---
 
-## 6.4 게시글 작성
+## 6.4 寃뚯떆湲 ?묒꽦
 
 ### `POST /api/posts`
 
-게시글을 작성한다.
+寃뚯떆湲???묒꽦?쒕떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
 ### Request Header
 
@@ -441,18 +441,18 @@ Content-Type: application/json
 ```json
 {
   "category": "IT_SCIENCE",
-  "title": "AI 반도체 뉴스가 급증하고 있습니다",
-  "content": "본문입니다."
+  "title": "AI 諛섎룄泥??댁뒪媛 湲됱쬆?섍퀬 ?덉뒿?덈떎",
+  "content": "蹂몃Ц?낅땲??"
 }
 ```
 
 ### Validation
 
-| 필드 | 기준 |
+| ?꾨뱶 | 湲곗? |
 | --- | --- |
-| `category` | 필수 |
-| `title` | 필수, 1~150자 |
-| `content` | 필수 |
+| `category` | ?꾩닔 |
+| `title` | ?꾩닔, 1~150??|
+| `content` | ?꾩닔 |
 
 ### Response `200`
 
@@ -462,11 +462,11 @@ Content-Type: application/json
   "data": {
     "id": "post-uuid"
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/new
@@ -475,36 +475,36 @@ PostEditor
 
 ---
 
-## 6.5 게시글 수정
+## 6.5 寃뚯떆湲 ?섏젙
 
 ### `PATCH /api/posts/{postId}`
 
-게시글을 수정한다.
+寃뚯떆湲???섏젙?쒕떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요, 작성자만 가능
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂, ?묒꽦?먮쭔 媛??
 
 ### Path Variables
 
-| 이름 | 타입 | 설명 |
+| ?대쫫 | ???| ?ㅻ챸 |
 | --- | --- | --- |
-| `postId` | string(UUID) | 게시글 ID |
+| `postId` | string(UUID) | 寃뚯떆湲 ID |
 
 ### Request Body
 
 ```json
 {
   "category": "IT_SCIENCE",
-  "title": "수정된 제목",
-  "content": "수정된 본문입니다."
+  "title": "?섏젙???쒕ぉ",
+  "content": "?섏젙??蹂몃Ц?낅땲??"
 }
 ```
 
-### 처리 기준
+### 泥섎━ 湲곗?
 
 ```text
-부분 수정 아님
-category, title, content 모두 보낸다
-작성자가 아니면 403
+遺遺??섏젙 ?꾨떂
+category, title, content 紐⑤몢 蹂대궦??
+?묒꽦?먭? ?꾨땲硫?403
 ```
 
 ### Response `200`
@@ -515,11 +515,11 @@ category, title, content 모두 보낸다
   "data": {
     "id": "post-uuid",
     "category": "IT_SCIENCE",
-    "title": "수정된 제목",
-    "content": "수정된 본문입니다.",
+    "title": "?섏젙???쒕ぉ",
+    "content": "?섏젙??蹂몃Ц?낅땲??",
     "writer": {
       "id": "user-uuid",
-      "name": "홍길동"
+      "name": "?띻만??
     },
     "likeCount": 12,
     "commentCount": 3,
@@ -529,11 +529,11 @@ category, title, content 모두 보낸다
     "createdAt": "2026-05-27T10:30:00",
     "updatedAt": "2026-05-27T11:00:00"
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/[postId]/edit
@@ -542,19 +542,19 @@ PostEditor
 
 ---
 
-## 6.6 게시글 삭제
+## 6.6 寃뚯떆湲 ??젣
 
 ### `DELETE /api/posts/{postId}`
 
-게시글을 삭제한다.
+寃뚯떆湲????젣?쒕떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요, 작성자만 가능
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂, ?묒꽦?먮쭔 媛??
 
 ### Path Variables
 
-| 이름 | 타입 | 설명 |
+| ?대쫫 | ???| ?ㅻ챸 |
 | --- | --- | --- |
-| `postId` | string(UUID) | 게시글 ID |
+| `postId` | string(UUID) | 寃뚯떆湲 ID |
 
 ### Response `200`
 
@@ -562,19 +562,19 @@ PostEditor
 {
   "success": true,
   "data": null,
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 처리 기준
+### 泥섎━ 湲곗?
 
 ```text
 soft delete
-삭제 후 목록에서 제외
-삭제 성공 후 프론트는 목록 페이지로 이동
+??젣 ??紐⑸줉?먯꽌 ?쒖쇅
+??젣 ?깃났 ???꾨줎?몃뒗 紐⑸줉 ?섏씠吏濡??대룞
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/[postId]
@@ -582,19 +582,19 @@ soft delete
 
 ---
 
-## 6.7 댓글 목록 조회
+## 6.7 ?볤? 紐⑸줉 議고쉶
 
 ### `GET /api/posts/{postId}/comments`
 
-게시글의 댓글 목록을 조회한다.
+寃뚯떆湲???볤? 紐⑸줉??議고쉶?쒕떎.
 
-> Bearer Token 선택, 로그인 쿠키 선택
+> Bearer Token ?좏깮, 濡쒓렇??荑좏궎 ?좏깮
 
 ### Path Variables
 
-| 이름 | 타입 | 설명 |
+| ?대쫫 | ???| ?ㅻ챸 |
 | --- | --- | --- |
-| `postId` | string(UUID) | 게시글 ID |
+| `postId` | string(UUID) | 寃뚯떆湲 ID |
 
 ### Response `200`
 
@@ -604,25 +604,25 @@ soft delete
   "data": [
     {
       "id": "comment-uuid",
-      "content": "저도 같은 흐름을 봤습니다.",
-      "writerName": "김민재",
+      "content": "???媛숈? ?먮쫫??遊ㅼ뒿?덈떎.",
+      "writerName": "源誘쇱옱",
       "isMine": false,
       "createdAt": "2026-05-27T10:40:00"
     }
   ],
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 처리 기준
+### 泥섎━ 湲곗?
 
 ```text
-댓글이 없으면 []
-정렬은 createdAt ASC
-삭제된 댓글은 제외
+?볤????놁쑝硫?[]
+?뺣젹? createdAt ASC
+??젣???볤?? ?쒖쇅
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/[postId]
@@ -631,33 +631,33 @@ CommentList
 
 ---
 
-## 6.8 댓글 작성
+## 6.8 ?볤? ?묒꽦
 
 ### `POST /api/posts/{postId}/comments`
 
-댓글을 작성한다.
+?볤????묒꽦?쒕떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
 ### Path Variables
 
-| 이름 | 타입 | 설명 |
+| ?대쫫 | ???| ?ㅻ챸 |
 | --- | --- | --- |
-| `postId` | string(UUID) | 게시글 ID |
+| `postId` | string(UUID) | 寃뚯떆湲 ID |
 
 ### Request Body
 
 ```json
 {
-  "content": "저도 같은 흐름을 봤습니다."
+  "content": "???媛숈? ?먮쫫??遊ㅼ뒿?덈떎."
 }
 ```
 
 ### Validation
 
-| 필드 | 기준 |
+| ?꾨뱶 | 湲곗? |
 | --- | --- |
-| `content` | 필수, 1~1000자 |
+| `content` | ?꾩닔, 1~1000??|
 
 ### Response `200`
 
@@ -666,16 +666,16 @@ CommentList
   "success": true,
   "data": {
     "id": "comment-uuid",
-    "content": "저도 같은 흐름을 봤습니다.",
-    "writerName": "김민재",
+    "content": "???媛숈? ?먮쫫??遊ㅼ뒿?덈떎.",
+    "writerName": "源誘쇱옱",
     "isMine": true,
     "createdAt": "2026-05-27T10:40:00"
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/[postId]
@@ -684,33 +684,33 @@ CommentForm
 
 ---
 
-## 6.9 댓글 수정
+## 6.9 ?볤? ?섏젙
 
 ### `PATCH /api/comments/{commentId}`
 
-댓글 내용을 수정한다.
+?볤? ?댁슜???섏젙?쒕떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요, 작성자만 가능
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂, ?묒꽦?먮쭔 媛??
 
 ### Path Variables
 
-| 이름 | 타입 | 설명 |
+| ?대쫫 | ???| ?ㅻ챸 |
 | --- | --- | --- |
-| `commentId` | string(UUID) | 댓글 ID |
+| `commentId` | string(UUID) | ?볤? ID |
 
 ### Request Body
 
 ```json
 {
-  "content": "수정된 댓글입니다."
+  "content": "?섏젙???볤??낅땲??"
 }
 ```
 
 ### Validation
 
-| 필드 | 기준 |
+| ?꾨뱶 | 湲곗? |
 | --- | --- |
-| `content` | 필수, 1~1000자 |
+| `content` | ?꾩닔, 1~1000??|
 
 ### Response `200`
 
@@ -719,24 +719,24 @@ CommentForm
   "success": true,
   "data": {
     "id": "comment-uuid",
-    "content": "수정된 댓글입니다.",
-    "writerName": "김민재",
+    "content": "?섏젙???볤??낅땲??",
+    "writerName": "源誘쇱옱",
     "isMine": true,
     "createdAt": "2026-05-27T10:40:00"
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 처리 기준
+### 泥섎━ 湲곗?
 
 ```text
-작성자만 수정 가능
-작성자가 아니면 403 FORBIDDEN
-삭제된 댓글은 404 COMMENT_NOT_FOUND
+?묒꽦?먮쭔 ?섏젙 媛??
+?묒꽦?먭? ?꾨땲硫?403 FORBIDDEN
+??젣???볤?? 404 COMMENT_NOT_FOUND
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/[postId]
@@ -745,23 +745,23 @@ CommentList
 
 ---
 
-## 6.10 댓글 삭제
+## 6.10 ?볤? ??젣
 
 ### `DELETE /api/comments/{commentId}`
 
-댓글을 삭제한다.
+?볤?????젣?쒕떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요, 작성자만 가능
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂, ?묒꽦?먮쭔 媛??
 
 ### Path Variables
 
-| 이름 | 타입 | 설명 |
+| ?대쫫 | ???| ?ㅻ챸 |
 | --- | --- | --- |
-| `commentId` | string(UUID) | 댓글 ID |
+| `commentId` | string(UUID) | ?볤? ID |
 
 ### Request Body
 
-없음
+?놁쓬
 
 ### Response `200`
 
@@ -769,20 +769,20 @@ CommentList
 {
   "success": true,
   "data": null,
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 처리 기준
+### 泥섎━ 湲곗?
 
 ```text
 soft delete
-작성자만 삭제 가능
-삭제 후 댓글 목록에서 제외
-삭제 성공 후 comments query와 post detail query를 invalidate
+?묒꽦?먮쭔 ??젣 媛??
+??젣 ???볤? 紐⑸줉?먯꽌 ?쒖쇅
+??젣 ?깃났 ??comments query? post detail query瑜?invalidate
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/[postId]
@@ -791,19 +791,19 @@ CommentList
 
 ---
 
-## 6.11 좋아요
+## 6.11 醫뗭븘??
 
 ### `POST /api/posts/{postId}/likes`
 
-게시글에 좋아요를 누른다.
+寃뚯떆湲??醫뗭븘?붾? ?꾨Ⅸ??
 
-> Bearer Token 필요, 로그인 쿠키 필요
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
 ### Path Variables
 
-| 이름 | 타입 | 설명 |
+| ?대쫫 | ???| ?ㅻ챸 |
 | --- | --- | --- |
-| `postId` | string(UUID) | 게시글 ID |
+| `postId` | string(UUID) | 寃뚯떆湲 ID |
 
 ### Response `200`
 
@@ -815,18 +815,18 @@ CommentList
     "liked": true,
     "likeCount": 13
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 처리 기준
+### 泥섎━ 湲곗?
 
 ```text
-이미 좋아요 상태면 409 LIKE_ALREADY_EXISTS
-프론트는 응답의 likeCount를 최종 표시값으로 사용
+?대? 醫뗭븘???곹깭硫?409 LIKE_ALREADY_EXISTS
+?꾨줎?몃뒗 ?묐떟??likeCount瑜?理쒖쥌 ?쒖떆媛믪쑝濡??ъ슜
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/[postId]
@@ -835,19 +835,19 @@ LikeButton
 
 ---
 
-## 6.12 좋아요 취소
+## 6.12 醫뗭븘??痍⑥냼
 
 ### `DELETE /api/posts/{postId}/likes`
 
-게시글 좋아요를 취소한다.
+寃뚯떆湲 醫뗭븘?붾? 痍⑥냼?쒕떎.
 
-> Bearer Token 필요, 로그인 쿠키 필요
+> Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
 ### Path Variables
 
-| 이름 | 타입 | 설명 |
+| ?대쫫 | ???| ?ㅻ챸 |
 | --- | --- | --- |
-| `postId` | string(UUID) | 게시글 ID |
+| `postId` | string(UUID) | 寃뚯떆湲 ID |
 
 ### Response `200`
 
@@ -859,18 +859,18 @@ LikeButton
     "liked": false,
     "likeCount": 12
   },
-  "message": "요청 성공"
+  "message": "?붿껌 ?깃났"
 }
 ```
 
-### 처리 기준
+### 泥섎━ 湲곗?
 
 ```text
-좋아요가 없으면 404 LIKE_NOT_FOUND
-프론트는 응답의 likeCount를 최종 표시값으로 사용
+醫뗭븘?붽? ?놁쑝硫?404 LIKE_NOT_FOUND
+?꾨줎?몃뒗 ?묐떟??likeCount瑜?理쒖쥌 ?쒖떆媛믪쑝濡??ъ슜
 ```
 
-### 사용 화면
+### ?ъ슜 ?붾㈃
 
 ```text
 /community/posts/[postId]
@@ -879,7 +879,7 @@ LikeButton
 
 ---
 
-## 7. Axios API 함수 설계
+## 7. Axios API ?⑥닔 ?ㅺ퀎
 
 ```ts
 import { api } from "@/shared/api/axios";
@@ -997,69 +997,69 @@ export const unlikePost = async (postId: string) => {
 
 ---
 
-## 8. 화면별 데이터 흐름
+## 8. ?붾㈃蹂??곗씠???먮쫫
 
-### 카테고리 탭 클릭
+### 移댄뀒怨좊━ ???대┃
 
 ```text
-CategoryTabs 클릭
-→ selectedCategory 변경
-→ /community/[category] 이동
-→ getPostsByCategory(category, page, size)
-→ PostList 렌더링
+CategoryTabs ?대┃
+??selectedCategory 蹂寃?
+??/community/[category] ?대룞
+??getPostsByCategory(category, page, size)
+??PostList ?뚮뜑留?
 ```
 
-### 게시글 목록 조회
+### 寃뚯떆湲 紐⑸줉 議고쉶
 
 ```text
-/community 또는 /community/[category] 진입
-→ React Query useQuery 실행
-→ GET /api/posts
-→ PostCard 목록 표시
+/community ?먮뒗 /community/[category] 吏꾩엯
+??React Query useQuery ?ㅽ뻾
+??GET /api/posts
+??PostCard 紐⑸줉 ?쒖떆
 ```
 
-### 게시글 상세 진입
+### 寃뚯떆湲 ?곸꽭 吏꾩엯
 
 ```text
-PostCard 클릭
-→ /community/posts/[postId] 이동
-→ getPostDetail(postId)
-→ getComments(postId)
-→ PostDetail, CommentList, LikeButton 렌더링
+PostCard ?대┃
+??/community/posts/[postId] ?대룞
+??getPostDetail(postId)
+??getComments(postId)
+??PostDetail, CommentList, LikeButton ?뚮뜑留?
 ```
 
-### 게시글 작성 후 이동
+### 寃뚯떆湲 ?묒꽦 ???대룞
 
 ```text
-PostEditor 제출
-→ createPost()
-→ 성공 시 /community/posts/{postId} 이동
-→ posts query invalidate
+PostEditor ?쒖텧
+??createPost()
+???깃났 ??/community/posts/{postId} ?대룞
+??posts query invalidate
 ```
 
-### 댓글 작성 후 갱신
+### ?볤? ?묒꽦 ??媛깆떊
 
 ```text
-CommentForm 제출
-→ createComment(postId)
-→ 성공 시 comments query invalidate
-→ post detail query invalidate
-→ commentCount 갱신
+CommentForm ?쒖텧
+??createComment(postId)
+???깃났 ??comments query invalidate
+??post detail query invalidate
+??commentCount 媛깆떊
 ```
 
-### 좋아요 클릭 후 UI 갱신
+### 醫뗭븘???대┃ ??UI 媛깆떊
 
 ```text
-LikeButton 클릭
-→ likedByMe true면 unlikePost()
-→ likedByMe false면 likePost()
-→ optimistic update로 likedByMe, likeCount 즉시 변경
-→ 실패 시 rollback
+LikeButton ?대┃
+??likedByMe true硫?unlikePost()
+??likedByMe false硫?likePost()
+??optimistic update濡?likedByMe, likeCount 利됱떆 蹂寃?
+???ㅽ뙣 ??rollback
 ```
 
 ---
 
-## 9. React Query 기준
+## 9. React Query 湲곗?
 
 ### Query Key
 
@@ -1073,30 +1073,30 @@ export const communityKeys = {
 };
 ```
 
-### Invalidate 기준
+### Invalidate 湲곗?
 
-| 동작 | invalidate |
+| ?숈옉 | invalidate |
 | --- | --- |
-| 게시글 작성 성공 | posts |
-| 게시글 수정 성공 | post detail, posts |
-| 게시글 삭제 성공 | posts |
-| 댓글 작성 성공 | comments, post detail, posts |
-| 댓글 수정 성공 | comments |
-| 댓글 삭제 성공 | comments, post detail, posts |
-| 좋아요 성공/취소 성공 | post detail, posts |
+| 寃뚯떆湲 ?묒꽦 ?깃났 | posts |
+| 寃뚯떆湲 ?섏젙 ?깃났 | post detail, posts |
+| 寃뚯떆湲 ??젣 ?깃났 | posts |
+| ?볤? ?묒꽦 ?깃났 | comments, post detail, posts |
+| ?볤? ?섏젙 ?깃났 | comments |
+| ?볤? ??젣 ?깃났 | comments, post detail, posts |
+| 醫뗭븘???깃났/痍⑥냼 ?깃났 | post detail, posts |
 
 ---
 
-## 10. Optimistic Update 기준
+## 10. Optimistic Update 湲곗?
 
-Optimistic update 허용:
+Optimistic update ?덉슜:
 
 ```text
 likedByMe
 likeCount
 ```
 
-Optimistic update 금지:
+Optimistic update 湲덉?:
 
 ```text
 commentCount
@@ -1105,20 +1105,20 @@ totalElements
 totalPages
 ```
 
-좋아요 실패 시 처리:
+醫뗭븘???ㅽ뙣 ??泥섎━:
 
 ```text
-이전 likedByMe, likeCount로 rollback
+?댁쟾 likedByMe, likeCount濡?rollback
 post detail query invalidate
 posts list query invalidate
-토스트 메시지 표시
+?좎뒪??硫붿떆吏 ?쒖떆
 ```
 
 ---
 
-## 11. 인증 처리 기준
+## 11. ?몄쬆 泥섎━ 湲곗?
 
-### 인증 필요 API
+### ?몄쬆 ?꾩슂 API
 
 ```text
 POST /api/posts
@@ -1131,7 +1131,7 @@ POST /api/posts/{postId}/likes
 DELETE /api/posts/{postId}/likes
 ```
 
-### 인증 선택 API
+### ?몄쬆 ?좏깮 API
 
 ```text
 GET /api/posts
@@ -1139,77 +1139,78 @@ GET /api/posts/{postId}
 GET /api/posts/{postId}/comments
 ```
 
-### 비로그인 처리
+### 鍮꾨줈洹몄씤 泥섎━
 
 ```text
-비로그인 사용자가 작성/댓글/좋아요 클릭
-→ 로그인 페이지 이동 또는 로그인 모달 표시
+鍮꾨줈洹몄씤 ?ъ슜?먭? ?묒꽦/?볤?/醫뗭븘???대┃
+??濡쒓렇???섏씠吏 ?대룞 ?먮뒗 濡쒓렇??紐⑤떖 ?쒖떆
 ```
 
-### 수정/삭제 버튼 노출
+### ?섏젙/??젣 踰꾪듉 ?몄텧
 
 ```ts
 if (post.isMine) {
-  // 수정/삭제 버튼 표시
+  // ?섏젙/??젣 踰꾪듉 ?쒖떆
 }
 ```
 
 ---
 
-## 12. 에러 처리 기준
+## 12. ?먮윭 泥섎━ 湲곗?
 
-| Status | errorCode | 프론트 처리 |
+| Status | errorCode | ?꾨줎??泥섎━ |
 | --- | --- | --- |
-| `400` | `INVALID_REQUEST` | 입력값 검증 메시지 표시 |
-| `400` | `INVALID_CATEGORY` | 카테고리 선택 오류 표시 |
-| `401` | `INVALID_JWT_TOKEN` | 로그인 페이지 이동 |
-| `403` | `FORBIDDEN` | 권한 없음 토스트 |
-| `404` | `POST_NOT_FOUND` | 게시글 없음 화면 |
-| `404` | `COMMENT_NOT_FOUND` | 댓글 없음 토스트 |
-| `409` | `LIKE_ALREADY_EXISTS` | likedByMe=true로 동기화 후 재조회 |
-| `404` | `LIKE_NOT_FOUND` | likedByMe=false로 동기화 후 재조회 |
+| `400` | `INVALID_REQUEST` | ?낅젰媛?寃利?硫붿떆吏 ?쒖떆 |
+| `400` | `INVALID_CATEGORY` | 移댄뀒怨좊━ ?좏깮 ?ㅻ쪟 ?쒖떆 |
+| `401` | `INVALID_JWT_TOKEN` | 濡쒓렇???섏씠吏 ?대룞 |
+| `403` | `FORBIDDEN` | 沅뚰븳 ?놁쓬 ?좎뒪??|
+| `404` | `POST_NOT_FOUND` | 寃뚯떆湲 ?놁쓬 ?붾㈃ |
+| `404` | `COMMENT_NOT_FOUND` | ?볤? ?놁쓬 ?좎뒪??|
+| `409` | `LIKE_ALREADY_EXISTS` | likedByMe=true濡??숆린?????ъ“??|
+| `404` | `LIKE_NOT_FOUND` | likedByMe=false濡??숆린?????ъ“??|
 
 ---
 
-## 13. UI 컴포넌트 구조
+## 13. UI 而댄룷?뚰듃 援ъ“
 
 ```text
 features/community/
-├── api/
-│   └── communityApi.ts
-├── components/
-│   ├── CategoryTabs.tsx
-│   ├── PostList.tsx
-│   ├── PostCard.tsx
-│   ├── PostEditor.tsx
-│   ├── CommentList.tsx
-│   ├── CommentForm.tsx
-│   └── LikeButton.tsx
-├── hooks/
-│   ├── usePosts.ts
-│   ├── usePostDetail.ts
-│   ├── useComments.ts
-│   └── usePostLike.ts
-├── types/
-│   └── community.ts
-└── utils/
-    ├── categoryLabel.ts
-    └── formatCommunityDate.ts
+?쒋?? api/
+??  ?붴?? communityApi.ts
+?쒋?? components/
+??  ?쒋?? CategoryTabs.tsx
+??  ?쒋?? PostList.tsx
+??  ?쒋?? PostCard.tsx
+??  ?쒋?? PostEditor.tsx
+??  ?쒋?? CommentList.tsx
+??  ?쒋?? CommentForm.tsx
+??  ?붴?? LikeButton.tsx
+?쒋?? hooks/
+??  ?쒋?? usePosts.ts
+??  ?쒋?? usePostDetail.ts
+??  ?쒋?? useComments.ts
+??  ?붴?? usePostLike.ts
+?쒋?? types/
+??  ?붴?? community.ts
+?붴?? utils/
+    ?쒋?? categoryLabel.ts
+    ?붴?? formatCommunityDate.ts
 ```
 
 ---
 
-## 14. 구현 우선순위
+## 14. 援ы쁽 ?곗꽑?쒖쐞
 
 ```text
-1. community.ts 타입 정의
-2. communityApi.ts Axios 함수 작성
-3. React Query key/hook 작성
-4. CategoryTabs 구현
-5. PostList / PostCard 구현
-6. 게시글 상세 화면 구현
-7. PostEditor 작성/수정 공용 구현
-8. CommentList / CommentForm 구현
-9. LikeButton optimistic update 구현
-10. 수정/삭제 버튼 isMine 기준 적용
+1. community.ts ????뺤쓽
+2. communityApi.ts Axios ?⑥닔 ?묒꽦
+3. React Query key/hook ?묒꽦
+4. CategoryTabs 援ы쁽
+5. PostList / PostCard 援ы쁽
+6. 寃뚯떆湲 ?곸꽭 ?붾㈃ 援ы쁽
+7. PostEditor ?묒꽦/?섏젙 怨듭슜 援ы쁽
+8. CommentList / CommentForm 援ы쁽
+9. LikeButton optimistic update 援ы쁽
+10. ?섏젙/??젣 踰꾪듉 isMine 湲곗? ?곸슜
 ```
+
