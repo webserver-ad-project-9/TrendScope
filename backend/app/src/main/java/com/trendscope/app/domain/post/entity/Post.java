@@ -56,4 +56,50 @@ public class Post extends BaseEntity {
     public UUID getId() {
         return id;
     }
+
+    public User getUser() {
+        return user;
+    }
+
+    public BoardCategory getCategory() {
+        return category;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public long getViewCount() {
+        return viewCount;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
+    public boolean isWrittenBy(UUID userId) {
+        return userId != null && user.getId().equals(userId);
+    }
+
+    public void update(BoardCategory category, String title, String content) {
+        this.category = category;
+        this.title = title;
+        this.content = content;
+    }
+
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }
