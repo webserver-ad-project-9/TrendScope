@@ -5,7 +5,7 @@
 ## 분리 기준
 - 공통 단위: `src/components/ui`에 둔다. 특정 도메인 문구나 데이터 구조를 알지 않아야 한다.
 - 기능 전용 단위: `src/components/trend-scope`에 둔다. TrendScope 화면 섹션, 헤더, 시각화 컴포넌트가 여기에 속한다.
-- Service/Application 단위: `src/services`에 둔다. 초기 화면 뷰 모델과 백엔드 Auth/User/Keyword API use-case를 제공한다.
+- Service/Application 단위: `src/services`에 둔다. 초기 화면 뷰 모델과 백엔드 Auth/User/Keyword API use-case, 최초 온보딩 키워드 임시 저장과 bulk 생성 use-case를 제공한다.
 - Repository/Adapter 단위: `apiClient.ts`가 현재 백엔드 REST API adapter 역할을 담당한다.
 - UI 또는 Presentation 단위: 컴포넌트는 props 기반 렌더링과 이벤트 콜백 호출만 담당한다.
 
@@ -16,6 +16,7 @@
 | `TrendScopeHeader` | `src/components/trend-scope/TrendScopeHeader.tsx` | 브랜드, 주요 탭, 로그인/시작 버튼 표시 |
 | `OAuthCallbackClient` | `src/components/auth/OAuthCallbackClient.tsx` | OAuth callback query token을 저장하고 홈으로 이동 |
 | `HomeSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 첫 화면, 오늘의 감자, 핵심 지표 표시 |
+| `OnboardingSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 최초 로그인 전 관심 키워드 토글, 직접 입력, Google OAuth 시작 CTA 표시 |
 | `BriefingSection` | `src/components/trend-scope/TrendScopeSections.tsx` | AI 브리핑, 키워드, 뉴스, 차트 표시 |
 | `SearchSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 별도 키워드 검색 화면과 검색 결과 브리핑 표시 |
 | `MyPageSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 로그인 사용자와 온보딩 키워드 조회/등록 UI |
@@ -27,7 +28,7 @@
 | `Button` | `src/components/ui/Button.tsx` | 공통 버튼 스타일과 variant 제공 |
 | `apiClient` | `src/services/apiClient.ts` | 백엔드 Base URL, 인증 header/cookie, 공통 응답/오류 처리 |
 | `authService` | `src/services/authService.ts` | Google OAuth 시작, token 저장, 현재 사용자 조회, 로그아웃 |
-| `keywordService` | `src/services/keywordService.ts` | 온보딩 키워드 조회/생성 및 DTO to view model 변환 |
+| `keywordService` | `src/services/keywordService.ts` | 온보딩 키워드 조회/생성/bulk 생성, 최초 로그인 선택값 임시 저장, DTO to view model 변환 |
 
 ## 계약 규칙
 - Props는 `readonly` 기반 명시 타입으로 정의한다.
@@ -37,7 +38,7 @@
 - OAuth callback client는 query 읽기와 auth service 호출만 담당하고 token 저장 구현은 service/client 경계에 둔다.
 
 ## 상태 소유 경계
-- `useTrendScopeWorkspace`: active section, auth state, keyword server state projection, active post, keyword draft, search draft, client-only search briefing result, community board filter, board posts, post draft를 소유한다.
+- `useTrendScopeWorkspace`: active section, auth state, 최초 온보딩 키워드 선택 state, keyword server state projection, active post, keyword draft, search draft, client-only search briefing result, community board filter, board posts, post draft를 소유한다.
 - `TrendScopeApp`: hook 결과를 섹션 컴포넌트에 전달한다.
 - 섹션 컴포넌트: 폼 submit과 버튼 클릭을 콜백으로 전달한다.
 

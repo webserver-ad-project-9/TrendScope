@@ -9,8 +9,12 @@ import {
   startGoogleOAuthLogin,
 } from "@/src/services/authService";
 import {
+  clearPendingOnboardingKeywordNames,
   createOnboardingKeyword,
+  createOnboardingKeywordsBulk,
   fetchOnboardingKeywords,
+  readPendingOnboardingKeywordNames,
+  storePendingOnboardingKeywordNames,
 } from "@/src/services/keywordService";
 import { createKeywordSearchBriefing } from "@/src/services/trendDashboardService";
 import type { AuthStatus, CurrentUserViewModel, KeywordSyncStatus } from "@/src/types/auth";
@@ -38,20 +42,28 @@ interface TrendScopeWorkspaceState {
   readonly canSubmitPostDraft: boolean;
   readonly keywords: readonly KeywordViewModel[];
   readonly keywordDraft: string;
+  readonly onboardingKeywordDraft: string;
   readonly keywordSyncMessage: string | null;
   readonly keywordSyncStatus: KeywordSyncStatus;
   readonly searchDraft: string;
   readonly searchBriefing: KeywordSearchBriefingViewModel | null;
+  readonly selectedOnboardingKeywordNames: readonly string[];
+  readonly canSubmitOnboardingKeywords: boolean;
   readonly goToSection: (section: TrendScopeSection) => void;
   readonly login: () => void;
   readonly logout: () => Promise<void>;
   readonly setKeywordDraft: (value: string) => void;
+  readonly setOnboardingKeywordDraft: (value: string) => void;
   readonly setSearchDraft: (value: string) => void;
   readonly addKeyword: () => Promise<void>;
+  readonly addCustomOnboardingKeyword: () => void;
   readonly requestKeywordSearch: () => void;
+  readonly startLoginWithOnboardingKeywords: () => void;
+  readonly startLoginWithoutOnboardingKeywords: () => void;
   readonly setCommunityBoardSection: (sectionId: CommunityBoardFilterId) => void;
   readonly setPostDraftField: (field: keyof CommunityPostDraftViewModel, value: string) => void;
   readonly submitPostDraft: () => void;
+  readonly toggleOnboardingKeyword: (keywordName: string) => void;
   readonly openPost: (postId: string) => void;
 }
 
@@ -80,6 +92,10 @@ export function useTrendScopeWorkspace(
     body: "",
   });
   const [keywordDraft, setKeywordDraft] = useState("");
+  const [onboardingKeywordDraft, setOnboardingKeywordDraft] = useState("");
+  const [selectedOnboardingKeywordNames, setSelectedOnboardingKeywordNames] = useState<
+    readonly string[]
+  >([]);
   const [searchDraft, setSearchDraft] = useState("");
   const [searchBriefing, setSearchBriefing] = useState<KeywordSearchBriefingViewModel | null>(null);
 
@@ -129,6 +145,29 @@ export function useTrendScopeWorkspace(
           return;
         }
 
+        const pendingKeywordNames = readPendingOnboardingKeywordNames();
+
+        if (pendingKeywordNames.length > 0 && remoteKeywords.length === 0) {
+          setKeywordSyncStatus("saving");
+
+          const createdKeywords = await createOnboardingKeywordsBulk(pendingKeywordNames);
+
+          if (!shouldUpdateState) {
+            return;
+          }
+
+          clearPendingOnboardingKeywordNames();
+          setKeywords(createdKeywords);
+          setKeywordSyncStatus("ready");
+          setKeywordSyncMessage(
+            createdKeywords.length > 0
+              ? "첫 로그인 온보딩 키워드를 백엔드에 저장했습니다."
+              : "저장할 새 온보딩 키워드가 없습니다.",
+          );
+          return;
+        }
+
+        clearPendingOnboardingKeywordNames();
         setKeywords(remoteKeywords);
         setKeywordSyncStatus("ready");
         setKeywordSyncMessage(null);
@@ -167,6 +206,7 @@ export function useTrendScopeWorkspace(
 
   const canSubmitPostDraft =
     postDraft.title.trim().length > 0 && postDraft.body.trim().length > 0;
+  const canSubmitOnboardingKeywords = selectedOnboardingKeywordNames.length > 0;
 
   function goToSection(section: TrendScopeSection) {
     setActiveSection(section);
@@ -181,7 +221,26 @@ export function useTrendScopeWorkspace(
   }
 
   function login() {
+    goToSection("onboarding");
+  }
+
+  function startLoginWithOnboardingKeywords() {
+    if (selectedOnboardingKeywordNames.length === 0) {
+      return;
+    }
+
     try {
+      storePendingOnboardingKeywordNames(selectedOnboardingKeywordNames);
+      startGoogleOAuthLogin();
+    } catch (error) {
+      setAuthStatus("error");
+      setAuthMessage(getApiErrorMessage(error, "로그인 설정을 확인하지 못했습니다."));
+    }
+  }
+
+  function startLoginWithoutOnboardingKeywords() {
+    try {
+      clearPendingOnboardingKeywordNames();
       startGoogleOAuthLogin();
     } catch (error) {
       setAuthStatus("error");
@@ -200,6 +259,8 @@ export function useTrendScopeWorkspace(
 
     setCurrentUser(null);
     setAuthStatus("anonymous");
+    clearPendingOnboardingKeywordNames();
+    setSelectedOnboardingKeywordNames([]);
     setKeywords(snapshot.keywords);
     setKeywordSyncStatus("idle");
     setKeywordSyncMessage("로그아웃되어 로컬 예시 키워드를 표시합니다.");
@@ -247,6 +308,35 @@ export function useTrendScopeWorkspace(
     const targetKeyword = searchDraft.trim() || "입력한 키워드";
 
     setSearchBriefing(createKeywordSearchBriefing(targetKeyword, snapshot));
+  }
+
+  function toggleOnboardingKeyword(keywordName: string) {
+    const normalizedKeyword = keywordName.trim();
+
+    if (normalizedKeyword.length === 0) {
+      return;
+    }
+
+    setSelectedOnboardingKeywordNames((currentKeywords) =>
+      currentKeywords.includes(normalizedKeyword)
+        ? currentKeywords.filter((keyword) => keyword !== normalizedKeyword)
+        : [...currentKeywords, normalizedKeyword],
+    );
+  }
+
+  function addCustomOnboardingKeyword() {
+    const normalizedKeyword = onboardingKeywordDraft.trim();
+
+    if (normalizedKeyword.length === 0) {
+      return;
+    }
+
+    setSelectedOnboardingKeywordNames((currentKeywords) =>
+      currentKeywords.includes(normalizedKeyword)
+        ? currentKeywords
+        : [...currentKeywords, normalizedKeyword],
+    );
+    setOnboardingKeywordDraft("");
   }
 
   function setCommunityBoardSection(sectionId: CommunityBoardFilterId) {
@@ -319,20 +409,28 @@ export function useTrendScopeWorkspace(
     canSubmitPostDraft,
     keywords,
     keywordDraft,
+    onboardingKeywordDraft,
     keywordSyncMessage,
     keywordSyncStatus,
     searchDraft,
     searchBriefing,
+    selectedOnboardingKeywordNames,
+    canSubmitOnboardingKeywords,
     goToSection,
     login,
     logout,
     setKeywordDraft,
+    setOnboardingKeywordDraft,
     setSearchDraft,
     addKeyword,
+    addCustomOnboardingKeyword,
     requestKeywordSearch,
+    startLoginWithOnboardingKeywords,
+    startLoginWithoutOnboardingKeywords,
     setCommunityBoardSection,
     setPostDraftField,
     submitPostDraft,
+    toggleOnboardingKeyword,
     openPost,
   };
 }

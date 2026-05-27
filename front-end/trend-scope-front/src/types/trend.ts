@@ -1,5 +1,6 @@
 export type TrendScopeSection =
   | "home"
+  | "onboarding"
   | "briefing"
   | "search"
   | "mypage"
@@ -27,6 +28,12 @@ export interface KeywordViewModel {
   readonly label: string;
   readonly isHot: boolean;
   readonly isActive: boolean;
+}
+
+export interface OnboardingKeywordOptionViewModel {
+  readonly id: string;
+  readonly label: string;
+  readonly description: string;
 }
 
 export interface NewsArticleViewModel {
@@ -85,6 +92,7 @@ export interface RelatedKeywordViewModel {
 export interface TrendDashboardSnapshot {
   readonly heroMetrics: readonly MetricViewModel[];
   readonly featureChips: readonly string[];
+  readonly onboardingKeywordOptions: readonly OnboardingKeywordOptionViewModel[];
   readonly keywords: readonly KeywordViewModel[];
   readonly summaryHighlights: readonly string[];
   readonly newsArticles: readonly NewsArticleViewModel[];

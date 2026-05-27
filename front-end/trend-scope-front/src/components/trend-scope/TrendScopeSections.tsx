@@ -11,6 +11,7 @@ import type {
   KeywordViewModel,
   MetricViewModel,
   NewsArticleViewModel,
+  OnboardingKeywordOptionViewModel,
   RelatedKeywordViewModel,
   TrendPointViewModel,
   TrendScopeSection,
@@ -44,6 +45,20 @@ interface SearchSectionProps {
   readonly searchBriefing: KeywordSearchBriefingViewModel | null;
   readonly onSearchDraftChange: (value: string) => void;
   readonly onRequestKeywordSearch: () => void;
+}
+
+interface OnboardingSectionProps {
+  readonly isActive: boolean;
+  readonly canSubmitKeywords: boolean;
+  readonly keywordDraft: string;
+  readonly keywordOptions: readonly OnboardingKeywordOptionViewModel[];
+  readonly selectedKeywordNames: readonly string[];
+  readonly onAddCustomKeyword: () => void;
+  readonly onKeywordDraftChange: (value: string) => void;
+  readonly onNavigate: (section: TrendScopeSection) => void;
+  readonly onSkipKeywords: () => void;
+  readonly onStartLogin: () => void;
+  readonly onToggleKeyword: (keywordName: string) => void;
 }
 
 interface MyPageSectionProps {
@@ -235,6 +250,112 @@ export function SearchSection({
           <BriefingContent briefing={searchBriefing} />
         </div>
       )}
+    </section>
+  );
+}
+
+export function OnboardingSection({
+  canSubmitKeywords,
+  isActive,
+  keywordDraft,
+  keywordOptions,
+  onAddCustomKeyword,
+  onKeywordDraftChange,
+  onNavigate,
+  onSkipKeywords,
+  onStartLogin,
+  onToggleKeyword,
+  selectedKeywordNames,
+}: OnboardingSectionProps) {
+  const selectedKeywordNameSet = new Set(selectedKeywordNames);
+
+  function submitCustomKeyword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onAddCustomKeyword();
+  }
+
+  return (
+    <section className="page" data-active={isActive} id="onboarding">
+      <div className="onboarding-hero">
+        <div className="section-heading !mb-0">
+          <span className="eyebrow">
+            <span className="signal-dot" aria-hidden="true" />
+            First briefing
+          </span>
+          <h2 className="section-title">첫 브리핑 키워드</h2>
+          <p className="body-copy">로그인과 동시에 저장할 관심 키워드를 정합니다.</p>
+        </div>
+        <Button variant="ghost" onClick={() => onNavigate("home")}>
+          돌아가기
+        </Button>
+      </div>
+
+      <div className="onboarding-layout">
+        <article className="onboarding-panel">
+          <h3 className="card-title">관심 분야</h3>
+          <div className="onboarding-option-grid">
+            {keywordOptions.map((option) => {
+              const isSelected = selectedKeywordNameSet.has(option.label);
+
+              return (
+                <button
+                  aria-pressed={isSelected}
+                  className="onboarding-option"
+                  data-selected={isSelected}
+                  key={option.id}
+                  type="button"
+                  onClick={() => onToggleKeyword(option.label)}
+                >
+                  <strong>{option.label}</strong>
+                  <span>{option.description}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <form className="input-row" onSubmit={submitCustomKeyword}>
+            <input
+              className="input"
+              placeholder="직접 입력"
+              type="text"
+              value={keywordDraft}
+              onChange={(event) => onKeywordDraftChange(event.target.value)}
+            />
+            <Button type="submit" variant="ghost">
+              추가
+            </Button>
+          </form>
+        </article>
+
+        <aside className="onboarding-summary">
+          <span className="badge">선택 {selectedKeywordNames.length}</span>
+          <h3 className="card-title">저장될 키워드</h3>
+          <div className="selected-keyword-list">
+            {selectedKeywordNames.length === 0 ? (
+              <span className="muted">선택된 키워드가 없습니다.</span>
+            ) : (
+              selectedKeywordNames.map((keywordName) => (
+                <button
+                  className="selected-keyword-chip"
+                  key={keywordName}
+                  type="button"
+                  onClick={() => onToggleKeyword(keywordName)}
+                >
+                  {keywordName}
+                </button>
+              ))
+            )}
+          </div>
+          <div className="onboarding-actions">
+            <Button disabled={!canSubmitKeywords} variant="primary" onClick={onStartLogin}>
+              선택한 키워드로 Google 로그인
+            </Button>
+            <Button variant="ghost" onClick={onSkipKeywords}>
+              나중에 설정
+            </Button>
+          </div>
+        </aside>
+      </div>
     </section>
   );
 }

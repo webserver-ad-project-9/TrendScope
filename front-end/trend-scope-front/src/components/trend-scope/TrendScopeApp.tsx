@@ -9,6 +9,7 @@ import {
   CommunitySection,
   HomeSection,
   MyPageSection,
+  OnboardingSection,
   PostSection,
   SearchSection,
   WritePostSection,
@@ -45,6 +46,19 @@ export function TrendScopeApp({ initialSnapshot }: TrendScopeAppProps) {
           onNavigate={workspace.goToSection}
           onRequestKeywordSearch={workspace.requestKeywordSearch}
           onSearchDraftChange={workspace.setSearchDraft}
+        />
+        <OnboardingSection
+          canSubmitKeywords={workspace.canSubmitOnboardingKeywords}
+          isActive={workspace.activeSection === "onboarding"}
+          keywordDraft={workspace.onboardingKeywordDraft}
+          keywordOptions={initialSnapshot.onboardingKeywordOptions}
+          selectedKeywordNames={workspace.selectedOnboardingKeywordNames}
+          onAddCustomKeyword={workspace.addCustomOnboardingKeyword}
+          onKeywordDraftChange={workspace.setOnboardingKeywordDraft}
+          onNavigate={workspace.goToSection}
+          onSkipKeywords={workspace.startLoginWithoutOnboardingKeywords}
+          onStartLogin={workspace.startLoginWithOnboardingKeywords}
+          onToggleKeyword={workspace.toggleOnboardingKeyword}
         />
         <BriefingSection
           briefing={defaultBriefing}

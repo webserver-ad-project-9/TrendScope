@@ -66,7 +66,7 @@ export function TrendScopeHeader({
             <Button disabled={authStatus === "checking"} variant="ghost" onClick={onLogin}>
               {authStatus === "checking" ? "확인 중" : "Google 로그인"}
             </Button>
-            <Button variant="primary" onClick={() => onNavigate("mypage")}>
+            <Button variant="primary" onClick={onLogin}>
               시작하기
             </Button>
           </>

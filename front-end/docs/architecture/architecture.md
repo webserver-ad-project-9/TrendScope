@@ -13,7 +13,7 @@ AI 기반 뉴스 트렌드 분석 서비스의 프론트엔드다. 현재 구현
 ## 계층 방향
 - `app/page.tsx`: 라우팅 단위 화면 조립. 초기 뷰 모델 service를 호출하고 앱 컴포넌트에 전달한다.
 - `src/components`: UI 표시와 사용자 이벤트 전달만 담당한다.
-- `src/hooks`: 탭 이동, 키워드 편집, 별도 검색 화면 결과 표시, 커뮤니티 게시판 필터, 게시글 작성, 게시글 상세 전환 같은 화면 상태 전이를 담당한다.
+- `src/hooks`: 탭 이동, 최초 로그인 온보딩 키워드 선택, 키워드 편집, 별도 검색 화면 결과 표시, 커뮤니티 게시판 필터, 게시글 작성, 게시글 상세 전환 같은 화면 상태 전이를 담당한다.
 - `src/services`: 초기 화면 뷰 모델 제공, 백엔드 API client, auth service, keyword service를 담당한다.
 - `src/types`: UI view model, auth view model, 백엔드 DTO 타입을 분리해 정의한다.
 
@@ -33,11 +33,13 @@ app/page.tsx
 - `TrendScopeApp`은 초기 데이터를 props로 받아 하위 섹션 컴포넌트에 전달한다.
 - 클라이언트 hydration 후 `useTrendScopeWorkspace`가 `fetchCurrentUser()`로 로그인 상태를 확인한다. 이때 `apiClient`는 localStorage, `accessToken` 쿠키, 로컬 개발용 token 환경변수 순서로 Bearer token을 준비한다.
 - 로그인 사용자가 확인되면 `fetchOnboardingKeywords()`가 백엔드 키워드 목록을 조회하고 UI view model로 변환한다.
+- OAuth 시작 전 사용자가 온보딩 화면에서 키워드를 선택하면 `keywordService`가 선택값을 브라우저 저장소에 임시 보관한다. OAuth 성공 후 백엔드 키워드 목록이 비어 있으면 `createOnboardingKeywordsBulk()`가 `POST /api/onboarding/keywords/bulk`로 첫 키워드 목록을 저장한다.
 - 키워드 생성은 `createOnboardingKeyword()`로 백엔드에 저장한 뒤 응답 DTO를 UI view model로 반영한다.
 - 키워드 검색 결과 브리핑, 커뮤니티 게시판 필터, 작성 게시글, 커뮤니티 상세 화면은 아직 API 계약이 없어 `useTrendScopeWorkspace`의 클라이언트 상태로 관리한다.
 
 ## 인증 흐름
-- 헤더의 Google 로그인 버튼은 `GET /api/auth`로 브라우저를 이동시켜 백엔드 OAuth 흐름을 시작한다.
+- 헤더의 Google 로그인/시작하기 버튼은 최초 로그인 온보딩 화면으로 이동한다.
+- 온보딩 화면은 추천 키워드 토글과 직접 입력 키워드를 모아 OAuth redirect 전 브라우저 저장소에 임시 저장하고 `GET /api/auth`로 브라우저를 이동시킨다.
 - 백엔드는 OAuth 성공 후 `/oauth/callback?token={token}`으로 프론트를 redirect한다.
 - `app/oauth/callback/page.tsx`는 Suspense 경계 안에서 `OAuthCallbackClient`를 렌더링한다.
 - `OAuthCallbackClient`는 token query를 auth service에 전달해 환경변수로 지정한 브라우저 저장소와 cookie key에 저장하고 `/`로 이동한다.
@@ -49,10 +51,12 @@ app/page.tsx
 - 프론트 자체 API route는 추가하지 않았다.
 - 백엔드 API 호출은 `src/services/apiClient.ts`에서만 `fetch`를 직접 사용한다.
 - `authService`와 `keywordService`는 HTTP 세부사항을 감추고 typed result 또는 UI view model을 반환한다.
+- 최초 온보딩 키워드는 `keywordService`가 임시 저장, 조회, 제거, bulk 생성 경계를 담당한다.
 - UI 컴포넌트는 API client를 직접 import하지 않고 hook callback만 호출한다.
 
 ## 저장 흐름
 - OAuth token은 환경변수로 지정한 브라우저 storage key와 cookie key에 저장한다.
+- OAuth redirect 전 선택한 최초 온보딩 키워드는 `trendscope.pendingOnboardingKeywords` localStorage key에 임시 저장하고, 로그인 후 bulk 생성 성공 또는 기존 백엔드 키워드 확인 시 제거한다.
 - 백엔드 host, token 저장 key/cookie key, 로컬 개발용 token fallback은 앱 루트의 `.env.local`에서 관리한다.
 - 온보딩 키워드는 백엔드 저장소를 source of truth로 사용한다.
 - 게시판 필터, 작성 게시글, 게시글 상세 전환은 브라우저 메모리 상태다.
@@ -73,3 +77,4 @@ app/page.tsx
 | 2026-05-25 | Auth/User/Keyword API를 service/client 경계로 연동 | 백엔드 계약이 확인됨 | OAuth callback route, auth service, keyword service, API DTO 분리 추가 |
 | 2026-05-25 | 백엔드 host와 외부 key 설정을 env 파일로 분리 | 환경별 설정과 secret을 Git 추적에서 제외 | `.env.local` ignore, `.env.example` template, `src/config/environment.ts` 추가 |
 | 2026-05-25 | 보호 API token 준비 순서를 localStorage, `accessToken` 쿠키, 로컬 개발용 env token으로 정규화 | 백엔드 수정 명세가 Bearer token과 로그인 쿠키 동시 전송 및 개발용 static token 흐름을 정의함 | `apiClient`가 Bearer header와 cookie 동기화를 담당하고 UI는 service/hook 경계만 호출 |
+| 2026-05-27 | 최초 로그인 온보딩 키워드 선택을 OAuth 흐름 앞에 배치 | 백엔드 `POST /api/onboarding/keywords/bulk` 계약이 여러 관심 키워드 일괄 저장을 지원함 | `onboarding` 섹션, pending keyword storage, bulk keyword service 호출 추가 |

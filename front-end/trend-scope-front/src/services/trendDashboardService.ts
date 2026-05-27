@@ -17,6 +17,16 @@ export function getTrendDashboardSnapshot(): TrendDashboardSnapshot {
       { label: "핫 키워드", value: "5" },
     ],
     featureChips: ["AI 요약", "뉴스 링크", "키워드 추적", "커뮤니티 토론"],
+    onboardingKeywordOptions: [
+      { id: "onboarding-ai-chip", label: "AI 반도체", description: "HBM, 데이터센터, GPU" },
+      { id: "onboarding-economy", label: "경제", description: "증시, 금리, 기업 실적" },
+      { id: "onboarding-politics", label: "정치", description: "국회, 정당, 선거 이슈" },
+      { id: "onboarding-it", label: "IT", description: "AI, 플랫폼, 반도체 기술" },
+      { id: "onboarding-bitcoin", label: "비트코인", description: "가상자산, ETF, 시세 흐름" },
+      { id: "onboarding-samsung", label: "삼성전자", description: "실적, HBM, 공급망" },
+      { id: "onboarding-culture", label: "문화", description: "콘텐츠, 엔터, 라이프스타일" },
+      { id: "onboarding-global", label: "세계", description: "해외 시장과 국제 이슈" },
+    ],
     keywords: [
       { id: "keyword-samsung", label: "삼성전자", isHot: true, isActive: true },
       { id: "keyword-ai", label: "AI", isHot: false, isActive: true },

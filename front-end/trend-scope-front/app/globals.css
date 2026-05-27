@@ -571,6 +571,106 @@ a {
   padding: 26px;
 }
 
+.onboarding-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(53, 214, 194, 0.12), transparent 36%),
+    linear-gradient(180deg, rgba(24, 33, 50, 0.84), rgba(9, 15, 26, 0.96));
+  padding: 28px;
+}
+
+.onboarding-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+.onboarding-panel,
+.onboarding-summary {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(24, 33, 50, 0.88), rgba(9, 15, 26, 0.96));
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.26);
+  padding: 24px;
+}
+
+.onboarding-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.onboarding-option {
+  display: grid;
+  min-height: 96px;
+  gap: 8px;
+  border: 1px solid #263247;
+  border-radius: 8px;
+  background: #0b121f;
+  color: inherit;
+  padding: 16px;
+  text-align: left;
+}
+
+.onboarding-option:hover,
+.onboarding-option[data-selected="true"] {
+  border-color: rgba(53, 214, 194, 0.58);
+  background: rgba(53, 214, 194, 0.1);
+}
+
+.onboarding-option strong {
+  color: #ffffff;
+  font-size: 17px;
+}
+
+.onboarding-option span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.onboarding-summary {
+  position: sticky;
+  top: 96px;
+  display: grid;
+  gap: 16px;
+}
+
+.selected-keyword-list {
+  display: flex;
+  min-height: 96px;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+}
+
+.selected-keyword-chip {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  border: 1px solid rgba(255, 108, 63, 0.42);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: #ffb59e;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.onboarding-actions {
+  display: grid;
+  gap: 10px;
+}
+
 .board-list {
   display: grid;
   margin-top: 12px;
@@ -1144,6 +1244,7 @@ a {
   }
 
   .community-hero,
+  .onboarding-hero,
   .write-hero {
     align-items: flex-start;
     flex-direction: column;
@@ -1151,11 +1252,13 @@ a {
 
   .hero,
   .grid-two,
+  .onboarding-layout,
   .community-layout,
   .write-post-layout {
     grid-template-columns: 1fr;
   }
 
+  .onboarding-summary,
   .post-preview {
     position: static;
   }
@@ -1188,6 +1291,7 @@ a {
   .metric-grid,
   .grid-three,
   .form-grid,
+  .onboarding-option-grid,
   .relation-map,
   .keyword-row,
   .account-strip,
@@ -1198,7 +1302,10 @@ a {
   }
 
   .community-hero,
+  .onboarding-hero,
   .write-hero,
+  .onboarding-panel,
+  .onboarding-summary,
   .community-board-panel,
   .discussion-panel-header,
   .community-side-panel,
