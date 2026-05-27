@@ -20,11 +20,11 @@
 | `front-end/trend-scope-front/src/components/trend-scope` | directory | TrendScope 기능 전용 컴포넌트 | Feature UI | Header, section, shared briefing, visualization 컴포넌트 |
 | `front-end/trend-scope-front/src/config` | directory | 런타임/빌드타임 설정 읽기 | Configuration | Next public env와 server-only env 경계 문서화 |
 | `front-end/trend-scope-front/src/config/environment.ts` | file | 환경변수 access module | Configuration | 백엔드 Base URL, token storage/cookie key, 로컬 개발용 token fallback 설정 |
-| `front-end/trend-scope-front/src/hooks` | directory | 화면 상태와 UI 유스케이스 | UI application state | `useTrendScopeWorkspace`가 탭/인증/키워드/검색 브리핑/커뮤니티 게시판/글쓰기/게시글 전환 관리 |
+| `front-end/trend-scope-front/src/hooks` | directory | 화면 상태와 UI 유스케이스 | UI application state | `useTrendScopeWorkspace`가 탭/인증/최초 온보딩 키워드/키워드/검색 브리핑/커뮤니티 게시판/글쓰기/게시글 전환 관리 |
 | `front-end/trend-scope-front/src/services` | directory | 좁은 service/API client 경계 | Service/Application | 초기 뷰 모델, 백엔드 API client, auth service, keyword service |
 | `front-end/trend-scope-front/src/services/apiClient.ts` | file | 백엔드 API 공통 client | External integration | Base URL, Bearer header, cookie 동기화, 공통 오류 매핑 |
 | `front-end/trend-scope-front/src/services/authService.ts` | file | 인증 use-case service | Service/Application | Google OAuth 시작, callback token 저장, 현재 사용자 조회, 로그아웃 |
-| `front-end/trend-scope-front/src/services/keywordService.ts` | file | 온보딩 키워드 service | Service/Application | 백엔드 키워드 조회/생성 DTO를 UI view model로 변환 |
+| `front-end/trend-scope-front/src/services/keywordService.ts` | file | 온보딩 키워드 service | Service/Application | 백엔드 키워드 조회/생성/bulk 생성 DTO를 UI view model로 변환하고 OAuth 전 선택값 임시 저장 |
 | `front-end/trend-scope-front/src/types` | directory | UI view model, auth view model, API DTO 타입 | Contract/types | DTO와 UI view model을 파일 단위로 분리 |
 | `front-end/trend-scope-front/src/types/api.ts` | file | 백엔드 request/response DTO | Contract/types | API 응답 DTO 전용 |
 | `front-end/trend-scope-front/src/types/auth.ts` | file | 인증 UI view model 및 상태 타입 | Contract/types | auth state와 current user view model |

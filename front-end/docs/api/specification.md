@@ -130,6 +130,30 @@
   - `EXPIRED_JWT_TOKEN`: token 만료
   - `KEYWORD_DUPLICATED`: 이미 등록된 키워드
 
+### POST `/api/onboarding/keywords/bulk`
+- 설명: 최초 로그인 온보딩에서 선택한 여러 관심 키워드를 한 번에 생성한다. 백엔드는 이미 저장된 키워드는 중복 저장하지 않고 건너뛴다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body:
+  - `names`: string[], required, 생성할 키워드명 목록
+- Response body:
+  - `success`: boolean, required
+  - `data`: array, required, 새로 생성된 키워드 목록
+  - `data[].id`: string, required, 생성된 키워드 ID
+  - `data[].name`: string, required, 생성된 키워드명
+  - `message`: string, required
+- Status codes:
+  - `200`: 일괄 생성 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_REQUEST`: 키워드 목록 누락 또는 빈 배열
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
 ## 미연동 계약
 - 키워드 수정/삭제 API는 현재 백엔드 문서에 정의되어 있지 않아 호출하지 않는다.
 - 뉴스 분석, AI 브리핑, 커뮤니티 API는 현재 백엔드 문서에 정의되어 있지 않아 기존 로컬 view model을 유지한다.

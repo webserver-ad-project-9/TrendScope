@@ -19,24 +19,46 @@
 - Related API: 클라이언트 hydration 후 사용 가능한 token이 있으면 `GET /api/users/me`, `GET /api/onboarding/keywords`
 - Related DB tables: 없음
 
+## 최초 로그인 온보딩 키워드 결정
+- Actor: 방문자
+- Entry point: 헤더 `Google 로그인`, 헤더 `시작하기`
+- Preconditions: 앱이 클라이언트에서 hydration 완료
+- Steps:
+  1. 사용자가 로그인 CTA를 누르면 `onboarding` 섹션으로 이동한다.
+  2. 사용자가 추천 키워드 토글 또는 직접 입력으로 첫 관심 키워드를 선택한다.
+  3. `선택한 키워드로 Google 로그인`을 누르면 `keywordService.storePendingOnboardingKeywordNames()`가 선택 키워드를 localStorage에 임시 저장한다.
+  4. `authService.startGoogleOAuthLogin()`이 백엔드 `GET /api/auth`로 브라우저를 이동시킨다.
+  5. OAuth 성공 후 현재 사용자와 백엔드 키워드 목록을 조회한다.
+  6. 백엔드 키워드 목록이 비어 있고 임시 선택값이 있으면 `POST /api/onboarding/keywords/bulk`로 일괄 저장한다.
+  7. bulk 생성 성공 또는 기존 백엔드 키워드 확인 시 임시 선택값을 제거한다.
+- Validation: trim 후 빈 키워드는 선택 목록에 추가하지 않음. 중복 키워드는 클라이언트에서 한 번만 보관.
+- Empty state: 선택 키워드가 없으면 primary 로그인 버튼 비활성화. `나중에 설정`으로 키워드 없이 OAuth 로그인 가능.
+- Error state: bulk 생성 실패 시 `keywordSyncStatus=error`, 임시 선택값은 제거하지 않아 다음 인증 확인에서 재시도 가능.
+- Permission behavior: bulk 생성은 OAuth 성공 후 Bearer token과 `accessToken` cookie가 있을 때만 호출한다.
+- Retry or recovery: 다시 로그인하거나 마이페이지에서 개별 키워드 등록
+- Side effects: OAuth 전 localStorage 임시 저장, OAuth 후 백엔드 keyword bulk 생성
+- Related API: `GET /api/auth`, `GET /api/users/me`, `GET /api/onboarding/keywords`, `POST /api/onboarding/keywords/bulk`
+- Related DB tables: 백엔드 User, Keyword
+
 ## 로그인 및 사용자 확인
 - Actor: 방문자
 - Entry point: 헤더 `Google 로그인`
 - Preconditions: 백엔드 서버가 실행 중이고 Google OAuth 설정이 완료됨
 - Steps:
-  1. 사용자가 헤더의 `Google 로그인` 버튼을 누른다.
+  1. 사용자가 온보딩 화면에서 키워드 선택 후 Google 로그인을 시작하거나 `나중에 설정`을 선택한다.
   2. `authService.startGoogleOAuthLogin()`이 백엔드 `GET /api/auth`로 브라우저를 이동시킨다.
   3. 백엔드 OAuth 성공 후 프론트 `/oauth/callback?token={token}`으로 redirect한다.
   4. `OAuthCallbackClient`가 query token을 auth service에 전달한다.
   5. `apiClient`가 환경변수로 지정한 브라우저 storage key와 cookie key에 token을 저장한다.
   6. 홈으로 이동한 뒤 `useTrendScopeWorkspace`가 현재 사용자와 키워드 목록을 조회한다.
+  7. 임시 온보딩 키워드가 있고 백엔드 키워드가 비어 있으면 bulk 생성으로 첫 키워드를 확정한다.
 - Validation: token query가 없으면 저장하지 않고 홈으로 복귀
 - Empty state: token이 없으면 익명 상태 유지
 - Error state: 현재 사용자 조회 실패 시 `authStatus=error`
 - Permission behavior: 로그인 전 보호 API는 호출하지 않고 `MISSING_ACCESS_TOKEN`으로 정규화. localStorage가 비어 있어도 `accessToken` 쿠키나 로컬 개발용 token 환경변수가 있으면 Bearer token으로 동기화한 뒤 보호 API를 호출한다.
 - Retry or recovery: 다시 Google 로그인 시도
-- Side effects: 브라우저 token/cookie 저장
-- Related API: `GET /api/auth`, `GET /api/users/me`, `GET /api/onboarding/keywords`
+- Side effects: 브라우저 token/cookie 저장, 최초 온보딩 키워드 bulk 생성
+- Related API: `GET /api/auth`, `GET /api/users/me`, `GET /api/onboarding/keywords`, `POST /api/onboarding/keywords/bulk`
 - Related DB tables: 백엔드 User, Keyword
 
 ## 로그아웃

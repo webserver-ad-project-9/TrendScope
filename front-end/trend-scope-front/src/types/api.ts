@@ -27,3 +27,7 @@ export interface KeywordResponseDto {
 export interface CreateKeywordRequestDto {
   readonly name: string;
 }
+
+export interface CreateKeywordsBulkRequestDto {
+  readonly names: readonly string[];
+}

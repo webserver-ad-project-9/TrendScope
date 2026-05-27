@@ -9,3 +9,4 @@
 | GET | `/api/users/me` | Bearer token + `accessToken` cookie | 현재 사용자 조회 |
 | GET | `/api/onboarding/keywords` | Bearer token + `accessToken` cookie | 내 온보딩 키워드 목록 조회 |
 | POST | `/api/onboarding/keywords` | Bearer token + `accessToken` cookie | 내 온보딩 키워드 생성 |
+| POST | `/api/onboarding/keywords/bulk` | Bearer token + `accessToken` cookie | 최초 로그인 온보딩 키워드 일괄 생성 |
