@@ -20,13 +20,14 @@
 | `front-end/trend-scope-front/src/components/trend-scope` | directory | TrendScope 기능 전용 컴포넌트 | Feature UI | Header, section, shared briefing, visualization 컴포넌트 |
 | `front-end/trend-scope-front/src/config` | directory | 런타임/빌드타임 설정 읽기 | Configuration | Next public env와 server-only env 경계 문서화 |
 | `front-end/trend-scope-front/src/config/environment.ts` | file | 환경변수 access module | Configuration | 백엔드 Base URL, token storage/cookie key, 로컬 개발용 token fallback 설정 |
-| `front-end/trend-scope-front/src/hooks` | directory | 화면 상태와 UI 유스케이스 | UI application state | `useTrendScopeWorkspace`가 탭/인증/최초 온보딩 키워드/키워드/검색 브리핑/커뮤니티 게시판/글쓰기/게시글 전환 관리 |
-| `front-end/trend-scope-front/src/services` | directory | 좁은 service/API client 경계 | Service/Application | 초기 뷰 모델, 백엔드 API client, auth service, keyword service |
+| `front-end/trend-scope-front/src/hooks` | directory | 화면 상태와 UI 유스케이스 | UI application state | `useTrendScopeWorkspace`가 탭/인증/신규 가입 온보딩 키워드/키워드/검색 브리핑/커뮤니티 게시판/글쓰기/상세/댓글/좋아요 상태 관리 |
+| `front-end/trend-scope-front/src/services` | directory | 좁은 service/API client 경계 | Service/Application | 초기 뷰 모델, 백엔드 API client, auth service, keyword service, community service |
 | `front-end/trend-scope-front/src/services/apiClient.ts` | file | 백엔드 API 공통 client | External integration | Base URL, Bearer header, cookie 동기화, 공통 오류 매핑 |
-| `front-end/trend-scope-front/src/services/authService.ts` | file | 인증 use-case service | Service/Application | Google OAuth 시작, callback token 저장, 현재 사용자 조회, 로그아웃 |
-| `front-end/trend-scope-front/src/services/keywordService.ts` | file | 온보딩 키워드 service | Service/Application | 백엔드 키워드 조회/생성/bulk 생성 DTO를 UI view model로 변환하고 OAuth 전 선택값 임시 저장 |
+| `front-end/trend-scope-front/src/services/authService.ts` | file | 인증 use-case service | Service/Application | Google OAuth 시작, callback token/signup hint 저장, 현재 사용자 조회, 로그아웃 |
+| `front-end/trend-scope-front/src/services/keywordService.ts` | file | 온보딩 키워드 service | Service/Application | 백엔드 키워드 조회/생성/bulk 생성 DTO를 UI view model로 변환 |
+| `front-end/trend-scope-front/src/services/communityService.ts` | file | 커뮤니티 service | Service/Application | 백엔드 게시판/게시글/댓글/좋아요 DTO를 UI view model로 변환 |
 | `front-end/trend-scope-front/src/types` | directory | UI view model, auth view model, API DTO 타입 | Contract/types | DTO와 UI view model을 파일 단위로 분리 |
-| `front-end/trend-scope-front/src/types/api.ts` | file | 백엔드 request/response DTO | Contract/types | API 응답 DTO 전용 |
+| `front-end/trend-scope-front/src/types/api.ts` | file | 백엔드 request/response DTO | Contract/types | Auth/User/Keyword/Community API DTO 전용 |
 | `front-end/trend-scope-front/src/types/auth.ts` | file | 인증 UI view model 및 상태 타입 | Contract/types | auth state와 current user view model |
 | `front-end/trend-scope-front/public` | directory | 정적 asset | Static assets | Next 기본 asset 유지 |
 
@@ -36,4 +37,5 @@
 - `src/hooks`는 브라우저 상호작용 상태와 service 호출 orchestration을 담당한다.
 - `src/services/trendDashboardService.ts`는 외부 API 호출이 아니라 초기 뷰 모델 공급만 담당한다.
 - `src/services/apiClient.ts`만 백엔드 HTTP 세부사항을 직접 다룬다.
+- `src/services/communityService.ts`는 커뮤니티 백엔드 DTO와 UI view model 변환을 담당한다.
 - `.env.local`은 Git에 커밋하지 않고, 새 환경변수는 `.env.example`에 실제 token/secret 없이 추가한다.

@@ -5,9 +5,12 @@ import type {
 } from "@/src/types/api";
 import { getFrontendEnvironment } from "@/src/config/environment";
 
+type BackendApiAuthenticationMode = "required" | "optional" | "none";
+
 interface BackendApiRequestOptions {
   readonly method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   readonly body?: unknown;
+  readonly authentication?: BackendApiAuthenticationMode;
   readonly isAuthenticated?: boolean;
 }
 
@@ -72,15 +75,16 @@ export async function requestBackendApi<TData>(
   options: BackendApiRequestOptions = {},
 ): Promise<TData> {
   const headers = new Headers();
+  const authenticationMode = resolveAuthenticationMode(options);
 
   if (options.body !== undefined) {
     headers.set("Content-Type", "application/json");
   }
 
-  if (options.isAuthenticated !== false) {
+  if (authenticationMode !== "none") {
     const accessToken = readAvailableAccessToken();
 
-    if (accessToken === null) {
+    if (accessToken === null && authenticationMode === "required") {
       throw new ApiClientError({
         status: 401,
         errorCode: "MISSING_ACCESS_TOKEN",
@@ -88,8 +92,10 @@ export async function requestBackendApi<TData>(
       });
     }
 
-    headers.set("Authorization", `Bearer ${accessToken}`);
-    writeAccessTokenCookie(accessToken);
+    if (accessToken !== null) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+      writeAccessTokenCookie(accessToken);
+    }
   }
 
   const response = await fetch(`${getBackendApiBaseUrl()}${path}`, {
@@ -122,6 +128,16 @@ export async function requestBackendApi<TData>(
   }
 
   return payload.data;
+}
+
+function resolveAuthenticationMode(
+  options: BackendApiRequestOptions,
+): BackendApiAuthenticationMode {
+  if (options.authentication !== undefined) {
+    return options.authentication;
+  }
+
+  return options.isAuthenticated === false ? "none" : "required";
 }
 
 function readAvailableAccessToken(): string | null {

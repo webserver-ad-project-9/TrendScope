@@ -85,14 +85,16 @@ export function TrendScopeApp({ initialSnapshot }: TrendScopeAppProps) {
           activeBoardSectionId={workspace.activeCommunityBoardSectionId}
           allBoardPosts={workspace.communityPosts}
           boardPosts={workspace.visibleCommunityPosts}
-          boardSections={initialSnapshot.communityBoardSections}
+          boardSections={workspace.communityBoardSections}
+          syncMessage={workspace.communitySyncMessage}
+          syncStatus={workspace.communitySyncStatus}
           isActive={workspace.activeSection === "community"}
           onBoardSectionChange={workspace.setCommunityBoardSection}
           onNavigate={workspace.goToSection}
           onOpenPost={workspace.openPost}
         />
         <WritePostSection
-          boardSections={initialSnapshot.communityBoardSections}
+          boardSections={workspace.communityBoardSections}
           canSubmitPostDraft={workspace.canSubmitPostDraft}
           isActive={workspace.activeSection === "writePost"}
           postDraft={workspace.postDraft}
@@ -101,9 +103,16 @@ export function TrendScopeApp({ initialSnapshot }: TrendScopeAppProps) {
           onSubmitPostDraft={workspace.submitPostDraft}
         />
         <PostSection
+          canSubmitComment={workspace.canSubmitPostComment}
+          commentDraft={workspace.postCommentDraft}
+          syncMessage={workspace.communitySyncMessage}
+          syncStatus={workspace.communitySyncStatus}
           isActive={workspace.activeSection === "post"}
           post={workspace.activePost}
+          onCommentDraftChange={workspace.setPostCommentDraft}
           onNavigate={workspace.goToSection}
+          onSubmitComment={workspace.submitPostComment}
+          onToggleLike={workspace.toggleActivePostLike}
         />
       </main>
 
