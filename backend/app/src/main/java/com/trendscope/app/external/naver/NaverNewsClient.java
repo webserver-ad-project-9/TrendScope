@@ -10,6 +10,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 public class NaverNewsClient {
 
+    private static final int DEFAULT_DISPLAY_COUNT = 20;
+    private static final int MAX_DISPLAY_COUNT = 100;
+
     private final WebClient webClient;
     private final NaverNewsProperties properties;
 
@@ -19,9 +22,13 @@ public class NaverNewsClient {
     }
 
     public NaverNewsResponse search(String keyword) {
+        return search(keyword, DEFAULT_DISPLAY_COUNT);
+    }
+
+    public NaverNewsResponse search(String keyword, int displayCount) {
         URI uri = UriComponentsBuilder.fromUriString(properties.baseUrl())
                 .queryParam("query", keyword)
-                .queryParam("display", 20)
+                .queryParam("display", normalizeDisplayCount(displayCount))
                 .queryParam("sort", "date")
                 .build()
                 .encode()
@@ -37,5 +44,12 @@ public class NaverNewsClient {
         } catch (Exception exception) {
             throw new BusinessException(ErrorCode.NAVER_API_REQUEST_FAILED);
         }
+    }
+
+    private int normalizeDisplayCount(int displayCount) {
+        if (displayCount < 1) {
+            return DEFAULT_DISPLAY_COUNT;
+        }
+        return Math.min(displayCount, MAX_DISPLAY_COUNT);
     }
 }

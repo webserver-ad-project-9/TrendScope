@@ -2,6 +2,7 @@ package com.trendscope.app.domain.news.repository;
 
 import com.trendscope.app.domain.news.entity.NewsArticle;
 import com.trendscope.app.domain.keyword.entity.Keyword;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
@@ -14,4 +15,11 @@ public interface NewsArticleRepository extends JpaRepository<NewsArticle, UUID> 
     List<NewsArticle> findTop50ByOrderByPublishedAtDesc();
 
     List<NewsArticle> findByKeywordInOrderByPublishedAtDesc(List<Keyword> keywords, Pageable pageable);
+
+    List<NewsArticle> findByKeywordAndPublishedAtGreaterThanEqualAndPublishedAtLessThanOrderByPublishedAtDesc(
+            Keyword keyword,
+            LocalDateTime start,
+            LocalDateTime end,
+            Pageable pageable
+    );
 }

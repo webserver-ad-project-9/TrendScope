@@ -1,9 +1,11 @@
 package com.trendscope.app.domain.news.controller;
 
 import com.trendscope.app.domain.news.dto.NewsArticleResponse;
+import com.trendscope.app.domain.news.dto.KeywordBriefingResponse;
 import com.trendscope.app.domain.news.dto.NewsRecommendationResponse;
 import com.trendscope.app.domain.news.dto.NewsSummaryRequest;
 import com.trendscope.app.domain.news.dto.NewsSummaryResponse;
+import com.trendscope.app.domain.news.service.KeywordBriefingService;
 import com.trendscope.app.domain.news.service.NewsRecommendationService;
 import com.trendscope.app.domain.news.service.NewsService;
 import com.trendscope.app.domain.news.service.NewsSummaryService;
@@ -28,12 +30,15 @@ public class NewsController {
     private final NewsService newsService;
     private final NewsSummaryService newsSummaryService;
     private final NewsRecommendationService newsRecommendationService;
+    private final KeywordBriefingService keywordBriefingService;
 
     public NewsController(NewsService newsService, NewsSummaryService newsSummaryService,
-                          NewsRecommendationService newsRecommendationService) {
+                          NewsRecommendationService newsRecommendationService,
+                          KeywordBriefingService keywordBriefingService) {
         this.newsService = newsService;
         this.newsSummaryService = newsSummaryService;
         this.newsRecommendationService = newsRecommendationService;
+        this.keywordBriefingService = keywordBriefingService;
     }
 
     @GetMapping("/latest")
@@ -57,5 +62,11 @@ public class NewsController {
             @RequestParam(defaultValue = "false") boolean refresh,
             @RequestParam(required = false) Integer limit) {
         return ApiResponse.ok(newsRecommendationService.recommend(principal.userId(), refresh, limit));
+    }
+
+    @GetMapping("/keyword-briefings")
+    public ApiResponse<KeywordBriefingResponse> keywordBriefings(
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        return ApiResponse.ok(keywordBriefingService.createBriefing(principal.userId()));
     }
 }

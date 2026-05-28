@@ -25,7 +25,11 @@ public class NewsCollectionService {
     }
 
     public int collect(Keyword keyword) {
-        var response = naverNewsClient.search(keyword.getName());
+        return collect(keyword, 20);
+    }
+
+    public int collect(Keyword keyword, int displayCount) {
+        var response = naverNewsClient.search(keyword.getName(), displayCount);
         var articles = response.items().stream()
                 .filter(item -> deduplicationService.isNewArticle(item.originallink()))
                 .map(item -> naverNewsMapper.toEntity(keyword, item))
