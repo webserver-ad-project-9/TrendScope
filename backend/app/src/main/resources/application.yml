@@ -46,8 +46,7 @@ trendpulse:
     api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:gpt-4o-mini}
   llm:
-    provider: ${LOCAL_LLM_PROVIDER:openai-compatible}
-    base-url: ${LOCAL_LLM_BASE_URL:http://localhost:11434}
+    host: ${LOCAL_LLM_HOST:localhost:8000}
     api-key: ${LOCAL_LLM_API_KEY:}
-    model: ${LOCAL_LLM_MODEL:gemma-3-4b-it-Q4_K_M}
+    model: ${LOCAL_LLM_MODEL:gemma-3-4b-it-gguf}
     timeout-ms: ${LOCAL_LLM_TIMEOUT_MS:30000}

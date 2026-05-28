@@ -10,7 +10,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       TZ: Asia/Seoul
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - trendpulse-mysql-data:/var/lib/mysql
     healthcheck:
@@ -28,8 +28,6 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-      local-llm:
-        condition: service_started
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SERVER_PORT: 8080
@@ -48,30 +46,12 @@ services:
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      LOCAL_LLM_PROVIDER: openai-compatible
-      LOCAL_LLM_BASE_URL: http://local-llm:8080
-      LOCAL_LLM_MODEL: gemma-3-4b-it-Q4_K_M
-      LOCAL_LLM_TIMEOUT_MS: 60000
+      LOCAL_LLM_HOST: ${LOCAL_LLM_HOST:-host.docker.internal:8000}
+      LOCAL_LLM_API_KEY: ${LOCAL_LLM_API_KEY:-}
+      LOCAL_LLM_MODEL: ${LOCAL_LLM_MODEL:-gemma-3-4b-it-gguf}
+      LOCAL_LLM_TIMEOUT_MS: ${LOCAL_LLM_TIMEOUT_MS:-60000}
     ports:
       - "8080:8080"
-
-  local-llm:
-    image: ghcr.io/ggml-org/llama.cpp:server
-    container_name: trendpulse-local-llm
-    restart: unless-stopped
-    command:
-      - "-m"
-      - "/models/gemma-3-4b-it-Q4_K_M.gguf"
-      - "--host"
-      - "0.0.0.0"
-      - "--port"
-      - "8080"
-      - "-c"
-      - "4096"
-    volumes:
-      - ../models:/models:ro
-    ports:
-      - "11434:8080"
 
 volumes:
   trendpulse-mysql-data:

@@ -25,47 +25,22 @@ public class LocalLlmClient {
 
     public String complete(String prompt) {
         try {
-            if (properties.isOllama()) {
-                return summarizeWithOllama(prompt);
-            }
-            return summarizeWithOpenAiCompatibleApi(prompt);
+            return summarizeWithLocalProxy(prompt);
         } catch (Exception exception) {
             throw new BusinessException(ErrorCode.AI_SUMMARY_FAILED);
         }
     }
 
-    private String summarizeWithOllama(String prompt) {
-        OllamaChatRequest request = new OllamaChatRequest(
-                properties.model(),
-                false,
-                List.of(
-                        new ChatMessage("system", "You summarize Korean news clearly and briefly."),
-                        new ChatMessage("user", prompt)
-                )
-        );
-
-        OllamaChatResponse response = webClient.post()
-                .uri("/api/chat")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(OllamaChatResponse.class)
-                .block(Duration.ofMillis(properties.timeoutMsOrDefault()));
-
-        if (response == null || response.message() == null || response.message().content() == null) {
-            throw new BusinessException(ErrorCode.AI_SUMMARY_FAILED);
-        }
-        return response.message().content().trim();
-    }
-
-    private String summarizeWithOpenAiCompatibleApi(String prompt) {
+    private String summarizeWithLocalProxy(String prompt) {
         OpenAiChatRequest request = new OpenAiChatRequest(
-                properties.model(),
+                properties.modelOrDefault(),
                 List.of(
                         new ChatMessage("system", "You summarize Korean news clearly and briefly."),
                         new ChatMessage("user", prompt)
                 ),
                 0.2,
-                700
+                700,
+                false
         );
 
         OpenAiChatResponse response = webClient.post()
@@ -93,17 +68,12 @@ public class LocalLlmClient {
     private record ChatMessage(String role, String content) {
     }
 
-    private record OllamaChatRequest(String model, boolean stream, List<ChatMessage> messages) {
-    }
-
-    private record OllamaChatResponse(ChatMessage message) {
-    }
-
     private record OpenAiChatRequest(
             String model,
             List<ChatMessage> messages,
             double temperature,
-            int max_tokens
+            int max_tokens,
+            boolean stream
     ) {
     }
 
