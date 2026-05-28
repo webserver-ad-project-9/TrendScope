@@ -19,7 +19,6 @@ interface TrendScopeHeaderProps {
 const navigationItems: readonly NavigationItem[] = [
   { label: "홈", section: "home" },
   { label: "AI 브리핑", section: "briefing" },
-  { label: "키워드 검색", section: "search" },
   { label: "마이페이지", section: "mypage" },
   { label: "커뮤니티", section: "community" },
 ];

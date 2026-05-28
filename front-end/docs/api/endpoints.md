@@ -10,6 +10,10 @@
 | GET | `/api/onboarding/keywords` | Bearer token + `accessToken` cookie | 내 온보딩 키워드 목록 조회 |
 | POST | `/api/onboarding/keywords` | Bearer token + `accessToken` cookie | 내 온보딩 키워드 생성 |
 | POST | `/api/onboarding/keywords/bulk` | Bearer token + `accessToken` cookie | 신규 가입 온보딩 키워드 일괄 생성 |
+| GET | `/api/news/recommendations` | Bearer token + `accessToken` cookie | 내 키워드 기반 추천 뉴스 조회 및 선택적 최신 뉴스 수집 |
+| POST | `/api/news/{newsId}/summary` | Bearer token + `accessToken` cookie | 단일 뉴스 LLM 요약 생성 |
+| POST | `/api/news/summary` | Bearer token + `accessToken` cookie | 여러 뉴스 LLM 묶음 요약 생성 |
+| GET | `/api/trend-analysis/summary` | Bearer token + `accessToken` cookie | 백엔드 트렌드 분석 요약 조회 |
 | GET | `/api/community/categories` | public | 게시판 카테고리 목록 조회 |
 | GET | `/api/posts` | optional Bearer token + `accessToken` cookie | 게시글 목록 조회 |
 | POST | `/api/posts` | Bearer token + `accessToken` cookie | 게시글 생성 |

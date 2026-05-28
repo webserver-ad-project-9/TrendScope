@@ -24,6 +24,50 @@ export interface KeywordResponseDto {
   readonly name: string;
 }
 
+export interface NewsRecommendationKeywordResponseDto {
+  readonly id: string;
+  readonly name: string;
+}
+
+export interface RecommendedNewsResponseDto {
+  readonly id: string;
+  readonly keywordId: string;
+  readonly matchedKeyword: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly originUrl: string;
+  readonly publishedAt: string | null;
+  readonly recommendationReason: string;
+}
+
+export interface NewsRecommendationResponseDto {
+  readonly keywords: readonly NewsRecommendationKeywordResponseDto[];
+  readonly articles: readonly RecommendedNewsResponseDto[];
+  readonly refreshed: boolean;
+}
+
+export interface NewsSummarySourceResponseDto {
+  readonly id: string;
+  readonly title: string;
+  readonly originUrl: string;
+  readonly publishedAt: string | null;
+}
+
+export interface NewsSummaryResponseDto {
+  readonly newsIds: readonly string[];
+  readonly summary: string;
+  readonly sources: readonly NewsSummarySourceResponseDto[];
+}
+
+export interface NewsSummaryRequestDto {
+  readonly newsIds: readonly string[];
+  readonly maxSentenceCount?: number;
+}
+
+export interface TrendAnalysisSummaryResponseDto {
+  readonly trendScore: number;
+}
+
 export interface CreateKeywordRequestDto {
   readonly name: string;
 }

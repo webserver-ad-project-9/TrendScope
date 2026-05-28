@@ -1,8 +1,6 @@
 "use client";
 
 import { useTrendScopeWorkspace } from "@/src/hooks/useTrendScopeWorkspace";
-import { getDefaultBriefingViewModel } from "@/src/services/trendDashboardService";
-import type { TrendDashboardSnapshot } from "@/src/types/trend";
 import { TrendScopeHeader } from "./TrendScopeHeader";
 import {
   BriefingSection,
@@ -11,20 +9,11 @@ import {
   MyPageSection,
   OnboardingSection,
   PostSection,
-  SearchSection,
   WritePostSection,
 } from "./TrendScopeSections";
 
-interface TrendScopeAppProps {
-  readonly initialSnapshot: TrendDashboardSnapshot;
-}
-
-export function TrendScopeApp({ initialSnapshot }: TrendScopeAppProps) {
-  const workspace = useTrendScopeWorkspace(initialSnapshot);
-  const defaultBriefing = getDefaultBriefingViewModel({
-    ...initialSnapshot,
-    keywords: workspace.keywords,
-  });
+export function TrendScopeApp() {
+  const workspace = useTrendScopeWorkspace();
 
   return (
     <div className="app-shell">
@@ -38,20 +27,11 @@ export function TrendScopeApp({ initialSnapshot }: TrendScopeAppProps) {
       />
 
       <main>
-        <HomeSection
-          featureChips={initialSnapshot.featureChips}
-          isActive={workspace.activeSection === "home"}
-          metrics={initialSnapshot.heroMetrics}
-          searchDraft={workspace.searchDraft}
-          onNavigate={workspace.goToSection}
-          onRequestKeywordSearch={workspace.requestKeywordSearch}
-          onSearchDraftChange={workspace.setSearchDraft}
-        />
+        <HomeSection isActive={workspace.activeSection === "home"} />
         <OnboardingSection
           canSubmitKeywords={workspace.canSubmitOnboardingKeywords}
           isActive={workspace.activeSection === "onboarding"}
           keywordDraft={workspace.onboardingKeywordDraft}
-          keywordOptions={initialSnapshot.onboardingKeywordOptions}
           selectedKeywordNames={workspace.selectedOnboardingKeywordNames}
           onAddCustomKeyword={workspace.addCustomOnboardingKeyword}
           onKeywordDraftChange={workspace.setOnboardingKeywordDraft}
@@ -61,15 +41,17 @@ export function TrendScopeApp({ initialSnapshot }: TrendScopeAppProps) {
           onToggleKeyword={workspace.toggleOnboardingKeyword}
         />
         <BriefingSection
-          briefing={defaultBriefing}
           isActive={workspace.activeSection === "briefing"}
-        />
-        <SearchSection
-          isActive={workspace.activeSection === "search"}
-          searchBriefing={workspace.searchBriefing}
-          searchDraft={workspace.searchDraft}
-          onRequestKeywordSearch={workspace.requestKeywordSearch}
-          onSearchDraftChange={workspace.setSearchDraft}
+          newsRecommendation={workspace.newsRecommendation}
+          newsSummariesByArticleId={workspace.newsSummariesByArticleId}
+          newsSyncMessage={workspace.newsSyncMessage}
+          newsSyncStatus={workspace.newsSyncStatus}
+          summarizingNewsId={workspace.summarizingNewsId}
+          trendAnalysisSummary={workspace.trendAnalysisSummary}
+          trendAnalysisSyncMessage={workspace.trendAnalysisSyncMessage}
+          trendAnalysisSyncStatus={workspace.trendAnalysisSyncStatus}
+          onRefreshNews={workspace.refreshNewsRecommendations}
+          onSummarizeNews={workspace.summarizeRecommendedNews}
         />
         <MyPageSection
           currentUser={workspace.currentUser}

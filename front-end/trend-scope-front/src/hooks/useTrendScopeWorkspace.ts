@@ -25,7 +25,11 @@ import {
   createOnboardingKeywordsBulk,
   fetchOnboardingKeywords,
 } from "@/src/services/keywordService";
-import { createKeywordSearchBriefing } from "@/src/services/trendDashboardService";
+import {
+  fetchNewsRecommendations,
+  summarizeNewsArticle,
+} from "@/src/services/newsService";
+import { fetchTrendAnalysisSummary } from "@/src/services/trendAnalysisService";
 import type { AuthStatus, CurrentUserViewModel, KeywordSyncStatus } from "@/src/types/auth";
 import type {
   BoardPostViewModel,
@@ -34,9 +38,12 @@ import type {
   CommunityBoardSectionViewModel,
   CommunityPostDraftViewModel,
   CommunitySyncStatus,
-  KeywordSearchBriefingViewModel,
   KeywordViewModel,
-  TrendDashboardSnapshot,
+  NewsRecommendationViewModel,
+  NewsSummaryViewModel,
+  NewsSyncStatus,
+  TrendAnalysisSummaryViewModel,
+  TrendAnalysisSyncStatus,
   TrendScopeSection,
 } from "@/src/types/trend";
 
@@ -58,12 +65,18 @@ interface TrendScopeWorkspaceState {
   readonly canSubmitPostComment: boolean;
   readonly keywords: readonly KeywordViewModel[];
   readonly keywordDraft: string;
+  readonly newsRecommendation: NewsRecommendationViewModel | null;
+  readonly newsSummariesByArticleId: Readonly<Record<string, NewsSummaryViewModel>>;
+  readonly newsSyncMessage: string | null;
+  readonly newsSyncStatus: NewsSyncStatus;
+  readonly trendAnalysisSummary: TrendAnalysisSummaryViewModel | null;
+  readonly trendAnalysisSyncMessage: string | null;
+  readonly trendAnalysisSyncStatus: TrendAnalysisSyncStatus;
   readonly onboardingKeywordDraft: string;
   readonly keywordSyncMessage: string | null;
   readonly keywordSyncStatus: KeywordSyncStatus;
-  readonly searchDraft: string;
-  readonly searchBriefing: KeywordSearchBriefingViewModel | null;
   readonly selectedOnboardingKeywordNames: readonly string[];
+  readonly summarizingNewsId: string | null;
   readonly canSubmitOnboardingKeywords: boolean;
   readonly goToSection: (section: TrendScopeSection) => void;
   readonly login: () => void;
@@ -71,10 +84,10 @@ interface TrendScopeWorkspaceState {
   readonly setKeywordDraft: (value: string) => void;
   readonly setOnboardingKeywordDraft: (value: string) => void;
   readonly setPostCommentDraft: (value: string) => void;
-  readonly setSearchDraft: (value: string) => void;
   readonly addKeyword: () => Promise<void>;
   readonly addCustomOnboardingKeyword: () => void;
-  readonly requestKeywordSearch: () => void;
+  readonly refreshNewsRecommendations: () => Promise<void>;
+  readonly summarizeRecommendedNews: (newsId: string) => Promise<void>;
   readonly startLoginWithOnboardingKeywords: () => Promise<void>;
   readonly startLoginWithoutOnboardingKeywords: () => void;
   readonly setCommunityBoardSection: (sectionId: CommunityBoardFilterId) => void;
@@ -90,9 +103,7 @@ interface TrendScopeWorkspaceState {
  * 화면 내 탭 이동, 키워드 편집, 커뮤니티 API 연동 등 브라우저 상호작용 상태를 관리한다.
  * 실제 백엔드 API 호출은 service 경계를 통해 수행한다.
  */
-export function useTrendScopeWorkspace(
-  snapshot: TrendDashboardSnapshot,
-): TrendScopeWorkspaceState {
+export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
   const [activeSection, setActiveSection] = useState<TrendScopeSection>("home");
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [activePost, setActivePost] = useState<BoardPostViewModel | null>(null);
@@ -100,12 +111,12 @@ export function useTrendScopeWorkspace(
     useState<CommunityBoardFilterId>("all");
   const [communityBoardSections, setCommunityBoardSections] = useState<
     readonly CommunityBoardSectionViewModel[]
-  >(snapshot.communityBoardSections);
+  >([]);
   const [boardPosts, setBoardPosts] = useState<readonly BoardPostViewModel[]>([]);
   const [communitySyncStatus, setCommunitySyncStatus] =
     useState<CommunitySyncStatus>("idle");
   const [communitySyncMessage, setCommunitySyncMessage] = useState<string | null>(null);
-  const [keywords, setKeywords] = useState<readonly KeywordViewModel[]>(snapshot.keywords);
+  const [keywords, setKeywords] = useState<readonly KeywordViewModel[]>([]);
   const [currentUser, setCurrentUser] = useState<CurrentUserViewModel | null>(null);
   const [authStatus, setAuthStatus] = useState<AuthStatus>("checking");
   const [authMessage, setAuthMessage] = useState<string | null>(null);
@@ -122,8 +133,23 @@ export function useTrendScopeWorkspace(
   const [selectedOnboardingKeywordNames, setSelectedOnboardingKeywordNames] = useState<
     readonly string[]
   >([]);
-  const [searchDraft, setSearchDraft] = useState("");
-  const [searchBriefing, setSearchBriefing] = useState<KeywordSearchBriefingViewModel | null>(null);
+  const [newsRecommendation, setNewsRecommendation] =
+    useState<NewsRecommendationViewModel | null>(null);
+  const [newsSummariesByArticleId, setNewsSummariesByArticleId] = useState<
+    Readonly<Record<string, NewsSummaryViewModel>>
+  >({});
+  const [newsSyncStatus, setNewsSyncStatus] = useState<NewsSyncStatus>("idle");
+  const [newsSyncMessage, setNewsSyncMessage] = useState<string | null>(
+    "로그인 후 추천 뉴스를 확인할 수 있습니다.",
+  );
+  const [summarizingNewsId, setSummarizingNewsId] = useState<string | null>(null);
+  const [trendAnalysisSummary, setTrendAnalysisSummary] =
+    useState<TrendAnalysisSummaryViewModel | null>(null);
+  const [trendAnalysisSyncStatus, setTrendAnalysisSyncStatus] =
+    useState<TrendAnalysisSyncStatus>("idle");
+  const [trendAnalysisSyncMessage, setTrendAnalysisSyncMessage] = useState<string | null>(
+    "로그인 후 브리핑 지표를 확인할 수 있습니다.",
+  );
 
   useEffect(() => {
     let shouldUpdateState = true;
@@ -156,8 +182,8 @@ export function useTrendScopeWorkspace(
         setKeywordSyncStatus(isMissingTokenError(error) ? "idle" : "error");
         setKeywordSyncMessage(
           isMissingTokenError(error)
-            ? "로그인 후 백엔드 키워드를 불러옵니다."
-            : getApiErrorMessage(error, "키워드 동기화 준비에 실패했습니다."),
+            ? "로그인 후 키워드를 확인할 수 있습니다."
+            : getApiErrorMessage(error, "키워드 확인에 실패했습니다."),
         );
         return;
       }
@@ -201,6 +227,124 @@ export function useTrendScopeWorkspace(
       shouldUpdateState = false;
     };
   }, []);
+
+  useEffect(() => {
+    let shouldUpdateState = true;
+
+    async function syncNewsRecommendations() {
+      if (authStatus !== "authenticated" || currentUser === null) {
+        setNewsRecommendation(null);
+        setNewsSummariesByArticleId({});
+        setSummarizingNewsId(null);
+        setNewsSyncStatus("idle");
+        setNewsSyncMessage("로그인 후 추천 뉴스를 확인할 수 있습니다.");
+        return;
+      }
+
+      if (keywordSyncStatus !== "ready") {
+        return;
+      }
+
+      if (keywords.length === 0) {
+        setNewsRecommendation({
+          keywords: [],
+          articles: [],
+          refreshed: false,
+        });
+        setNewsSummariesByArticleId({});
+        setNewsSyncStatus("idle");
+        setNewsSyncMessage("키워드를 추가하면 추천 뉴스가 준비됩니다.");
+        return;
+      }
+
+      setNewsSyncStatus("loading");
+      setNewsSyncMessage(null);
+
+      try {
+        const recommendation = await fetchNewsRecommendations({ refresh: false });
+
+        if (!shouldUpdateState) {
+          return;
+        }
+
+        setNewsRecommendation(recommendation);
+        setNewsSummariesByArticleId({});
+        setNewsSyncStatus("ready");
+        setNewsSyncMessage(
+          recommendation.articles.length === 0
+            ? "저장된 추천 뉴스가 없습니다. 새 소식을 불러와 보세요."
+            : null,
+        );
+      } catch (error) {
+        if (!shouldUpdateState) {
+          return;
+        }
+
+        if (isMissingTokenError(error)) {
+          setAuthStatus("anonymous");
+          setCurrentUser(null);
+        }
+
+        setNewsSyncStatus("error");
+        setNewsSyncMessage(getApiErrorMessage(error, "추천 뉴스를 불러오지 못했습니다."));
+      }
+    }
+
+    void syncNewsRecommendations();
+
+    return () => {
+      shouldUpdateState = false;
+    };
+  }, [authStatus, currentUser, keywordSyncStatus, keywords]);
+
+  useEffect(() => {
+    let shouldUpdateState = true;
+
+    async function syncTrendAnalysisSummary() {
+      if (authStatus !== "authenticated" || currentUser === null) {
+        setTrendAnalysisSummary(null);
+        setTrendAnalysisSyncStatus("idle");
+        setTrendAnalysisSyncMessage("로그인 후 브리핑 지표를 확인할 수 있습니다.");
+        return;
+      }
+
+      setTrendAnalysisSyncStatus("loading");
+      setTrendAnalysisSyncMessage(null);
+
+      try {
+        const summary = await fetchTrendAnalysisSummary();
+
+        if (!shouldUpdateState) {
+          return;
+        }
+
+        setTrendAnalysisSummary(summary);
+        setTrendAnalysisSyncStatus("ready");
+        setTrendAnalysisSyncMessage(null);
+      } catch (error) {
+        if (!shouldUpdateState) {
+          return;
+        }
+
+        if (isMissingTokenError(error)) {
+          setAuthStatus("anonymous");
+          setCurrentUser(null);
+        }
+
+        setTrendAnalysisSummary(null);
+        setTrendAnalysisSyncStatus("error");
+        setTrendAnalysisSyncMessage(
+          getApiErrorMessage(error, "트렌드 분석 요약을 불러오지 못했습니다."),
+        );
+      }
+    }
+
+    void syncTrendAnalysisSummary();
+
+    return () => {
+      shouldUpdateState = false;
+    };
+  }, [authStatus, currentUser]);
 
   useEffect(() => {
     let shouldUpdateState = true;
@@ -290,10 +434,8 @@ export function useTrendScopeWorkspace(
   }
 
   function goToSection(section: TrendScopeSection) {
-    if (section === "writePost" && currentUser === null) {
-      setCommunitySyncStatus("error");
-      setCommunitySyncMessage("로그인 후 게시글을 작성할 수 있습니다.");
-      beginGoogleOAuthLogin();
+    if (section !== "home" && currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
       return;
     }
 
@@ -317,7 +459,7 @@ export function useTrendScopeWorkspace(
     }
 
     if (currentUser === null) {
-      beginGoogleOAuthLogin();
+      returnToHomeForLoginRequiredFeature();
       return;
     }
 
@@ -330,12 +472,13 @@ export function useTrendScopeWorkspace(
       setKeywords(createdKeywords);
       setSelectedOnboardingKeywordNames([]);
       setKeywordSyncStatus("ready");
-      setKeywordSyncMessage("첫 브리핑 키워드를 백엔드에 저장했습니다.");
+      setKeywordSyncMessage("첫 브리핑 키워드를 저장했습니다.");
       setActiveSection("home");
       scrollToTop();
     } catch (error) {
       if (isMissingTokenError(error)) {
         setAuthStatus("anonymous");
+        setCurrentUser(null);
       }
 
       setKeywordSyncStatus("error");
@@ -365,9 +508,20 @@ export function useTrendScopeWorkspace(
     setAuthStatus("anonymous");
     clearPendingOnboardingKeywordNames();
     setSelectedOnboardingKeywordNames([]);
-    setKeywords(snapshot.keywords);
+    setKeywords([]);
     setKeywordSyncStatus("idle");
-    setKeywordSyncMessage("로그아웃되어 로컬 예시 키워드를 표시합니다.");
+    setKeywordSyncMessage("로그아웃되었습니다.");
+    setActiveSection("home");
+    setActivePostId(null);
+    setActivePost(null);
+    setNewsRecommendation(null);
+    setNewsSummariesByArticleId({});
+    setSummarizingNewsId(null);
+    setNewsSyncStatus("idle");
+    setNewsSyncMessage("로그인 후 추천 뉴스를 확인할 수 있습니다.");
+    setTrendAnalysisSummary(null);
+    setTrendAnalysisSyncStatus("idle");
+    setTrendAnalysisSyncMessage("로그인 후 브리핑 지표를 확인할 수 있습니다.");
 
     try {
       const anonymousPosts = await fetchCommunityPosts("all");
@@ -387,10 +541,7 @@ export function useTrendScopeWorkspace(
     }
 
     if (currentUser === null) {
-      setAuthStatus("anonymous");
-      setKeywordSyncStatus("error");
-      setKeywordSyncMessage("로그인 후 키워드를 등록할 수 있습니다.");
-
+      returnToHomeForLoginRequiredFeature();
       return;
     }
 
@@ -406,10 +557,11 @@ export function useTrendScopeWorkspace(
       ]);
       setKeywordDraft("");
       setKeywordSyncStatus("ready");
-      setKeywordSyncMessage("키워드를 백엔드에 등록했습니다.");
+      setKeywordSyncMessage("키워드를 등록했습니다.");
     } catch (error) {
       if (isMissingTokenError(error)) {
         setAuthStatus("anonymous");
+        setCurrentUser(null);
       }
 
       setKeywordSyncStatus("error");
@@ -417,10 +569,78 @@ export function useTrendScopeWorkspace(
     }
   }
 
-  function requestKeywordSearch() {
-    const targetKeyword = searchDraft.trim() || "입력한 키워드";
+  async function refreshNewsRecommendations() {
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
 
-    setSearchBriefing(createKeywordSearchBriefing(targetKeyword, snapshot));
+    if (keywords.length === 0) {
+      setNewsRecommendation({
+        keywords: [],
+        articles: [],
+        refreshed: false,
+      });
+      setNewsSyncStatus("idle");
+      setNewsSyncMessage("키워드를 먼저 추가하세요.");
+      return;
+    }
+
+    setNewsSyncStatus("refreshing");
+    setNewsSyncMessage("최신 뉴스를 준비하고 있습니다.");
+
+    try {
+      const recommendation = await fetchNewsRecommendations({ refresh: true });
+
+      setNewsRecommendation(recommendation);
+      setNewsSummariesByArticleId({});
+      setNewsSyncStatus("ready");
+      setNewsSyncMessage(
+        recommendation.articles.length === 0
+          ? "아직 표시할 추천 뉴스가 없습니다."
+          : "최신 뉴스를 수집했습니다.",
+      );
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setNewsSyncStatus("error");
+      setNewsSyncMessage(getApiErrorMessage(error, "최신 뉴스 수집에 실패했습니다."));
+    }
+  }
+
+  async function summarizeRecommendedNews(newsId: string) {
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
+    setSummarizingNewsId(newsId);
+    setNewsSyncStatus("summarizing");
+    setNewsSyncMessage(null);
+
+    try {
+      const summary = await summarizeNewsArticle(newsId);
+
+      setNewsSummariesByArticleId((currentSummaries) => ({
+        ...currentSummaries,
+        [newsId]: summary,
+      }));
+      setNewsSyncStatus("ready");
+      setNewsSyncMessage(null);
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setNewsSyncStatus("error");
+      setNewsSyncMessage(getApiErrorMessage(error, "뉴스 요약 생성에 실패했습니다."));
+    } finally {
+      setSummarizingNewsId(null);
+    }
   }
 
   function toggleOnboardingKeyword(keywordName: string) {
@@ -475,9 +695,7 @@ export function useTrendScopeWorkspace(
     }
 
     if (currentUser === null) {
-      setCommunitySyncStatus("error");
-      setCommunitySyncMessage("로그인 후 게시글을 작성할 수 있습니다.");
-      beginGoogleOAuthLogin();
+      returnToHomeForLoginRequiredFeature();
       return;
     }
 
@@ -506,11 +724,12 @@ export function useTrendScopeWorkspace(
       setActivePost(createdPost);
       setActiveSection("post");
       setCommunitySyncStatus("ready");
-      setCommunitySyncMessage("게시글을 백엔드에 등록했습니다.");
+      setCommunitySyncMessage("게시글을 등록했습니다.");
       scrollToTop();
     } catch (error) {
       if (isMissingTokenError(error)) {
         setAuthStatus("anonymous");
+        setCurrentUser(null);
       }
 
       setCommunitySyncStatus("error");
@@ -527,8 +746,7 @@ export function useTrendScopeWorkspace(
     }
 
     if (currentUser === null) {
-      setCommunitySyncStatus("error");
-      setCommunitySyncMessage("로그인 후 댓글을 작성할 수 있습니다.");
+      returnToHomeForLoginRequiredFeature();
       return;
     }
 
@@ -548,6 +766,7 @@ export function useTrendScopeWorkspace(
     } catch (error) {
       if (isMissingTokenError(error)) {
         setAuthStatus("anonymous");
+        setCurrentUser(null);
       }
 
       setCommunitySyncStatus("error");
@@ -563,8 +782,7 @@ export function useTrendScopeWorkspace(
     }
 
     if (currentUser === null) {
-      setCommunitySyncStatus("error");
-      setCommunitySyncMessage("로그인 후 좋아요를 누를 수 있습니다.");
+      returnToHomeForLoginRequiredFeature();
       return;
     }
 
@@ -600,6 +818,11 @@ export function useTrendScopeWorkspace(
       setCommunitySyncStatus("error");
       setCommunitySyncMessage(getApiErrorMessage(error, "좋아요 변경에 실패했습니다."));
 
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
       if (isLikeStateConflictError(error)) {
         void reloadActivePost(previousPost.id);
       }
@@ -607,6 +830,11 @@ export function useTrendScopeWorkspace(
   }
 
   function openPost(postId: string) {
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
     const localPost = boardPosts.find((post) => post.id === postId) ?? null;
 
     setActivePostId(postId);
@@ -654,6 +882,18 @@ export function useTrendScopeWorkspace(
     );
   }
 
+  function returnToHomeForLoginRequiredFeature() {
+    setActiveSection("home");
+    setActivePostId(null);
+    setActivePost(null);
+    setCommunitySyncMessage(null);
+    setKeywordSyncMessage(null);
+    setNewsSyncMessage("로그인 후 추천 뉴스를 확인할 수 있습니다.");
+    setTrendAnalysisSyncMessage("로그인 후 브리핑 지표를 확인할 수 있습니다.");
+    showLoginRequiredAlert();
+    scrollToTop();
+  }
+
   return {
     activeSection,
     activePost,
@@ -672,12 +912,18 @@ export function useTrendScopeWorkspace(
     canSubmitPostComment,
     keywords,
     keywordDraft,
+    newsRecommendation,
+    newsSummariesByArticleId,
+    newsSyncMessage,
+    newsSyncStatus,
+    trendAnalysisSummary,
+    trendAnalysisSyncMessage,
+    trendAnalysisSyncStatus,
     onboardingKeywordDraft,
     keywordSyncMessage,
     keywordSyncStatus,
-    searchDraft,
-    searchBriefing,
     selectedOnboardingKeywordNames,
+    summarizingNewsId,
     canSubmitOnboardingKeywords,
     goToSection,
     login,
@@ -685,10 +931,10 @@ export function useTrendScopeWorkspace(
     setKeywordDraft,
     setOnboardingKeywordDraft,
     setPostCommentDraft,
-    setSearchDraft,
     addKeyword,
     addCustomOnboardingKeyword,
-    requestKeywordSearch,
+    refreshNewsRecommendations,
+    summarizeRecommendedNews,
     startLoginWithOnboardingKeywords,
     startLoginWithoutOnboardingKeywords,
     setCommunityBoardSection,
@@ -704,6 +950,12 @@ export function useTrendScopeWorkspace(
 function scrollToTop() {
   if (typeof window !== "undefined") {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
+function showLoginRequiredAlert() {
+  if (typeof window !== "undefined") {
+    window.alert("로그인이 필요한 기능입니다.");
   }
 }
 

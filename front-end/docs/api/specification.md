@@ -159,6 +159,123 @@
   - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
   - `EXPIRED_JWT_TOKEN`: token 만료
 
+### GET `/api/news/recommendations`
+- 설명: 현재 로그인 사용자의 활성 온보딩 키워드 기준 추천 뉴스를 조회한다. `refresh=true`이면 추천 전에 백엔드가 네이버 뉴스 API로 최신 뉴스를 수집한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params:
+  - `refresh`: boolean, optional, default `false`, `true`이면 최신 뉴스 수집 후 추천 목록 반환
+  - `limit`: number, optional, default `20`, 최소 `1`, 최대 `50`, 추천 뉴스 개수
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.keywords`: array, required, 추천 기준 키워드 목록
+  - `data.keywords[].id`: string, required, 키워드 ID
+  - `data.keywords[].name`: string, required, 키워드명
+  - `data.articles`: array, required, 추천 뉴스 목록
+  - `data.articles[].id`: string, required, 뉴스 ID
+  - `data.articles[].keywordId`: string, required, 매칭된 온보딩 키워드 ID
+  - `data.articles[].matchedKeyword`: string, required, 매칭된 키워드명
+  - `data.articles[].title`: string, required, 뉴스 제목
+  - `data.articles[].description`: string, optional, nullable, 뉴스 설명
+  - `data.articles[].originUrl`: string, required, 원문 URL
+  - `data.articles[].publishedAt`: string, optional, nullable, ISO-8601 발행 시각
+  - `data.articles[].recommendationReason`: string, required, 추천 사유
+  - `data.refreshed`: boolean, required, 이번 요청에서 수집을 수행했는지 여부
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+  - `404`: 사용자 없음
+  - `502`: 최신 뉴스 수집 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+  - `USER_NOT_FOUND`: token에 해당하는 사용자 없음
+  - `NAVER_API_REQUEST_FAILED`: `refresh=true` 수집 중 네이버 뉴스 API 호출 실패
+- Notes:
+  - 프론트는 최초 브리핑 진입과 키워드 동기화 후 `refresh=false&limit=20`으로 조회한다.
+  - 사용자가 `최신 뉴스 가져오기`를 누른 경우에만 `refresh=true&limit=20`을 호출한다.
+  - `articles`는 백엔드 정렬 순서를 유지한다.
+
+### POST `/api/news/{newsId}/summary`
+- 설명: 추천 뉴스 목록의 단일 뉴스 ID를 로컬 LLM으로 요약한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `newsId`: string, required, 추천 뉴스 응답의 `articles[].id`
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.newsIds`: string[], required, 요약 대상 뉴스 ID 목록
+  - `data.summary`: string, required, LLM 생성 요약문
+  - `data.sources`: array, required, 요약 근거 뉴스 목록
+  - `data.sources[].id`: string, required, 뉴스 ID
+  - `data.sources[].title`: string, required, 뉴스 제목
+  - `data.sources[].originUrl`: string, required, 원문 URL
+  - `data.sources[].publishedAt`: string, optional, nullable, ISO-8601 발행 시각
+  - `message`: string, required
+- Status codes:
+  - `200`: 요약 성공
+  - `401`: 인증 실패
+  - `404`: 뉴스 없음
+  - `502`: LLM 요약 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+  - `NEWS_ARTICLE_NOT_FOUND`: 요약 대상 뉴스 없음
+  - `AI_SUMMARY_FAILED`: 로컬 LLM 요약 요청 실패
+
+### POST `/api/news/summary`
+- 설명: 여러 뉴스 ID를 한 번에 전달해 묶음 요약을 생성한다. 현재 UI는 단일 뉴스 카드 요약을 우선 노출하며, service 경계는 묶음 요약 계약도 보유한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body:
+  - `newsIds`: string[], required, 요약할 뉴스 ID 목록
+  - `maxSentenceCount`: number, optional, default `3`, 최소 `1`, 최대 `5`, 요약 문장 수
+- Response body: `POST /api/news/{newsId}/summary`와 동일
+- Status codes:
+  - `200`: 요약 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+  - `404`: 뉴스 없음
+  - `502`: LLM 요약 실패
+- Error cases:
+  - `INVALID_REQUEST`: `newsIds` 누락 또는 빈 배열
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+  - `NEWS_ARTICLE_NOT_FOUND`: 요약 대상 뉴스 없음
+  - `AI_SUMMARY_FAILED`: 로컬 LLM 요약 요청 실패
+
+### GET `/api/trend-analysis/summary`
+- 설명: 백엔드가 저장한 TrendAnalysis 결과의 평균 트렌드 점수를 조회한다. 현재 UI는 AI 브리핑 화면에서 이 값을 표시한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.trendScore`: number, required, 백엔드가 계산한 평균 트렌드 점수
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
 ### GET `/api/community/categories`
 - 설명: 게시판 카테고리 목록을 조회한다. API 응답의 enum code를 UI 섹션 view model로 변환해 사용한다.
 - 인증: public
@@ -374,4 +491,6 @@
 ## 미연동 계약
 - 키워드 수정/삭제 API는 현재 백엔드 문서에 정의되어 있지 않아 호출하지 않는다.
 - 커뮤니티 게시글 수정/삭제, 댓글 수정/삭제 API는 참고자료에는 있으나 현재 UI에서 호출하지 않는다.
-- 뉴스 분석, AI 브리핑 API는 현재 백엔드 문서에 정의되어 있지 않아 기존 로컬 view model을 유지한다.
+- 임의 키워드 검색용 뉴스 분석 API는 현재 백엔드 문서에 정의되어 있지 않아 화면과 로컬 구현을 제거했다.
+- 뉴스 추천과 단일/묶음 LLM 요약 API는 백엔드 계약이 확인되어 `newsService` 경계 뒤에서 호출한다.
+- 트렌드 분석 요약 API는 백엔드 계약이 확인되어 `trendAnalysisService` 경계 뒤에서 호출한다.

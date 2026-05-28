@@ -123,7 +123,7 @@ export async function requestBackendApi<TData>(
     throw new ApiClientError({
       status: response.status,
       errorCode: "INVALID_API_RESPONSE",
-      message: "백엔드 응답 형식이 올바르지 않습니다.",
+      message: "서비스 응답을 확인하지 못했습니다.",
     });
   }
 
@@ -240,7 +240,7 @@ function createApiClientError<TData>(
   return new ApiClientError({
     status,
     errorCode: "HTTP_REQUEST_FAILED",
-    message: "백엔드 요청에 실패했습니다.",
+    message: "요청 처리에 실패했습니다.",
   });
 }
 

@@ -3,56 +3,42 @@ import { Button } from "@/src/components/ui/Button";
 import type { CurrentUserViewModel, KeywordSyncStatus } from "@/src/types/auth";
 import type {
   BoardPostViewModel,
-  BriefingViewModel,
   CommunityBoardFilterId,
   CommunityBoardSectionViewModel,
   CommunityPostDraftViewModel,
   CommunitySyncStatus,
-  KeywordSearchBriefingViewModel,
   KeywordViewModel,
-  MetricViewModel,
-  NewsArticleViewModel,
-  OnboardingKeywordOptionViewModel,
-  RelatedKeywordViewModel,
-  TrendPointViewModel,
+  NewsRecommendationViewModel,
+  NewsSummaryViewModel,
+  NewsSyncStatus,
+  RecommendedNewsArticleViewModel,
+  TrendAnalysisSummaryViewModel,
+  TrendAnalysisSyncStatus,
   TrendScopeSection,
-  WordFrequencyViewModel,
 } from "@/src/types/trend";
-import {
-  RelatedKeywordMap,
-  SignalMapVisual,
-  TrendBarChart,
-  WordCloud,
-} from "./TrendScopeVisuals";
 
 interface HomeSectionProps {
   readonly isActive: boolean;
-  readonly featureChips: readonly string[];
-  readonly metrics: readonly MetricViewModel[];
-  readonly searchDraft: string;
-  readonly onNavigate: (section: TrendScopeSection) => void;
-  readonly onSearchDraftChange: (value: string) => void;
-  readonly onRequestKeywordSearch: () => void;
 }
 
 interface BriefingSectionProps {
   readonly isActive: boolean;
-  readonly briefing: BriefingViewModel;
-}
-
-interface SearchSectionProps {
-  readonly isActive: boolean;
-  readonly searchDraft: string;
-  readonly searchBriefing: KeywordSearchBriefingViewModel | null;
-  readonly onSearchDraftChange: (value: string) => void;
-  readonly onRequestKeywordSearch: () => void;
+  readonly newsRecommendation: NewsRecommendationViewModel | null;
+  readonly newsSummariesByArticleId: Readonly<Record<string, NewsSummaryViewModel>>;
+  readonly newsSyncMessage: string | null;
+  readonly newsSyncStatus: NewsSyncStatus;
+  readonly summarizingNewsId: string | null;
+  readonly trendAnalysisSummary: TrendAnalysisSummaryViewModel | null;
+  readonly trendAnalysisSyncMessage: string | null;
+  readonly trendAnalysisSyncStatus: TrendAnalysisSyncStatus;
+  readonly onRefreshNews: () => Promise<void>;
+  readonly onSummarizeNews: (newsId: string) => Promise<void>;
 }
 
 interface OnboardingSectionProps {
   readonly isActive: boolean;
   readonly canSubmitKeywords: boolean;
   readonly keywordDraft: string;
-  readonly keywordOptions: readonly OnboardingKeywordOptionViewModel[];
   readonly selectedKeywordNames: readonly string[];
   readonly onAddCustomKeyword: () => void;
   readonly onKeywordDraftChange: (value: string) => void;
@@ -109,29 +95,30 @@ interface PostSectionProps {
   readonly onToggleLike: () => Promise<void>;
 }
 
-interface BriefingContentProps {
-  readonly briefing: BriefingViewModel;
+interface TrendAnalysisPanelProps {
+  readonly summary: TrendAnalysisSummaryViewModel | null;
+  readonly syncMessage: string | null;
+  readonly syncStatus: TrendAnalysisSyncStatus;
 }
 
-interface NewsListProps {
-  readonly newsArticles: readonly NewsArticleViewModel[];
+interface RecommendedNewsPanelProps {
+  readonly recommendation: NewsRecommendationViewModel | null;
+  readonly summariesByArticleId: Readonly<Record<string, NewsSummaryViewModel>>;
+  readonly syncMessage: string | null;
+  readonly syncStatus: NewsSyncStatus;
+  readonly summarizingNewsId: string | null;
+  readonly onRefreshNews: () => Promise<void>;
+  readonly onSummarizeNews: (newsId: string) => Promise<void>;
 }
 
-interface VisualGridProps {
-  readonly trendPoints: readonly TrendPointViewModel[];
-  readonly wordFrequencies: readonly WordFrequencyViewModel[];
-  readonly relatedKeywords: readonly RelatedKeywordViewModel[];
+interface RecommendedNewsCardProps {
+  readonly article: RecommendedNewsArticleViewModel;
+  readonly isSummarizing: boolean;
+  readonly summary: NewsSummaryViewModel | null;
+  readonly onSummarizeNews: (newsId: string) => Promise<void>;
 }
 
-export function HomeSection({
-  featureChips,
-  isActive,
-  metrics,
-  onNavigate,
-  onRequestKeywordSearch,
-  onSearchDraftChange,
-  searchDraft,
-}: HomeSectionProps) {
+export function HomeSection({ isActive }: HomeSectionProps) {
   return (
     <section className="page" data-active={isActive} id="home">
       <div className="hero">
@@ -141,63 +128,39 @@ export function HomeSection({
             AI 기반 뉴스 트렌드 브리핑
           </span>
           <h1 className="hero-title">
-            인터넷에서 지금 가장 <span className="accent-text">뜨거운 이슈</span>를 한눈에
+            관심 키워드의 뉴스 흐름을 <span className="accent-text">한 화면에서</span>
           </h1>
           <p className="body-copy">
-            관심 키워드를 등록하면 뉴스 흐름을 분석하고, 핵심 이슈와 관련 기사를 브리핑
-            화면에서 빠르게 확인할 수 있습니다.
+            키워드를 저장하고, 주요 뉴스와 요약, 커뮤니티 반응을 한곳에서 확인하세요.
           </p>
-
-          <form
-            className="input-row"
-            onSubmit={(event) => {
-              event.preventDefault();
-              onRequestKeywordSearch();
-              onNavigate("search");
-            }}
-          >
-            <input
-              className="input"
-              placeholder="관심 키워드를 입력하세요"
-              type="text"
-              value={searchDraft}
-              onChange={(event) => onSearchDraftChange(event.target.value)}
-            />
-            <Button type="submit" variant="primary">
-              키워드 검색
-            </Button>
-          </form>
-
-          <div className="chip-row" aria-label="핵심 기능">
-            {featureChips.map((chip) => (
-              <span className="chip" key={chip}>
-                {chip}
-              </span>
-            ))}
-          </div>
         </div>
 
-        <article className="hero-card">
+        <article className="hero-card home-brief-card">
           <div className="hero-card-header">
             <div>
-              <h2 className="card-title">오늘의 감자</h2>
-              <p className="body-copy">현재 뉴스 묶음에서 가장 높은 신호를 보이는 이슈</p>
+              <h2 className="card-title">오늘의 브리핑</h2>
+              <p className="body-copy">관심사에 맞춘 뉴스 흐름을 정리합니다.</p>
             </div>
-            <span className="badge">Hot issue</span>
+            <span className="badge">Personalized</span>
           </div>
-          <SignalMapVisual />
           <div className="hero-card-body">
-            <h3 className="hot-title">AI 반도체 수요 폭발, 엔비디아와 삼성전자 동반 주목</h3>
-            <p className="body-copy">
-              최근 뉴스 300건 기준으로 AI 인프라와 HBM 공급 이슈가 높은 언급량을 보였습니다.
-            </p>
-            <div className="metric-grid">
-              {metrics.map((metric) => (
-                <div className="metric-card" key={metric.label}>
-                  <span className="metric-value">{metric.value}</span>
-                  <span className="metric-label">{metric.label}</span>
-                </div>
-              ))}
+            <div className="home-step-list" aria-label="브리핑 흐름">
+              <div className="home-step-item">
+                <span>01</span>
+                <strong>키워드</strong>
+              </div>
+              <div className="home-step-item">
+                <span>02</span>
+                <strong>뉴스</strong>
+              </div>
+              <div className="home-step-item">
+                <span>03</span>
+                <strong>요약</strong>
+              </div>
+            </div>
+            <div className="home-card-note">
+              <span className="signal-dot" aria-hidden="true" />
+              <span>브리핑은 로그인 후 개인 키워드를 기준으로 준비됩니다.</span>
             </div>
           </div>
         </article>
@@ -206,60 +169,41 @@ export function HomeSection({
   );
 }
 
-export function BriefingSection({ briefing, isActive }: BriefingSectionProps) {
+export function BriefingSection({
+  isActive,
+  newsRecommendation,
+  newsSummariesByArticleId,
+  newsSyncMessage,
+  newsSyncStatus,
+  onRefreshNews,
+  onSummarizeNews,
+  summarizingNewsId,
+  trendAnalysisSummary,
+  trendAnalysisSyncMessage,
+  trendAnalysisSyncStatus,
+}: BriefingSectionProps) {
   return (
     <section className="page" data-active={isActive} id="briefing">
-      <BriefingContent briefing={briefing} />
-    </section>
-  );
-}
-
-export function SearchSection({
-  isActive,
-  onRequestKeywordSearch,
-  onSearchDraftChange,
-  searchBriefing,
-  searchDraft,
-}: SearchSectionProps) {
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onRequestKeywordSearch();
-  }
-
-  return (
-    <section className="page" data-active={isActive} id="search">
       <div className="section-heading">
-        <h2 className="section-title">키워드 검색</h2>
-        <p className="body-copy">원하는 키워드를 검색하면 AI 브리핑과 같은 형식으로 보여줍니다.</p>
+        <h2 className="section-title">AI 브리핑</h2>
+        <p className="body-copy">관심 키워드의 흐름과 추천 뉴스를 확인하세요.</p>
       </div>
 
-      <form className="search-page-form" onSubmit={submitSearch}>
-        <input
-          className="input"
-          placeholder="예: 전기차 배터리"
-          type="text"
-          value={searchDraft}
-          onChange={(event) => onSearchDraftChange(event.target.value)}
-        />
-        <Button type="submit" variant="primary">
-          검색
-        </Button>
-      </form>
+      <TrendAnalysisPanel
+        summary={trendAnalysisSummary}
+        syncMessage={trendAnalysisSyncMessage}
+        syncStatus={trendAnalysisSyncStatus}
+      />
 
-      {searchBriefing === null ? (
-        <div className="empty-briefing">
-          <span className="badge">Ready</span>
-          <h3 className="card-title mt-5">검색할 키워드를 입력하세요</h3>
-          <p className="body-copy">
-            검색 후 요약, 관련 키워드, 트렌드 그래프, 워드 클라우드, 관련 뉴스가 같은 구성으로
-            표시됩니다.
-          </p>
-        </div>
-      ) : (
-        <div className="mt-7">
-          <BriefingContent briefing={searchBriefing} />
-        </div>
-      )}
+      <RecommendedNewsPanel
+        recommendation={newsRecommendation}
+        summariesByArticleId={newsSummariesByArticleId}
+        summarizingNewsId={summarizingNewsId}
+        syncMessage={newsSyncMessage}
+        syncStatus={newsSyncStatus}
+        onRefreshNews={onRefreshNews}
+        onSummarizeNews={onSummarizeNews}
+      />
     </section>
   );
 }
@@ -268,7 +212,6 @@ export function OnboardingSection({
   canSubmitKeywords,
   isActive,
   keywordDraft,
-  keywordOptions,
   onAddCustomKeyword,
   onKeywordDraftChange,
   onNavigate,
@@ -277,8 +220,6 @@ export function OnboardingSection({
   onToggleKeyword,
   selectedKeywordNames,
 }: OnboardingSectionProps) {
-  const selectedKeywordNameSet = new Set(selectedKeywordNames);
-
   function submitCustomKeyword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onAddCustomKeyword();
@@ -293,7 +234,7 @@ export function OnboardingSection({
             First briefing
           </span>
           <h2 className="section-title">첫 브리핑 키워드</h2>
-          <p className="body-copy">처음 가입한 계정의 관심 키워드를 저장합니다.</p>
+          <p className="body-copy">관심 키워드를 입력해 첫 브리핑을 준비하세요.</p>
         </div>
         <Button variant="ghost" onClick={() => onNavigate("home")}>
           돌아가기
@@ -302,31 +243,11 @@ export function OnboardingSection({
 
       <div className="onboarding-layout">
         <article className="onboarding-panel">
-          <h3 className="card-title">관심 분야</h3>
-          <div className="onboarding-option-grid">
-            {keywordOptions.map((option) => {
-              const isSelected = selectedKeywordNameSet.has(option.label);
-
-              return (
-                <button
-                  aria-pressed={isSelected}
-                  className="onboarding-option"
-                  data-selected={isSelected}
-                  key={option.id}
-                  type="button"
-                  onClick={() => onToggleKeyword(option.label)}
-                >
-                  <strong>{option.label}</strong>
-                  <span>{option.description}</span>
-                </button>
-              );
-            })}
-          </div>
-
+          <h3 className="card-title">키워드 입력</h3>
           <form className="input-row" onSubmit={submitCustomKeyword}>
             <input
               className="input"
-              placeholder="직접 입력"
+              placeholder="예: 반도체"
               type="text"
               value={keywordDraft}
               onChange={(event) => onKeywordDraftChange(event.target.value)}
@@ -400,7 +321,7 @@ export function MyPageSection({
         <h3 className="card-title">내 키워드 관리</h3>
         <div className="account-strip">
           {currentUser === null ? (
-            <span className="muted">로그인 후 백엔드 키워드와 동기화됩니다.</span>
+            <span className="muted">로그인이 필요합니다.</span>
           ) : (
             <>
               <strong>{currentUser.name}</strong>
@@ -437,7 +358,7 @@ export function MyPageSection({
               <div className="keyword-row" key={keyword.id}>
                 <strong>{keyword.label}</strong>
                 <span className="keyword-state">
-                  {keywordSyncStatus === "ready" ? "서버 동기화" : "로컬 표시"}
+                  {keywordSyncStatus === "ready" ? "저장됨" : "처리 중"}
                 </span>
               </div>
             ))
@@ -546,17 +467,14 @@ export function CommunitySection({
           <div className="discussion-panel-header">
             <div>
               <span className="badge">{activeBoardSection?.label ?? "전체"}</span>
-              <h3 className="discussion-title">
-                {activeBoardSection?.description ?? "전체 분야의 인기 흐름"}
-              </h3>
+              <h3 className="discussion-title">{activeBoardSection?.label ?? "전체 게시글"}</h3>
             </div>
             <span className="muted">{boardPosts.length}개 글</span>
           </div>
 
           {syncStatus === "loading" && allBoardPosts.length === 0 ? (
             <div className="community-empty">
-              <h3 className="card-title">게시글을 불러오는 중입니다</h3>
-              <p className="body-copy">백엔드 게시판 API에서 목록을 가져오고 있습니다.</p>
+              <h3 className="card-title">게시글을 준비하고 있습니다</h3>
             </div>
           ) : boardPosts.length === 0 ? (
             <div className="community-empty">
@@ -703,8 +621,8 @@ export function WritePostSection({
 
         <aside className="post-preview">
           <span className="badge">{selectedBoardSection?.label ?? "게시판"}</span>
-          <h3>{postDraft.title.trim() || "게시글 제목"}</h3>
-          <p>{postDraft.body.trim() || "작성 중인 내용이 여기에 미리 표시됩니다."}</p>
+          <h3>{postDraft.title.trim() || "제목 미리보기"}</h3>
+          <p>{postDraft.body.trim() || "작성 중인 내용이 여기에 표시됩니다."}</p>
         </aside>
       </div>
     </section>
@@ -811,80 +729,174 @@ export function PostSection({
   );
 }
 
-function BriefingContent({ briefing }: BriefingContentProps) {
+function TrendAnalysisPanel({ summary, syncMessage, syncStatus }: TrendAnalysisPanelProps) {
   return (
-    <>
-      <div className="section-heading">
-        <h2 className="section-title">{briefing.title}</h2>
-        <p className="body-copy">{briefing.description}</p>
+    <article className="card trend-analysis-card">
+      <div>
+        <span className="badge">트렌드 점수</span>
+        <h3 className="card-title">브리핑 지표</h3>
       </div>
 
-      <div className="grid-two">
-        <article className="card">
-          <h3 className="card-title">AI 요약</h3>
-          <p className="body-copy">{briefing.summaryIntro}</p>
-          <ul className="summary-list">
-            {briefing.summaryHighlights.map((highlight) => (
-              <li key={highlight}>{highlight}</li>
-            ))}
-          </ul>
-        </article>
+      {syncMessage !== null ? (
+        <p className="sync-message" data-state={syncStatus}>
+          {syncMessage}
+        </p>
+      ) : null}
 
-        <aside className="card">
-          <h3 className="card-title">{briefing.keywordPanelTitle}</h3>
-          <div className="chip-row">
-            {briefing.keywords.map((keyword) => (
-              <span className={`chip ${keyword.isHot ? "chip-hot" : ""}`} key={keyword.id}>
-                {keyword.label}
-              </span>
+      {syncStatus === "loading" ? (
+        <p className="body-copy">분석 결과를 준비하고 있습니다.</p>
+      ) : summary === null ? (
+        <p className="body-copy">아직 표시할 지표가 없습니다.</p>
+      ) : (
+        <div className="trend-analysis-score">
+          <strong>{summary.trendScoreLabel}</strong>
+          <span>평균 트렌드 점수</span>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function RecommendedNewsPanel({
+  recommendation,
+  summariesByArticleId,
+  summarizingNewsId,
+  syncMessage,
+  syncStatus,
+  onRefreshNews,
+  onSummarizeNews,
+}: RecommendedNewsPanelProps) {
+  const articles = recommendation?.articles ?? [];
+  const keywords = recommendation?.keywords ?? [];
+  const isRecommendationLoading = syncStatus === "loading";
+  const isRefreshing = syncStatus === "refreshing";
+
+  return (
+    <section className="news-recommendation-section mt-5">
+      <div className="section-toolbar">
+        <div>
+          <span className="badge">추천 뉴스</span>
+          <h3 className="section-subtitle">내 키워드 추천 뉴스</h3>
+          <p className="body-copy">관심 키워드와 맞닿은 기사 목록입니다.</p>
+        </div>
+        <Button
+          disabled={isRecommendationLoading || isRefreshing}
+          variant="primary"
+          onClick={() => void onRefreshNews()}
+        >
+          {isRefreshing ? "수집 중" : "최신 뉴스 가져오기"}
+        </Button>
+      </div>
+
+      {syncMessage !== null ? (
+        <p className="sync-message news-sync-message" data-state={syncStatus}>
+          {syncMessage}
+        </p>
+      ) : null}
+
+      {keywords.length > 0 ? (
+        <div className="chip-row news-keyword-row" aria-label="추천 기준 키워드">
+          {keywords.map((keyword) => (
+            <span className="chip" key={keyword.id}>
+              {keyword.label}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {isRecommendationLoading && articles.length === 0 ? (
+        <div className="empty-briefing">
+          <span className="badge">준비 중</span>
+          <h3 className="card-title mt-5">추천 뉴스를 불러오는 중입니다</h3>
+        </div>
+      ) : recommendation === null ? (
+        <div className="empty-briefing">
+          <span className="badge">로그인 필요</span>
+          <h3 className="card-title mt-5">브리핑을 보려면 로그인하세요</h3>
+        </div>
+      ) : keywords.length === 0 ? (
+        <div className="empty-briefing">
+          <span className="badge">키워드 없음</span>
+          <h3 className="card-title mt-5">등록된 키워드가 없습니다</h3>
+          <p className="body-copy">마이페이지에서 키워드를 추가하세요.</p>
+        </div>
+      ) : articles.length === 0 ? (
+        <div className="empty-briefing">
+          <span className="badge">뉴스 없음</span>
+          <h3 className="card-title mt-5">아직 추천 뉴스가 없습니다</h3>
+          <p className="body-copy">새 소식을 불러와 보세요.</p>
+        </div>
+      ) : (
+        <div className="recommended-news-list">
+          {articles.map((article) => (
+            <RecommendedNewsCard
+              article={article}
+              isSummarizing={summarizingNewsId === article.id}
+              key={article.id}
+              summary={summariesByArticleId[article.id] ?? null}
+              onSummarizeNews={onSummarizeNews}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RecommendedNewsCard({
+  article,
+  isSummarizing,
+  summary,
+  onSummarizeNews,
+}: RecommendedNewsCardProps) {
+  return (
+    <article className="recommended-news-card">
+      <div className="recommended-news-meta">
+        <span className="badge">{article.matchedKeyword}</span>
+        <span>{article.publishedAtLabel}</span>
+      </div>
+      <h4 className="recommended-news-title">{article.title}</h4>
+      {article.description !== null && article.description.trim().length > 0 ? (
+        <p className="body-copy recommended-news-description">{article.description}</p>
+      ) : null}
+      <p className="recommended-news-reason">{article.recommendationReason}</p>
+
+      <div className="recommended-news-actions">
+        <a
+          className="button button-ghost"
+          href={article.originUrl}
+          rel="noreferrer"
+          target="_blank"
+        >
+          원문 열기
+        </a>
+        <Button
+          disabled={isSummarizing}
+          variant="primary"
+          onClick={() => void onSummarizeNews(article.id)}
+        >
+          {isSummarizing ? "요약 중" : "AI 요약"}
+        </Button>
+      </div>
+
+      {summary !== null ? (
+        <div className="news-summary-box">
+          <h5>요약</h5>
+          <p>{summary.summary}</p>
+          <div className="summary-source-list">
+            {summary.sources.map((source) => (
+              <a
+                href={source.originUrl}
+                key={source.id}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {source.title}
+              </a>
             ))}
           </div>
-        </aside>
-      </div>
-
-      <VisualGrid
-        relatedKeywords={briefing.relatedKeywords}
-        trendPoints={briefing.trendPoints}
-        wordFrequencies={briefing.wordFrequencies}
-      />
-
-      <article className="card mt-5">
-        <h3 className="card-title">관련 뉴스 링크</h3>
-        <NewsList newsArticles={briefing.newsArticles} />
-      </article>
-    </>
-  );
-}
-
-function VisualGrid({ relatedKeywords, trendPoints, wordFrequencies }: VisualGridProps) {
-  return (
-    <div className="grid-three mt-5">
-      <article className="card">
-        <h3 className="card-title">트렌드 그래프</h3>
-        <TrendBarChart points={trendPoints} />
-      </article>
-      <article className="card">
-        <h3 className="card-title">워드 클라우드</h3>
-        <WordCloud words={wordFrequencies} />
-      </article>
-      <article className="card">
-        <h3 className="card-title">관련 키워드</h3>
-        <RelatedKeywordMap keywords={relatedKeywords} />
-      </article>
-    </div>
-  );
-}
-
-function NewsList({ newsArticles }: NewsListProps) {
-  return (
-    <div className="news-list">
-      {newsArticles.map((article) => (
-        <div className="news-row" key={article.id}>
-          <span className="news-time">{article.time}</span>
-          <span className="news-title">{article.title}</span>
-          <span className="link-label">{article.source}</span>
         </div>
-      ))}
-    </div>
+      ) : null}
+    </article>
   );
 }
