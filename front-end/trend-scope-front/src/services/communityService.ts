@@ -58,16 +58,6 @@ const categoryLabelByCode: Record<CommunityCategoryCodeDto, string> = {
   ENTERTAINMENT: "연예",
 };
 
-const categoryDescriptionByBoardSectionId: Record<CommunityBoardSectionId, string> = {
-  politics: "국회, 정당, 선거 이슈",
-  economy: "증시, 기업, 산업 흐름",
-  society: "생활, 정책, 사건 이슈",
-  it: "AI, 플랫폼, 반도체 기술",
-  global: "해외 시장과 국제 이슈",
-  sports: "스포츠 이슈와 경기 흐름",
-  entertainment: "방송, 콘텐츠, 연예 이슈",
-};
-
 /**
  * 백엔드 게시판 카테고리 목록을 UI 섹션 모델로 변환한다.
  */
@@ -201,7 +191,6 @@ function mapCommunityCategoryDtoToViewModel(
   return {
     id: sectionId,
     label: categoryDto.label || categoryLabelByCode[categoryDto.code],
-    description: categoryDescriptionByBoardSectionId[sectionId],
   };
 }
 

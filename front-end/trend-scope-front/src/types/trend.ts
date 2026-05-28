@@ -2,7 +2,6 @@ export type TrendScopeSection =
   | "home"
   | "onboarding"
   | "briefing"
-  | "search"
   | "mypage"
   | "community"
   | "writePost"
@@ -21,10 +20,15 @@ export type CommunityBoardFilterId = "all" | CommunityBoardSectionId;
 
 export type CommunitySyncStatus = "idle" | "loading" | "saving" | "ready" | "error";
 
-export interface MetricViewModel {
-  readonly label: string;
-  readonly value: string;
-}
+export type NewsSyncStatus =
+  | "idle"
+  | "loading"
+  | "refreshing"
+  | "summarizing"
+  | "ready"
+  | "error";
+
+export type TrendAnalysisSyncStatus = "idle" | "loading" | "ready" | "error";
 
 export interface KeywordViewModel {
   readonly id: string;
@@ -33,18 +37,46 @@ export interface KeywordViewModel {
   readonly isActive: boolean;
 }
 
-export interface OnboardingKeywordOptionViewModel {
+export interface NewsRecommendationKeywordViewModel {
   readonly id: string;
   readonly label: string;
-  readonly description: string;
 }
 
-export interface NewsArticleViewModel {
+export interface RecommendedNewsArticleViewModel {
   readonly id: string;
-  readonly time: string;
+  readonly keywordId: string;
+  readonly matchedKeyword: string;
   readonly title: string;
-  readonly source: string;
-  readonly href: string;
+  readonly description: string | null;
+  readonly originUrl: string;
+  readonly publishedAt: string | null;
+  readonly publishedAtLabel: string;
+  readonly recommendationReason: string;
+}
+
+export interface NewsSummarySourceViewModel {
+  readonly id: string;
+  readonly title: string;
+  readonly originUrl: string;
+  readonly publishedAt: string | null;
+  readonly publishedAtLabel: string;
+}
+
+export interface NewsSummaryViewModel {
+  readonly newsIds: readonly string[];
+  readonly summary: string;
+  readonly sources: readonly NewsSummarySourceViewModel[];
+}
+
+export interface NewsRecommendationViewModel {
+  readonly keywords: readonly NewsRecommendationKeywordViewModel[];
+  readonly articles: readonly RecommendedNewsArticleViewModel[];
+  readonly refreshed: boolean;
+}
+
+export interface TrendAnalysisSummaryViewModel {
+  readonly trendScore: number;
+  readonly trendScoreLabel: string;
 }
 
 export interface BoardPostViewModel {
@@ -74,57 +106,10 @@ export interface PostCommentViewModel {
 export interface CommunityBoardSectionViewModel {
   readonly id: CommunityBoardSectionId;
   readonly label: string;
-  readonly description: string;
 }
 
 export interface CommunityPostDraftViewModel {
   readonly boardSectionId: CommunityBoardSectionId;
   readonly title: string;
   readonly body: string;
-}
-
-export interface TrendPointViewModel {
-  readonly label: string;
-  readonly count: number;
-}
-
-export interface WordFrequencyViewModel {
-  readonly label: string;
-  readonly weight: number;
-}
-
-export interface RelatedKeywordViewModel {
-  readonly label: string;
-  readonly description: string;
-}
-
-export interface TrendDashboardSnapshot {
-  readonly heroMetrics: readonly MetricViewModel[];
-  readonly featureChips: readonly string[];
-  readonly onboardingKeywordOptions: readonly OnboardingKeywordOptionViewModel[];
-  readonly keywords: readonly KeywordViewModel[];
-  readonly summaryHighlights: readonly string[];
-  readonly newsArticles: readonly NewsArticleViewModel[];
-  readonly communityBoardSections: readonly CommunityBoardSectionViewModel[];
-  readonly boardPosts: readonly BoardPostViewModel[];
-  readonly trendPoints: readonly TrendPointViewModel[];
-  readonly wordFrequencies: readonly WordFrequencyViewModel[];
-  readonly relatedKeywords: readonly RelatedKeywordViewModel[];
-}
-
-export interface BriefingViewModel {
-  readonly title: string;
-  readonly description: string;
-  readonly summaryIntro: string;
-  readonly keywordPanelTitle: string;
-  readonly keywords: readonly KeywordViewModel[];
-  readonly summaryHighlights: readonly string[];
-  readonly newsArticles: readonly NewsArticleViewModel[];
-  readonly trendPoints: readonly TrendPointViewModel[];
-  readonly wordFrequencies: readonly WordFrequencyViewModel[];
-  readonly relatedKeywords: readonly RelatedKeywordViewModel[];
-}
-
-export interface KeywordSearchBriefingViewModel extends BriefingViewModel {
-  readonly keyword: string;
 }

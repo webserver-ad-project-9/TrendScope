@@ -4,8 +4,8 @@
 
 ## 분리 기준
 - 공통 단위: `src/components/ui`에 둔다. 특정 도메인 문구나 데이터 구조를 알지 않아야 한다.
-- 기능 전용 단위: `src/components/trend-scope`에 둔다. TrendScope 화면 섹션, 헤더, 시각화 컴포넌트가 여기에 속한다.
-- Service/Application 단위: `src/services`에 둔다. 초기 화면 뷰 모델과 백엔드 Auth/User/Keyword/Community API use-case, OAuth signup hint, 신규 가입 온보딩 키워드 bulk 생성 use-case를 제공한다.
+- 기능 전용 단위: `src/components/trend-scope`에 둔다. TrendScope 화면 섹션과 헤더가 여기에 속한다.
+- Service/Application 단위: `src/services`에 둔다. 백엔드 Auth/User/Keyword/News/TrendAnalysis/Community API use-case, OAuth signup hint, 신규 가입 온보딩 키워드 bulk 생성 use-case를 제공한다.
 - Repository/Adapter 단위: `apiClient.ts`가 현재 백엔드 REST API adapter 역할을 담당한다.
 - UI 또는 Presentation 단위: 컴포넌트는 props 기반 렌더링과 이벤트 콜백 호출만 담당한다.
 
@@ -13,22 +13,24 @@
 | Component/Module | Path | Responsibility |
 | --- | --- | --- |
 | `TrendScopeApp` | `src/components/trend-scope/TrendScopeApp.tsx` | 전체 화면 조립과 hook state 배선 |
-| `TrendScopeHeader` | `src/components/trend-scope/TrendScopeHeader.tsx` | 브랜드, 주요 탭, 로그인/시작 버튼 표시 |
+| `TrendScopeHeader` | `src/components/trend-scope/TrendScopeHeader.tsx` | 브랜드, 주요 탭, 로그인/시작 버튼 표시와 섹션 이동 이벤트 전달 |
 | `OAuthCallbackClient` | `src/components/auth/OAuthCallbackClient.tsx` | OAuth callback query token을 저장하고 홈으로 이동 |
-| `HomeSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 첫 화면, 오늘의 감자, 핵심 지표 표시 |
-| `OnboardingSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 신규 가입 후보의 관심 키워드 토글, 직접 입력, 첫 키워드 저장 CTA 표시 |
-| `BriefingSection` | `src/components/trend-scope/TrendScopeSections.tsx` | AI 브리핑, 키워드, 뉴스, 차트 표시 |
-| `SearchSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 별도 키워드 검색 화면과 검색 결과 브리핑 표시 |
+| `HomeSection` | `src/components/trend-scope/TrendScopeSections.tsx` | public 첫 화면 표시. API 데이터나 mock 지표를 렌더링하지 않음 |
+| `OnboardingSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 신규 가입 후보의 직접 입력 키워드 선택과 첫 키워드 저장 CTA 표시 |
+| `BriefingSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 백엔드 트렌드 분석 요약과 추천 뉴스/요약 패널 표시 |
+| `TrendAnalysisPanel` | `src/components/trend-scope/TrendScopeSections.tsx` | `GET /api/trend-analysis/summary` 결과 표시 |
+| `RecommendedNewsPanel` | `src/components/trend-scope/TrendScopeSections.tsx` | `GET /api/news/recommendations` 결과와 refresh action 표시 |
+| `RecommendedNewsCard` | `src/components/trend-scope/TrendScopeSections.tsx` | 추천 뉴스 카드와 `POST /api/news/{newsId}/summary` 결과 표시 |
 | `MyPageSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 로그인 사용자와 온보딩 키워드 조회/등록 UI |
 | `CommunitySection` | `src/components/trend-scope/TrendScopeSections.tsx` | 백엔드 게시글 목록의 분야별 필터와 게시글 목록 표시 |
 | `WritePostSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 별도 게시글 작성 화면 |
 | `PostSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 백엔드 게시글 상세, 댓글, 좋아요 표시와 이벤트 전달 |
-| `BriefingContent` | `src/components/trend-scope/TrendScopeSections.tsx` | 기본 AI 브리핑과 검색 결과 브리핑의 공통 형식 렌더링 |
-| `TrendBarChart`, `WordCloud`, `RelatedKeywordMap`, `SignalMapVisual` | `src/components/trend-scope/TrendScopeVisuals.tsx` | 대시보드 시각화 표시 |
 | `Button` | `src/components/ui/Button.tsx` | 공통 버튼 스타일과 variant 제공 |
 | `apiClient` | `src/services/apiClient.ts` | 백엔드 Base URL, 인증 header/cookie, 공통 응답/오류 처리 |
 | `authService` | `src/services/authService.ts` | Google OAuth 시작, token 저장, 현재 사용자 조회, 로그아웃 |
 | `keywordService` | `src/services/keywordService.ts` | 온보딩 키워드 조회/생성/bulk 생성, DTO to view model 변환 |
+| `newsService` | `src/services/newsService.ts` | 내 키워드 기반 추천 뉴스 조회, 최신 뉴스 수집 refresh, LLM 요약, DTO to view model 변환 |
+| `trendAnalysisService` | `src/services/trendAnalysisService.ts` | 트렌드 분석 요약 조회, DTO to view model 변환 |
 | `communityService` | `src/services/communityService.ts` | 커뮤니티 카테고리/게시글/댓글/좋아요 API 호출, DTO to view model 변환 |
 
 ## 계약 규칙
@@ -39,9 +41,9 @@
 - OAuth callback client는 query 읽기와 auth service 호출만 담당하고 token 및 signup hint 저장 구현은 service/client 경계에 둔다.
 
 ## 상태 소유 경계
-- `useTrendScopeWorkspace`: active section, auth state, 신규 가입 온보딩 키워드 선택 state, keyword server state projection, active post, keyword draft, search draft, client-only search briefing result, community board filter, backend board posts projection, post draft, comment draft, community sync status를 소유한다.
+- `useTrendScopeWorkspace`: active section, auth state, 보호 섹션 접근 guard, 신규 가입 온보딩 키워드 선택 state, keyword server state projection, news recommendation/summary server state projection, trend analysis server state projection, active post, keyword draft, community board filter, backend board posts projection, post draft, comment draft, community sync status를 소유한다.
 - `TrendScopeApp`: hook 결과를 섹션 컴포넌트에 전달한다.
-- 섹션 컴포넌트: 폼 submit과 버튼 클릭을 콜백으로 전달한다.
+- 섹션 컴포넌트: 폼 submit과 버튼 클릭을 콜백으로 전달하며 인증 여부를 직접 판단하지 않는다.
 
 ## 재사용 기준
 - 도메인 문구와 TrendScope 전용 레이아웃이 들어간 컴포넌트는 기능 전용 컴포넌트로 유지한다.

@@ -4,21 +4,31 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "trendpulse.llm")
 public record LocalLlmProperties(
-        String provider,
-        String baseUrl,
+        String host,
         String apiKey,
         String model,
         long timeoutMs
 ) {
-    public boolean isOllama() {
-        return "ollama".equalsIgnoreCase(provider);
-    }
+    private static final String DEFAULT_BASE_URL = "http://localhost:8000";
+    private static final String DEFAULT_MODEL = "gemma-3-4b-it-gguf";
 
     public String normalizedBaseUrl() {
-        if (baseUrl == null || baseUrl.isBlank()) {
-            return "http://localhost:11434";
+        if (host == null || host.isBlank()) {
+            return DEFAULT_BASE_URL;
         }
-        return baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+
+        String normalizedHost = host.trim();
+        if (!normalizedHost.startsWith("http://") && !normalizedHost.startsWith("https://")) {
+            normalizedHost = "http://" + normalizedHost;
+        }
+
+        return normalizedHost.endsWith("/")
+                ? normalizedHost.substring(0, normalizedHost.length() - 1)
+                : normalizedHost;
+    }
+
+    public String modelOrDefault() {
+        return model == null || model.isBlank() ? DEFAULT_MODEL : model;
     }
 
     public long timeoutMsOrDefault() {
