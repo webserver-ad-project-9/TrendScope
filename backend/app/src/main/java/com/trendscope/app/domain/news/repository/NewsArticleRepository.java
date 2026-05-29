@@ -22,4 +22,10 @@ public interface NewsArticleRepository extends JpaRepository<NewsArticle, UUID> 
             LocalDateTime end,
             Pageable pageable
     );
+
+    List<NewsArticle> findByKeywordInAndPublishedAtGreaterThanEqualOrderByPublishedAtDesc(
+            List<Keyword> keywords,
+            LocalDateTime publishedAt,
+            Pageable pageable
+    );
 }
