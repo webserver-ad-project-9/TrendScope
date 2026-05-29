@@ -14,6 +14,7 @@ public enum ErrorCode {
     LIKE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Post like already exists"),
     LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "Post like not found"),
     NEWS_ARTICLE_NOT_FOUND(HttpStatus.NOT_FOUND, "News article not found"),
+    NEWS_BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "News bookmark not found"),
     NAVER_API_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "Naver News API request failed"),
     AI_SUMMARY_FAILED(HttpStatus.BAD_GATEWAY, "AI summary request failed"),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
