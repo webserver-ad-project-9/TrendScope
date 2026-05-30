@@ -1,0 +1,46 @@
+# 디렉토리 문서 - TrendScope-front
+
+이 파일은 현재 프로젝트 구조를 설명하는 기준 문서다.
+
+## 현재 구조
+| Path | Type | Responsibility | Owner | Notes |
+| --- | --- | --- | --- | --- |
+| `front-end/.codex` | directory | 저장소 작업 규칙과 사용자 참고자료 | Repository rules | 프로젝트 명세 위치가 아니며 `.codex/ref_docs`는 사용자 참고자료 전용 |
+| `front-end/docs` | directory | 프로젝트 명세 문서 | Documentation | API, 아키텍처, 상태, DB 명세 유지 |
+| `front-end/trend-scope-front` | directory | Next.js 프론트엔드 앱 | Frontend app | 실제 실행 대상 |
+| `front-end/trend-scope-front/.env.example` | file | 환경변수 템플릿 | Configuration | 실제 token/secret 없이 필요한 env key만 문서화 |
+| `front-end/trend-scope-front/.env.local` | ignored file | 로컬 환경변수 | Local configuration | Git 추적 제외, 개발자 로컬 값 관리 |
+| `front-end/trend-scope-front/app` | directory | App Router route/layout/global style | Route/UI boundary | `page.tsx`는 화면 조립만 담당 |
+| `front-end/trend-scope-front/app/page.tsx` | file | 홈 route entry | Route/UI boundary | 앱 컴포넌트만 렌더링하며 로컬 초기 데이터 service를 호출하지 않음 |
+| `front-end/trend-scope-front/app/oauth/callback/page.tsx` | file | OAuth 성공 redirect 처리 route | Route/UI boundary | Suspense 경계로 client callback 컴포넌트 렌더링 |
+| `front-end/trend-scope-front/app/layout.tsx` | file | 루트 HTML, 메타데이터, 전역 CSS import | Route/UI boundary | `lang="ko"`, TrendScope metadata 설정 |
+| `front-end/trend-scope-front/app/globals.css` | file | 전역 디자인 토큰과 화면 스타일 | Presentation style | 백엔드 API 기반 화면 섹션의 반응형 레이아웃 구현 |
+| `front-end/trend-scope-front/src/components/auth` | directory | 인증 전용 client 컴포넌트 | Feature UI | OAuth callback query 처리 컴포넌트 |
+| `front-end/trend-scope-front/src/components/ui` | directory | 공통 UI 컴포넌트 | Shared UI | `Button` 등 재사용 UI |
+| `front-end/trend-scope-front/src/components/trend-scope` | directory | TrendScope 기능 전용 컴포넌트 | Feature UI | Header, section 컴포넌트 |
+| `front-end/trend-scope-front/src/config` | directory | 런타임/빌드타임 설정 읽기 | Configuration | Next public env와 server-only env 경계 문서화 |
+| `front-end/trend-scope-front/src/config/environment.ts` | file | 환경변수 access module | Configuration | 백엔드 Base URL, token storage/cookie key, 로컬 개발용 token fallback 설정 |
+| `front-end/trend-scope-front/src/hooks` | directory | 화면 상태와 UI 유스케이스 | UI application state | `useTrendScopeWorkspace`가 탭/인증/신규 가입 온보딩 키워드/키워드/뉴스 추천/뉴스 대시보드/트렌드/커뮤니티/글쓰기/상세/댓글/좋아요/수정 삭제 상태 관리 |
+| `front-end/trend-scope-front/src/services` | directory | 좁은 service/API client 경계 | Service/Application | 백엔드 API client, auth service, keyword service, news service, trend analysis service, community service |
+| `front-end/trend-scope-front/src/services/apiClient.ts` | file | 백엔드 API 공통 client | External integration | Base URL, Bearer header, cookie 동기화, 공통 오류 매핑 |
+| `front-end/trend-scope-front/src/services/authService.ts` | file | 인증 use-case service | Service/Application | Google OAuth 시작, callback token/signup hint 저장, 현재 사용자 조회, 로그아웃 |
+| `front-end/trend-scope-front/src/services/keywordService.ts` | file | 온보딩 키워드 service | Service/Application | 백엔드 키워드 조회/생성/bulk 생성 DTO를 UI view model로 변환 |
+| `front-end/trend-scope-front/src/services/newsService.ts` | file | 뉴스 추천/요약/대시보드 service | Service/Application | 백엔드 뉴스 추천, 최신 뉴스 수집 refresh, 단일/묶음 LLM 요약, 키워드 브리핑, 뉴스 대시보드, 북마크 DTO를 UI view model로 변환 |
+| `front-end/trend-scope-front/src/services/trendAnalysisService.ts` | file | 트렌드 분석 service | Service/Application | 백엔드 트렌드 분석 요약 DTO를 UI view model로 변환 |
+| `front-end/trend-scope-front/src/services/communityService.ts` | file | 커뮤니티 service | Service/Application | 백엔드 게시판/게시글/댓글/좋아요와 게시글/댓글 수정 삭제 DTO를 UI view model로 변환 |
+| `front-end/trend-scope-front/src/types` | directory | UI view model, auth view model, API DTO 타입 | Contract/types | DTO와 UI view model을 파일 단위로 분리 |
+| `front-end/trend-scope-front/src/types/api.ts` | file | 백엔드 request/response DTO | Contract/types | Auth/User/Keyword/News/TrendAnalysis/Community API DTO 전용 |
+| `front-end/trend-scope-front/src/types/auth.ts` | file | 인증 UI view model 및 상태 타입 | Contract/types | auth state와 current user view model |
+| `front-end/trend-scope-front/src/types/trend.ts` | file | TrendScope UI view model 및 상태 타입 | Contract/types | 뉴스, 트렌드 분석, 커뮤니티, 섹션 상태 타입 |
+| `front-end/trend-scope-front/public` | directory | 정적 asset | Static assets | Next 기본 asset 유지 |
+
+## 주요 의존성 메모
+- `app/page.tsx`는 `src/components`에만 의존한다.
+- `src/components`는 화면 표시와 이벤트 전달을 담당하며 직접 HTTP 호출을 하지 않는다.
+- `src/hooks`는 브라우저 상호작용 상태와 service 호출 orchestration을 담당한다.
+- `src/services/apiClient.ts`만 백엔드 HTTP 세부사항을 직접 다룬다.
+- `src/services/newsService.ts`는 News API DTO를 브리핑/대시보드/북마크 화면 view model로 변환한다.
+- `src/services/trendAnalysisService.ts`는 TrendAnalysis API DTO를 브리핑 화면 view model로 변환한다.
+- `src/services/communityService.ts`는 커뮤니티 백엔드 DTO와 UI view model 변환, 게시글/댓글 mutation 경계를 담당한다.
+- 로컬 mock snapshot service와 정적 시각화 컴포넌트는 사용하지 않는다.
+- `.env.local`은 Git에 커밋하지 않고, 새 환경변수는 `.env.example`에 실제 token/secret 없이 추가한다.

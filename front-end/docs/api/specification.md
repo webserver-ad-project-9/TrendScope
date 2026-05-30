@@ -1,0 +1,841 @@
+# API 명세 - TrendScope-front
+
+이 문서는 프론트엔드가 호출하는 백엔드 API 계약을 기록한다.
+
+## 공통
+- Base URL: `NEXT_PUBLIC_BACKEND_API_BASE_URL` 환경변수 값을 사용한다.
+- 공통 성공 응답: `{ success: true, data, message }`
+- 공통 실패 응답: `{ success: false, errorCode, message }`
+- 보호 API 인증: `Authorization: Bearer {token}` header와 `accessToken` cookie가 모두 필요하다.
+- 브라우저 cookie 전송: 프론트 API client는 `credentials: "include"`를 사용한다.
+- Token 준비 순서: localStorage, `accessToken` cookie, 로컬 개발용 token 환경변수 순서로 확인한다.
+- Token 저장: OAuth callback query의 `token` 값을 환경변수로 지정한 storage key와 cookie key에 저장한다. localStorage가 비어 있고 cookie가 있으면 cookie 값을 storage에 동기화한다.
+- Token 값은 코드와 프로젝트 문서에 직접 기록하지 않는다. 로컬 개발용 static token도 `.env.local`에만 둔다.
+- Local env: 실제 값은 `front-end/trend-scope-front/.env.local`에 둔다. Git에는 실제 token/secret 없이 `.env.example`만 커밋한다.
+
+## 프론트 라우트
+### GET `/oauth/callback`
+- 설명: 백엔드 OAuth 성공 redirect를 처리하는 프론트 라우트다.
+- 인증: public
+- Query params:
+  - `token`: string, optional, 백엔드가 발급한 access token
+  - `isNewUser`: boolean/string, optional, 신규 가입 여부 hint. `true`, `1`, `yes`, `signup`, `new`는 신규 가입으로 처리
+  - `isSignup`: boolean/string, optional, `isNewUser`와 동일한 신규 가입 여부 hint
+  - `newUser`: boolean/string, optional, `isNewUser`와 동일한 신규 가입 여부 hint
+  - `signup`: boolean/string, optional, `isNewUser`와 동일한 신규 가입 여부 hint
+- 동작:
+  1. `token`이 있으면 브라우저 저장소와 cookie에 저장한다.
+  2. 신규 가입 여부 hint를 sessionStorage에 1회성 값으로 저장한다.
+  3. `/`로 replace navigation 한다.
+  4. `token`이 없으면 저장 없이 `/`로 replace navigation 한다.
+- Error cases: 화면 오류를 노출하지 않고 홈으로 복귀한다.
+
+## 백엔드 API
+### GET `/api/auth`
+- 설명: Google OAuth 로그인을 시작한다.
+- 인증: public
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body: 없음
+- Status codes:
+  - `302`: Google OAuth 인증 페이지로 redirect
+- Error cases: 백엔드 OAuth 설정 오류는 백엔드 redirect/error 화면에서 처리된다.
+- Notes:
+  - 백엔드의 Spring Security OAuth 시작 URL인 `/oauth2/authorization/google`도 같은 로그인 흐름을 시작할 수 있으나, 프론트 기본 진입점은 `/api/auth`다.
+  - 백엔드 OAuth 내부 callback인 `/api/auth/login/callback`은 Google과 백엔드 사이의 callback이므로 프론트에서 직접 호출하지 않는다.
+
+### POST `/api/auth/logout`
+- 설명: 현재 사용자 로그아웃을 요청한다. 프론트는 응답 성공/실패와 관계없이 로컬 token과 cookie를 정리한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: null, nullable
+  - `message`: string, required
+- Status codes:
+  - `200`: 로그아웃 요청 성공
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### GET `/api/users/me`
+- 설명: 현재 로그인 사용자의 기본 정보를 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.id`: string, required, 사용자 ID
+  - `data.email`: string, required, 이메일
+  - `data.name`: string, required, 사용자 이름
+  - `data.role`: string, required, 사용자 role
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+  - `404`: 사용자 없음
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+  - `USER_NOT_FOUND`: token에 해당하는 사용자 없음
+
+### GET `/api/onboarding/keywords`
+- 설명: 현재 사용자의 온보딩 키워드 목록을 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: array, required
+  - `data[].id`: string, required, 키워드 ID
+  - `data[].name`: string, required, 키워드명
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### POST `/api/onboarding/keywords`
+- 설명: 현재 사용자의 온보딩 키워드를 생성한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body:
+  - `name`: string, required, 생성할 키워드명
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.id`: string, required, 생성된 키워드 ID
+  - `data.name`: string, required, 생성된 키워드명
+  - `message`: string, required
+- Status codes:
+  - `200`: 생성 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+  - `409`: 중복 키워드
+- Error cases:
+  - `INVALID_REQUEST`: 키워드 누락
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+  - `KEYWORD_DUPLICATED`: 이미 등록된 키워드
+
+### POST `/api/onboarding/keywords/bulk`
+- 설명: 신규 가입 온보딩에서 선택한 여러 관심 키워드를 한 번에 생성한다. 백엔드는 이미 저장된 키워드는 중복 저장하지 않고 건너뛴다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body:
+  - `names`: string[], required, 생성할 키워드명 목록
+- Response body:
+  - `success`: boolean, required
+  - `data`: array, required, 새로 생성된 키워드 목록
+  - `data[].id`: string, required, 생성된 키워드 ID
+  - `data[].name`: string, required, 생성된 키워드명
+  - `message`: string, required
+- Status codes:
+  - `200`: 일괄 생성 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_REQUEST`: 키워드 목록 누락 또는 빈 배열
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### GET `/api/news/recommendations`
+- 설명: 현재 로그인 사용자의 활성 온보딩 키워드 기준 추천 뉴스를 조회한다. `refresh=true`이면 추천 전에 백엔드가 네이버 뉴스 API로 최신 뉴스를 수집한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params:
+  - `refresh`: boolean, optional, default `false`, `true`이면 최신 뉴스 수집 후 추천 목록 반환
+  - `limit`: number, optional, default `20`, 최소 `1`, 최대 `50`, 추천 뉴스 개수
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.keywords`: array, required, 추천 기준 키워드 목록
+  - `data.keywords[].id`: string, required, 키워드 ID
+  - `data.keywords[].name`: string, required, 키워드명
+  - `data.articles`: array, required, 추천 뉴스 목록
+  - `data.articles[].id`: string, required, 뉴스 ID
+  - `data.articles[].keywordId`: string, required, 매칭된 온보딩 키워드 ID
+  - `data.articles[].matchedKeyword`: string, required, 매칭된 키워드명
+  - `data.articles[].title`: string, required, 뉴스 제목
+  - `data.articles[].description`: string, optional, nullable, 뉴스 설명
+  - `data.articles[].originUrl`: string, required, 원문 URL
+  - `data.articles[].publishedAt`: string, optional, nullable, ISO-8601 발행 시각
+  - `data.articles[].recommendationReason`: string, required, 추천 사유
+  - `data.refreshed`: boolean, required, 이번 요청에서 수집을 수행했는지 여부
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+  - `404`: 사용자 없음
+  - `502`: 최신 뉴스 수집 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+  - `USER_NOT_FOUND`: token에 해당하는 사용자 없음
+  - `NAVER_API_REQUEST_FAILED`: `refresh=true` 수집 중 네이버 뉴스 API 호출 실패
+- Notes:
+  - 프론트는 최초 브리핑 진입과 키워드 동기화 후 `refresh=false&limit=20`으로 조회한다.
+  - 사용자가 `최신 뉴스 가져오기`를 누른 경우에만 `refresh=true&limit=20`을 호출한다.
+  - `articles`는 백엔드 정렬 순서를 유지한다.
+
+### POST `/api/news/{newsId}/summary`
+- 설명: 추천 뉴스 목록의 단일 뉴스 ID를 로컬 LLM으로 요약한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `newsId`: string, required, 추천 뉴스 응답의 `articles[].id`
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.newsIds`: string[], required, 요약 대상 뉴스 ID 목록
+  - `data.summary`: string, required, LLM 생성 요약문
+  - `data.sources`: array, required, 요약 근거 뉴스 목록
+  - `data.sources[].id`: string, required, 뉴스 ID
+  - `data.sources[].title`: string, required, 뉴스 제목
+  - `data.sources[].originUrl`: string, required, 원문 URL
+  - `data.sources[].publishedAt`: string, optional, nullable, ISO-8601 발행 시각
+  - `message`: string, required
+- Status codes:
+  - `200`: 요약 성공
+  - `401`: 인증 실패
+  - `404`: 뉴스 없음
+  - `502`: LLM 요약 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+  - `NEWS_ARTICLE_NOT_FOUND`: 요약 대상 뉴스 없음
+  - `AI_SUMMARY_FAILED`: 로컬 LLM 요약 요청 실패
+
+### POST `/api/news/summary`
+- 설명: 여러 뉴스 ID를 한 번에 전달해 묶음 요약을 생성한다. 현재 UI는 단일 뉴스 카드 요약을 우선 노출하며, service 경계는 묶음 요약 계약도 보유한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body:
+  - `newsIds`: string[], required, 요약할 뉴스 ID 목록
+  - `maxSentenceCount`: number, optional, default `3`, 최소 `1`, 최대 `5`, 요약 문장 수
+- Response body: `POST /api/news/{newsId}/summary`와 동일
+- Status codes:
+  - `200`: 요약 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+  - `404`: 뉴스 없음
+  - `502`: LLM 요약 실패
+- Error cases:
+  - `INVALID_REQUEST`: `newsIds` 누락 또는 빈 배열
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+  - `NEWS_ARTICLE_NOT_FOUND`: 요약 대상 뉴스 없음
+  - `AI_SUMMARY_FAILED`: 로컬 LLM 요약 요청 실패
+
+### GET `/api/news/keyword-briefings`
+- 설명: 로그인 사용자의 활성 온보딩 키워드 기준 당일 뉴스를 수집하고 키워드별 요약과 출처 기사 목록을 반환한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data.date`: string, required, `YYYY-MM-DD` 브리핑 기준 날짜
+  - `data.summaryType`: string, required, enum `KEYWORD_GROUP_SUMMARY`
+  - `data.totalCollectedCount`: number, required, 전체 수집 기사 수
+  - `data.summaries`: array, required
+  - `data.summaries[].keyword`: string, required, 온보딩 키워드명
+  - `data.summaries[].collectedCount`: number, required, 해당 키워드 기사 수
+  - `data.summaries[].summary`: string, required, 기사 제목 기반 요약
+  - `data.summaries[].articles`: array, required
+  - `data.summaries[].articles[].title`: string, required
+  - `data.summaries[].articles[].url`: string, required, 원문 URL
+  - `data.summaries[].articles[].publishedAt`: string, optional, nullable, ISO datetime
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+  - `502`: 네이버 뉴스 수집 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+  - `NAVER_API_REQUEST_FAILED`: 네이버 뉴스 수집 실패
+- Empty state: 활성 키워드가 없으면 `totalCollectedCount: 0`, `summaries: []`를 표시한다.
+
+### GET `/api/news/keyword-frequency`
+- 설명: 사용자의 활성 온보딩 키워드와 연결된 최신 뉴스 제목/설명에서 자주 등장한 단어 빈도를 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params:
+  - `limit`: number, optional, default `20`, 최소 `1`, 최대 `50`
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data.articleCount`: number, required, 분석 기사 수
+  - `data.keywords`: array, required
+  - `data.keywords[].keyword`: string, required
+  - `data.keywords[].count`: number, required
+  - `data.keywords[].weight`: number, required, 최빈 키워드 기준 상대 가중치
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `400`: limit 값 오류
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_REQUEST`: limit 값 오류
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+- Empty state: 분석 대상 뉴스가 없으면 `articleCount: 0`, `keywords: []`.
+
+### GET `/api/news/trend-scores`
+- 설명: 키워드별 당일 뉴스 기사 수와 MVP 트렌드 점수를 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data.trends`: array, required
+  - `data.trends[].keywordId`: string, required
+  - `data.trends[].keyword`: string, required
+  - `data.trends[].articleCount`: number, required
+  - `data.trends[].trendScore`: number, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### GET `/api/news/today-issues`
+- 설명: 최신 기사 제목 기반 오늘의 핵심 이슈 문장 목록을 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params:
+  - `limit`: number, optional, default `3`, 최대 `5`
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data.issues`: string[], required
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `400`: limit 값 오류
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_REQUEST`: limit 값 오류
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### GET `/api/news/suggested-keywords`
+- 설명: 최근 뉴스 제목/설명 기반 추천 키워드 목록을 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params:
+  - `limit`: number, optional, default `10`, 최대 `30`
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data.keywords`: array, required
+  - `data.keywords[].keyword`: string, required
+  - `data.keywords[].count`: number, required
+  - `data.keywords[].weight`: number, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `400`: limit 값 오류
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_REQUEST`: limit 값 오류
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### GET `/api/news/statistics/daily-counts`
+- 설명: 활성 온보딩 키워드로 저장된 뉴스의 일자별 기사 수를 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params:
+  - `days`: number, optional, default `7`, 최대 `30`
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data.counts`: array, required
+  - `data.counts[].date`: string, required, `YYYY-MM-DD`
+  - `data.counts[].count`: number, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `400`: days 값 오류
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_REQUEST`: days 값 오류
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### GET `/api/news/clusters`
+- 설명: 최근 뉴스 제목 기반 이슈 클러스터와 클러스터별 기사 목록을 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params:
+  - `limit`: number, optional, default `5`, 최대 `20`
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data.clusters`: array, required
+  - `data.clusters[].topic`: string, required
+  - `data.clusters[].articleCount`: number, required
+  - `data.clusters[].articles`: array, required
+  - `data.clusters[].articles[].title`: string, required
+  - `data.clusters[].articles[].url`: string, required
+  - `data.clusters[].articles[].publishedAt`: string, optional, nullable
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `400`: limit 값 오류
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_REQUEST`: limit 값 오류
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### GET `/api/news/sentiments`
+- 설명: 키워드별 뉴스 감성 및 리스크 요약을 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data.sentiments`: array, required
+  - `data.sentiments[].keywordId`: string, required
+  - `data.sentiments[].keyword`: string, required
+  - `data.sentiments[].sentiment`: string, required, enum `POSITIVE`, `NEUTRAL`, `NEGATIVE`
+  - `data.sentiments[].riskLevel`: string, required, enum `LOW`, `MEDIUM`, `HIGH`
+  - `data.sentiments[].reason`: string, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### POST `/api/news/{newsId}/bookmarks`
+- 설명: 로그인 사용자가 뉴스를 저장한다. 같은 사용자가 같은 뉴스를 다시 저장하면 기존 북마크를 반환할 수 있다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `newsId`: string, required, 저장할 뉴스 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data.bookmarkId`: string, required
+  - `data.newsId`: string, required
+  - `data.title`: string, required
+  - `data.url`: string, required
+  - `data.publishedAt`: string, optional, nullable
+  - `message`: string, required
+- Status codes:
+  - `200`: 저장 성공
+  - `401`: 인증 실패
+  - `404`: 뉴스 없음
+- Error cases:
+  - `NEWS_ARTICLE_NOT_FOUND`: 저장할 뉴스 없음
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### GET `/api/news/bookmarks`
+- 설명: 로그인 사용자의 뉴스 북마크 목록을 조회한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: array, required
+  - `data[].bookmarkId`: string, required
+  - `data[].newsId`: string, required
+  - `data[].title`: string, required
+  - `data[].url`: string, required
+  - `data[].publishedAt`: string, optional, nullable
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### DELETE `/api/news/{newsId}/bookmarks`
+- 설명: 로그인 사용자의 뉴스 북마크를 삭제한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `newsId`: string, required, 삭제할 뉴스 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: null, nullable
+  - `message`: string, required
+- Status codes:
+  - `200`: 삭제 성공
+  - `401`: 인증 실패
+  - `404`: 뉴스 또는 북마크 없음
+- Error cases:
+  - `NEWS_ARTICLE_NOT_FOUND`: 뉴스 없음
+  - `BOOKMARK_NOT_FOUND`: 삭제할 북마크 없음
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### GET `/api/trend-analysis/summary`
+- 설명: 백엔드가 저장한 TrendAnalysis 결과의 평균 트렌드 점수를 조회한다. 현재 UI는 AI 브리핑 화면에서 이 값을 표시한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.trendScore`: number, required, 백엔드가 계산한 평균 트렌드 점수
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `401`: 인증 실패
+- Error cases:
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### GET `/api/community/categories`
+- 설명: 게시판 카테고리 목록을 조회한다. API 응답의 enum code를 UI 섹션 view model로 변환해 사용한다.
+- 인증: public
+- Path params: 없음
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: array, required
+  - `data[].code`: string, required, enum `POLITICS`, `ECONOMY`, `IT_SCIENCE`, `SOCIETY`, `WORLD`, `SPORTS`, `ENTERTAINMENT`
+  - `data[].label`: string, required, 카테고리 표시명
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+- Error cases:
+  - `HTTP_REQUEST_FAILED`: 응답이 공통 실패 형식이 아닌 상태로 실패
+
+### GET `/api/posts`
+- 설명: 게시글 목록을 조회한다. 현재 UI는 첫 페이지 목록을 받아 클라이언트 게시판 탭에서 필터링한다.
+- 인증: optional Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params:
+  - `category`: string, optional, enum `POLITICS`, `ECONOMY`, `IT_SCIENCE`, `SOCIETY`, `WORLD`, `SPORTS`, `ENTERTAINMENT`, 특정 카테고리만 조회할 때 사용
+  - `page`: number, optional, default `0`, 0부터 시작하는 페이지 번호
+  - `size`: number, optional, default `20`, 페이지 크기
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.content`: array, required, 없으면 `[]`
+  - `data.content[].id`: string, required, 게시글 ID
+  - `data.content[].category`: string, required, 카테고리 enum
+  - `data.content[].title`: string, required, 제목
+  - `data.content[].writerName`: string, required, 작성자 표시명
+  - `data.content[].likeCount`: number, required, 좋아요 수
+  - `data.content[].commentCount`: number, required, 댓글 수
+  - `data.content[].viewCount`: number, required, 조회 수
+  - `data.content[].createdAt`: string, required, ISO-8601 생성 시각
+  - `data.content[].isMine`: boolean, required, 로그인 사용자의 작성글 여부
+  - `data.page`: number, required
+  - `data.size`: number, required
+  - `data.totalElements`: number, required
+  - `data.totalPages`: number, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `400`: category 값 오류
+- Error cases:
+  - `INVALID_CATEGORY`: 지원하지 않는 카테고리
+
+### POST `/api/posts`
+- 설명: 로그인 사용자가 게시글을 생성한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params: 없음
+- Query params: 없음
+- Request body:
+  - `category`: string, required, enum `POLITICS`, `ECONOMY`, `IT_SCIENCE`, `SOCIETY`, `WORLD`, `SPORTS`, `ENTERTAINMENT`
+  - `title`: string, required, 1~150자, 제목
+  - `content`: string, required, 본문
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.id`: string, required, 생성된 게시글 ID
+  - `message`: string, required
+- Status codes:
+  - `200`: 생성 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+- Error cases:
+  - `INVALID_REQUEST`: category, title, content 누락 또는 유효하지 않은 값
+  - `INVALID_CATEGORY`: 지원하지 않는 카테고리
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### GET `/api/posts/{postId}`
+- 설명: 게시글 상세를 조회한다. 조회 성공 시 백엔드가 `viewCount`를 1 증가시킨다.
+- 인증: optional Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.id`: string, required
+  - `data.category`: string, required, 카테고리 enum
+  - `data.title`: string, required
+  - `data.content`: string, required
+  - `data.writer`: object, required
+  - `data.writer.id`: string, required, 작성자 ID
+  - `data.writer.name`: string, required, 작성자 표시명
+  - `data.likeCount`: number, required
+  - `data.commentCount`: number, required
+  - `data.viewCount`: number, required
+  - `data.likedByMe`: boolean, required, 로그인 사용자의 좋아요 여부
+  - `data.isMine`: boolean, required, 로그인 사용자의 작성글 여부
+  - `data.createdAt`: string, required, ISO-8601 생성 시각
+  - `data.updatedAt`: string, required, ISO-8601 수정 시각
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `404`: 게시글 없음
+- Error cases:
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+
+### PATCH `/api/posts/{postId}`
+- 설명: 로그인 사용자가 본인이 작성한 게시글을 수정한다. 부분 수정이 아니며 `category`, `title`, `content`를 모두 전달한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body:
+  - `category`: string, required, enum `POLITICS`, `ECONOMY`, `IT_SCIENCE`, `SOCIETY`, `WORLD`, `SPORTS`, `ENTERTAINMENT`
+  - `title`: string, required, 1~150자
+  - `content`: string, required
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required, `GET /api/posts/{postId}`의 `data`와 동일한 게시글 상세
+  - `message`: string, required
+- Status codes:
+  - `200`: 수정 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+  - `403`: 작성자 아님
+  - `404`: 게시글 없음
+- Error cases:
+  - `INVALID_REQUEST`: category, title, content 누락 또는 유효하지 않은 값
+  - `INVALID_CATEGORY`: 지원하지 않는 카테고리
+  - `FORBIDDEN`: 작성자 권한 없음
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### DELETE `/api/posts/{postId}`
+- 설명: 로그인 사용자가 본인이 작성한 게시글을 삭제한다. 백엔드는 soft delete로 처리한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: null, nullable
+  - `message`: string, required
+- Status codes:
+  - `200`: 삭제 성공
+  - `401`: 인증 실패
+  - `403`: 작성자 아님
+  - `404`: 게시글 없음
+- Error cases:
+  - `FORBIDDEN`: 작성자 권한 없음
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### GET `/api/posts/{postId}/comments`
+- 설명: 게시글 댓글 목록을 조회한다.
+- 인증: optional Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: array, required, 없으면 `[]`
+  - `data[].id`: string, required, 댓글 ID
+  - `data[].content`: string, required, 댓글 내용
+  - `data[].writerName`: string, required, 작성자 표시명
+  - `data[].isMine`: boolean, required, 로그인 사용자의 작성 댓글 여부
+  - `data[].createdAt`: string, required, ISO-8601 생성 시각
+  - `message`: string, required
+- Status codes:
+  - `200`: 조회 성공
+  - `404`: 게시글 없음
+- Error cases:
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+
+### POST `/api/posts/{postId}/comments`
+- 설명: 로그인 사용자가 게시글에 댓글을 작성한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body:
+  - `content`: string, required, 1~1000자, 댓글 내용
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.id`: string, required, 댓글 ID
+  - `data.content`: string, required
+  - `data.writerName`: string, required
+  - `data.isMine`: boolean, required
+  - `data.createdAt`: string, required, ISO-8601 생성 시각
+  - `message`: string, required
+- Status codes:
+  - `200`: 생성 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+  - `404`: 게시글 없음
+- Error cases:
+  - `INVALID_REQUEST`: content 누락 또는 유효하지 않은 값
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### PATCH `/api/comments/{commentId}`
+- 설명: 로그인 사용자가 본인이 작성한 댓글 내용을 수정한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `commentId`: string, required, 댓글 ID
+- Query params: 없음
+- Request body:
+  - `content`: string, required, 1~1000자
+- Response body:
+  - `success`: boolean, required
+  - `data.id`: string, required, 댓글 ID
+  - `data.content`: string, required
+  - `data.writerName`: string, required
+  - `data.isMine`: boolean, required
+  - `data.createdAt`: string, required, ISO-8601 생성 시각
+  - `message`: string, required
+- Status codes:
+  - `200`: 수정 성공
+  - `400`: 요청 형식 오류
+  - `401`: 인증 실패
+  - `403`: 작성자 아님
+  - `404`: 댓글 없음
+- Error cases:
+  - `INVALID_REQUEST`: content 누락 또는 유효하지 않은 값
+  - `FORBIDDEN`: 작성자 권한 없음
+  - `COMMENT_NOT_FOUND`: 댓글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### DELETE `/api/comments/{commentId}`
+- 설명: 로그인 사용자가 본인이 작성한 댓글을 삭제한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `commentId`: string, required, 댓글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: null, nullable
+  - `message`: string, required
+- Status codes:
+  - `200`: 삭제 성공
+  - `401`: 인증 실패
+  - `403`: 작성자 아님
+  - `404`: 댓글 없음
+- Error cases:
+  - `FORBIDDEN`: 작성자 권한 없음
+  - `COMMENT_NOT_FOUND`: 댓글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`, `INVALID_JWT_TOKEN`, `LOGIN_COOKIE_REQUIRED`, `EXPIRED_JWT_TOKEN`: 인증 실패
+
+### POST `/api/posts/{postId}/likes`
+- 설명: 로그인 사용자가 게시글 좋아요를 생성한다. 프론트는 응답의 `likeCount`를 최종 표시값으로 사용한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.postId`: string, required
+  - `data.liked`: boolean, required, `true`
+  - `data.likeCount`: number, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 좋아요 성공
+  - `401`: 인증 실패
+  - `404`: 게시글 없음
+  - `409`: 이미 좋아요 상태
+- Error cases:
+  - `LIKE_ALREADY_EXISTS`: 이미 좋아요 상태
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+### DELETE `/api/posts/{postId}/likes`
+- 설명: 로그인 사용자가 게시글 좋아요를 취소한다. 프론트는 응답의 `likeCount`를 최종 표시값으로 사용한다.
+- 인증: Bearer token + `accessToken` cookie
+- Path params:
+  - `postId`: string, required, 게시글 ID
+- Query params: 없음
+- Request body: 없음
+- Response body:
+  - `success`: boolean, required
+  - `data`: object, required
+  - `data.postId`: string, required
+  - `data.liked`: boolean, required, `false`
+  - `data.likeCount`: number, required
+  - `message`: string, required
+- Status codes:
+  - `200`: 좋아요 취소 성공
+  - `401`: 인증 실패
+  - `404`: 게시글 또는 좋아요 없음
+- Error cases:
+  - `LIKE_NOT_FOUND`: 취소할 좋아요 없음
+  - `POST_NOT_FOUND`: 게시글이 없거나 삭제됨
+  - `MISSING_ACCESS_TOKEN`: 브라우저에 사용할 token이 없어 프론트 API client가 요청 전 차단
+  - `INVALID_JWT_TOKEN`: Bearer token 누락 또는 불일치
+  - `LOGIN_COOKIE_REQUIRED`: 로그인 cookie 누락
+  - `EXPIRED_JWT_TOKEN`: token 만료
+
+## 미연동 계약
+- 키워드 수정/삭제 API는 현재 백엔드 문서에 정의되어 있지 않아 호출하지 않는다.
+- 임의 키워드 검색용 뉴스 분석 API는 현재 백엔드 문서에 정의되어 있지 않아 화면과 로컬 구현을 제거했다.
+- 뉴스 추천, 단일/묶음 LLM 요약, 키워드별 브리핑, 뉴스 대시보드, 북마크 API는 백엔드 계약이 확인되어 `newsService` 경계 뒤에서 호출한다.
+- 트렌드 분석 요약 API는 백엔드 계약이 확인되어 `trendAnalysisService` 경계 뒤에서 호출한다.
+- 커뮤니티 게시글 수정/삭제와 댓글 수정/삭제 API는 백엔드 계약이 확인되어 `communityService` 경계 뒤에서 호출한다.

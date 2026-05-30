@@ -1,0 +1,7 @@
+.gradle
+build
+.vscode
+*.log
+local-test.out.log
+local-test.err.log
+docs
