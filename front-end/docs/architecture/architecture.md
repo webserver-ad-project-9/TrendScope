@@ -87,3 +87,4 @@ app/page.tsx
 | 2026-05-28 | 홈 검색을 제거하고 기능 섹션을 보호 라우팅으로 전환 | 홈은 public 진입점으로 단순화하고 로그인 사용자에게만 기능 화면을 허용 | 홈 검색 form 제거, 비로그인 보호 섹션 접근 시 alert 후 홈 복귀 |
 | 2026-05-28 | 로컬 mock snapshot과 임의 검색 브리핑 제거 | 현재 요청과 계층 규칙상 확인된 백엔드 API만 사용해야 함 | `trendDashboardService`, 검색 섹션, 정적 시각화 제거, `trendAnalysisService` 추가 |
 | 2026-05-30 | back-docs의 확인된 News Dashboard/Keyword Briefing/Bookmark/Community mutation API를 프론트에 연동 | mock 없이 백엔드 API 응답만 표시해야 함 | `dashboard` 섹션 추가, `newsService` 대시보드 호출 확장, 게시글/댓글 수정 삭제 UI 추가 |
+| 2026-05-31 | 실 서비스형 UI 표시 안정성 개선 | 다양한 화면 폭과 긴 데이터 값에서 기능 조작 영역이 무너지지 않아야 함 | 밝은 운영 UI 톤 적용, header/navigation/action button responsive 처리, 긴 텍스트 overflow 방어, service/hook/API 계약 유지 |
