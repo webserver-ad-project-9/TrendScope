@@ -21,7 +21,7 @@
 | `newsRecommendation` | `useTrendScopeWorkspace` | Backend `GET /api/news/recommendations` | Backend | 로그인 사용자의 키워드 기반 추천 뉴스 projection |
 | `newsSummariesByArticleId` | `useTrendScopeWorkspace` | Backend `POST /api/news/{newsId}/summary` | Backend | 뉴스 카드별 LLM 요약 결과 |
 | `batchNewsSummary` | `useTrendScopeWorkspace` | Backend `POST /api/news/summary` | Backend | 추천 뉴스 묶음 LLM 요약 결과 |
-| `newsDashboard` | `useTrendScopeWorkspace` | Backend News Dashboard APIs | Backend | 키워드 브리핑, 빈도, 트렌드 점수, 이슈, 추천 키워드, 일자별 뉴스 수, 클러스터, 감성, 북마크 projection |
+| `newsDashboard` | `useTrendScopeWorkspace` | Backend News Dashboard APIs | Backend | 홈 오늘의 브리핑과 뉴스 대시보드에 쓰는 키워드 브리핑, 빈도, 트렌드 점수, 이슈, 추천 키워드, 일자별 뉴스 수, 클러스터, 감성, 북마크 projection |
 | `newsBookmarks` | `useTrendScopeWorkspace` | Backend `GET /api/news/bookmarks` | Backend | `newsDashboard.bookmarks`에서 파생한 저장 뉴스 projection |
 | `newsDashboardSyncStatus` | `useTrendScopeWorkspace` | React state + news service result | No | 뉴스 대시보드/북마크 조회 및 저장 상태 |
 | `newsDashboardSyncMessage` | `useTrendScopeWorkspace` | React state | No | 뉴스 대시보드 API 성공/실패 메시지 |

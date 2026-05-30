@@ -11,13 +11,15 @@
   2. `TrendScopeApp`이 헤더, 홈, 온보딩, AI 브리핑, 마이페이지, 커뮤니티, 게시글 작성, 게시글 상세 섹션을 조립한다.
   3. `activeSection=home` 상태로 public 홈 화면이 표시된다.
   4. 홈 화면은 키워드 검색 form, mock 지표, 정적 시각화를 제공하지 않는다.
+  5. 홈 우측 오늘의 브리핑 카드는 로그인 전에는 `로그인 후 사용 가능한 기능입니다`를 표시한다.
+  6. 로그인 사용자에게는 기존 뉴스 대시보드 projection의 키워드별 브리핑을 표시한다.
 - Validation: 없음
-- Empty state: 없음
-- Error state: 없음
+- Empty state: 로그인 전에는 로그인 필요 문구, 로그인 후 브리핑 응답이 없으면 빈 브리핑 메시지 표시
+- Error state: 뉴스 대시보드 API 실패 시 오늘의 브리핑 카드에 실패 메시지 표시
 - Permission behavior: public
 - Retry or recovery: 새로고침
-- Side effects: 없음
-- Related API: 클라이언트 hydration 후 `GET /api/community/categories`, `GET /api/posts`; 사용 가능한 token이 있으면 `GET /api/users/me`, `GET /api/onboarding/keywords`, `GET /api/news/recommendations?refresh=false&limit=20`, `GET /api/trend-analysis/summary`
+- Side effects: 로그인 사용자와 키워드 동기화가 준비되면 기존 뉴스 대시보드 조회 side effect가 실행될 수 있음
+- Related API: 클라이언트 hydration 후 `GET /api/community/categories`, `GET /api/posts`; 사용 가능한 token이 있으면 `GET /api/users/me`, `GET /api/onboarding/keywords`, `GET /api/news/recommendations?refresh=false&limit=20`, `GET /api/trend-analysis/summary`, 뉴스 대시보드 API 묶음
 - Related DB tables: 없음
 
 ## 보호 섹션 접근

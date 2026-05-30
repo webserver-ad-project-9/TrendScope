@@ -28,7 +28,14 @@ export function TrendScopeApp() {
       />
 
       <main>
-        <HomeSection isActive={workspace.activeSection === "home"} />
+        <HomeSection
+          authStatus={workspace.authStatus}
+          currentUser={workspace.currentUser}
+          dashboard={workspace.newsDashboard}
+          dashboardSyncMessage={workspace.newsDashboardSyncMessage}
+          dashboardSyncStatus={workspace.newsDashboardSyncStatus}
+          isActive={workspace.activeSection === "home"}
+        />
         <OnboardingSection
           canSubmitKeywords={workspace.canSubmitOnboardingKeywords}
           isActive={workspace.activeSection === "onboarding"}

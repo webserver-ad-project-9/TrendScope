@@ -30,7 +30,7 @@ app/page.tsx
 ## 데이터 흐름
 - 클라이언트 hydration 후 `useTrendScopeWorkspace`가 `fetchCurrentUser()`로 로그인 상태를 확인한다. `apiClient`는 localStorage, `accessToken` 쿠키, 로컬 개발용 token 환경변수 순서로 Bearer token을 준비한다.
 - 로그인 사용자가 확인되면 `fetchOnboardingKeywords()`가 백엔드 키워드 목록을 조회하고 UI view model로 변환한다.
-- 홈 섹션은 public이며 키워드 검색 form이나 mock 지표를 제공하지 않는다.
+- 홈 섹션은 public이며 키워드 검색 form이나 mock 지표를 제공하지 않는다. 우측 오늘의 브리핑 카드는 로그인 전에는 `로그인 후 사용 가능한 기능입니다` 문구를 표시하고, 로그인 후에는 기존 뉴스 대시보드 projection의 키워드별 브리핑을 표시한다.
 - 홈을 제외한 기능 섹션은 `useTrendScopeWorkspace.goToSection()`에서 로그인 사용자 여부를 확인한다. 비로그인 사용자가 접근하면 `alert("로그인이 필요한 기능입니다.")`를 표시하고 홈으로 되돌린다.
 - OAuth callback 직후 신규 가입 hint가 있고 키워드 목록이 비어 있으면 신규 가입 후보로 판단해 온보딩 섹션을 표시한다.
 - 신규 가입 온보딩에서 사용자가 직접 입력한 키워드를 선택하면 `createOnboardingKeywordsBulk()`가 `POST /api/onboarding/keywords/bulk`로 첫 키워드 목록을 저장한다.
@@ -88,3 +88,4 @@ app/page.tsx
 | 2026-05-28 | 로컬 mock snapshot과 임의 검색 브리핑 제거 | 현재 요청과 계층 규칙상 확인된 백엔드 API만 사용해야 함 | `trendDashboardService`, 검색 섹션, 정적 시각화 제거, `trendAnalysisService` 추가 |
 | 2026-05-30 | back-docs의 확인된 News Dashboard/Keyword Briefing/Bookmark/Community mutation API를 프론트에 연동 | mock 없이 백엔드 API 응답만 표시해야 함 | `dashboard` 섹션 추가, `newsService` 대시보드 호출 확장, 게시글/댓글 수정 삭제 UI 추가 |
 | 2026-05-31 | 실 서비스형 UI 표시 안정성 개선 | 다양한 화면 폭과 긴 데이터 값에서 기능 조작 영역이 무너지지 않아야 함 | 밝은 운영 UI 톤 적용, header/navigation/action button responsive 처리, 긴 텍스트 overflow 방어, service/hook/API 계약 유지 |
+| 2026-05-31 | 홈 오늘의 브리핑에 키워드별 브리핑 projection 표시 | 홈 우측 카드에서 실사용자가 즉시 오늘 브리핑을 확인해야 함 | 비로그인 문구 표시, 로그인 후 기존 `newsDashboard.keywordBriefing` 재사용, 신규 API 호출 없음 |
