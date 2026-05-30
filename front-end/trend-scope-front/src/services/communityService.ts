@@ -9,6 +9,8 @@ import type {
   CreateCommunityPostRequestDto,
   CreateCommunityPostResponseDto,
   PageResponseDto,
+  UpdateCommunityCommentRequestDto,
+  UpdateCommunityPostRequestDto,
 } from "@/src/types/api";
 import type {
   BoardPostViewModel,
@@ -128,6 +130,38 @@ export async function createCommunityPost(
 }
 
 /**
+ * 로그인 사용자의 게시글을 수정한다.
+ */
+export async function updateCommunityPost(
+  postId: string,
+  draft: CommunityPostDraftViewModel,
+): Promise<BoardPostViewModel> {
+  const requestBody: UpdateCommunityPostRequestDto = {
+    category: categoryCodeByBoardSectionId[draft.boardSectionId],
+    title: draft.title.trim(),
+    content: draft.body.trim(),
+  };
+  const postDto = await requestBackendApi<CommunityPostDetailResponseDto>(
+    `/api/posts/${postId}`,
+    {
+      method: "PATCH",
+      body: requestBody,
+    },
+  );
+
+  return mapCommunityPostDetailDtoToViewModel(postDto, []);
+}
+
+/**
+ * 로그인 사용자의 게시글을 삭제한다.
+ */
+export async function deleteCommunityPost(postId: string): Promise<void> {
+  await requestBackendApi<null>(`/api/posts/${postId}`, {
+    method: "DELETE",
+  });
+}
+
+/**
  * 로그인 사용자의 댓글을 생성한다.
  */
 export async function createCommunityComment(
@@ -146,6 +180,36 @@ export async function createCommunityComment(
   );
 
   return mapCommunityCommentDtoToViewModel(commentDto);
+}
+
+/**
+ * 로그인 사용자의 댓글을 수정한다.
+ */
+export async function updateCommunityComment(
+  commentId: string,
+  content: string,
+): Promise<PostCommentViewModel> {
+  const requestBody: UpdateCommunityCommentRequestDto = {
+    content: content.trim(),
+  };
+  const commentDto = await requestBackendApi<CommunityCommentResponseDto>(
+    `/api/comments/${commentId}`,
+    {
+      method: "PATCH",
+      body: requestBody,
+    },
+  );
+
+  return mapCommunityCommentDtoToViewModel(commentDto);
+}
+
+/**
+ * 로그인 사용자의 댓글을 삭제한다.
+ */
+export async function deleteCommunityComment(commentId: string): Promise<void> {
+  await requestBackendApi<null>(`/api/comments/${commentId}`, {
+    method: "DELETE",
+  });
 }
 
 /**

@@ -615,6 +615,10 @@ a {
   padding: 16px;
 }
 
+.batch-summary-box {
+  margin-bottom: 18px;
+}
+
 .news-summary-box h5 {
   margin: 0 0 10px;
   color: #ffffff;
@@ -639,6 +643,200 @@ a {
   font-size: 14px;
   font-weight: 760;
   line-height: 1.45;
+}
+
+.dashboard-sync-message {
+  margin-bottom: 18px;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.dashboard-card {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-card-wide {
+  grid-column: 1 / -1;
+}
+
+.dashboard-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.keyword-briefing-grid,
+.cluster-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.keyword-briefing-card,
+.cluster-card,
+.trend-score-tile,
+.sentiment-row,
+.bookmark-row {
+  border: 1px solid #263247;
+  border-radius: 8px;
+  background: #0b121f;
+}
+
+.keyword-briefing-card,
+.cluster-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.keyword-briefing-card p {
+  margin: 0;
+  color: #dce5ef;
+  line-height: 1.7;
+}
+
+.frequency-list,
+.daily-count-list,
+.sentiment-list,
+.bookmark-list {
+  display: grid;
+  gap: 10px;
+}
+
+.frequency-row {
+  display: grid;
+  gap: 8px;
+}
+
+.frequency-row-header,
+.daily-count-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.frequency-row-header strong,
+.daily-count-row strong {
+  color: #ffffff;
+}
+
+.bar-track {
+  overflow: hidden;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bar-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--teal), var(--accent));
+}
+
+.dashboard-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.trend-score-tile {
+  display: grid;
+  gap: 8px;
+  min-height: 126px;
+  align-content: space-between;
+  padding: 16px;
+}
+
+.trend-score-tile strong {
+  color: var(--accent);
+  font-size: 34px;
+  font-weight: 920;
+  line-height: 1;
+}
+
+.trend-score-tile span {
+  color: #ffffff;
+  font-weight: 820;
+}
+
+.trend-score-tile small {
+  color: var(--muted);
+  font-weight: 760;
+}
+
+.issue-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 20px;
+  color: #dce5ef;
+  line-height: 1.7;
+}
+
+.daily-count-row {
+  grid-template-columns: 104px minmax(0, 1fr) 44px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.sentiment-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: start;
+  padding: 14px;
+}
+
+.sentiment-row strong {
+  color: #ffffff;
+}
+
+.sentiment-row p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.badge[data-sentiment="POSITIVE"] {
+  background: rgba(142, 217, 109, 0.16);
+  color: #bdf4a8;
+}
+
+.badge[data-sentiment="NEGATIVE"],
+.badge[data-risk="HIGH"] {
+  background: rgba(255, 108, 63, 0.16);
+  color: #ffb59e;
+}
+
+.badge[data-risk="MEDIUM"] {
+  background: rgba(255, 193, 91, 0.14);
+  color: #ffda91;
+}
+
+.bookmark-row {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.bookmark-row strong {
+  color: #ffffff;
+  line-height: 1.45;
+}
+
+.bookmark-row span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 760;
 }
 
 .onboarding-hero {
@@ -1142,6 +1340,14 @@ a {
   line-height: 1.65;
 }
 
+.comment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .footer {
   border-top: 1px solid var(--line);
   padding: 28px 56px;
@@ -1175,6 +1381,9 @@ a {
   }
 
   .hero,
+  .dashboard-layout,
+  .keyword-briefing-grid,
+  .cluster-grid,
   .onboarding-layout,
   .community-layout,
   .write-post-layout {
@@ -1214,6 +1423,9 @@ a {
   .keyword-row,
   .account-strip,
   .board-row,
+  .dashboard-mini-grid,
+  .daily-count-row,
+  .sentiment-row,
   .discussion-row {
     grid-template-columns: 1fr;
   }

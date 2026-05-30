@@ -38,10 +38,14 @@ app/page.tsx
 - 로그인 사용자와 키워드가 준비되면 `fetchNewsRecommendations()`가 `GET /api/news/recommendations?refresh=false&limit=20`으로 내 키워드 기반 추천 뉴스를 조회한다.
 - AI 브리핑 화면의 `최신 뉴스 가져오기`는 `GET /api/news/recommendations?refresh=true&limit=20`을 호출해 백엔드의 뉴스 수집을 실행하고 추천 목록을 교체한다.
 - 추천 뉴스 카드의 `AI 요약`은 `POST /api/news/{newsId}/summary`를 호출하고 요약 결과를 카드 내부에 표시한다.
+- 추천 뉴스 묶음 요약은 `POST /api/news/summary`를 호출하고 추천 뉴스 패널 상단에 결과를 표시한다.
+- 뉴스 저장/저장 취소는 `POST /api/news/{newsId}/bookmarks`, `DELETE /api/news/{newsId}/bookmarks`를 호출하고 `GET /api/news/bookmarks`로 저장 목록을 동기화한다.
+- 뉴스 대시보드 섹션은 로그인 사용자와 키워드 동기화가 준비되면 `GET /api/news/keyword-briefings`, `GET /api/news/keyword-frequency`, `GET /api/news/trend-scores`, `GET /api/news/today-issues`, `GET /api/news/suggested-keywords`, `GET /api/news/statistics/daily-counts`, `GET /api/news/clusters`, `GET /api/news/sentiments`, `GET /api/news/bookmarks`를 `newsService` 경계 뒤에서 호출한다.
 - 로그인 사용자가 확인되면 `fetchTrendAnalysisSummary()`가 `GET /api/trend-analysis/summary`를 호출해 백엔드가 집계한 평균 트렌드 점수를 표시한다.
 - 커뮤니티 카테고리와 게시글 목록은 `communityService`가 백엔드 `GET /api/community/categories`, `GET /api/posts`를 조회해 UI view model로 변환한다.
 - 커뮤니티 상세 화면은 게시글 상세 `GET /api/posts/{postId}`와 댓글 목록 `GET /api/posts/{postId}/comments`를 함께 조회한다.
 - 게시글 작성, 댓글 작성, 좋아요/좋아요 취소는 각각 `POST /api/posts`, `POST /api/posts/{postId}/comments`, `POST/DELETE /api/posts/{postId}/likes`를 호출한다.
+- 작성자 본인의 게시글 수정/삭제와 댓글 수정/삭제는 각각 `PATCH/DELETE /api/posts/{postId}`, `PATCH/DELETE /api/comments/{commentId}`를 호출한다.
 
 ## 인증 흐름
 - 헤더의 Google 로그인/시작하기 버튼은 백엔드 `GET /api/auth`로 이동한다.
@@ -82,3 +86,4 @@ app/page.tsx
 | 2026-05-28 | 뉴스 추천/수집/요약을 백엔드 API와 연동 | 백엔드가 내 키워드 기반 추천 뉴스, 수집 refresh, LLM 요약 계약을 제공함 | `newsService`, 뉴스 DTO/view model, AI 브리핑 추천 뉴스 패널 추가 |
 | 2026-05-28 | 홈 검색을 제거하고 기능 섹션을 보호 라우팅으로 전환 | 홈은 public 진입점으로 단순화하고 로그인 사용자에게만 기능 화면을 허용 | 홈 검색 form 제거, 비로그인 보호 섹션 접근 시 alert 후 홈 복귀 |
 | 2026-05-28 | 로컬 mock snapshot과 임의 검색 브리핑 제거 | 현재 요청과 계층 규칙상 확인된 백엔드 API만 사용해야 함 | `trendDashboardService`, 검색 섹션, 정적 시각화 제거, `trendAnalysisService` 추가 |
+| 2026-05-30 | back-docs의 확인된 News Dashboard/Keyword Briefing/Bookmark/Community mutation API를 프론트에 연동 | mock 없이 백엔드 API 응답만 표시해야 함 | `dashboard` 섹션 추가, `newsService` 대시보드 호출 확장, 게시글/댓글 수정 삭제 UI 추가 |

@@ -174,6 +174,43 @@
 - Related API: `POST /api/news/{newsId}/summary`, service 경계에 `POST /api/news/summary` 묶음 요약 계약도 유지
 - Related DB tables: 백엔드 NewsArticle, AiSummary
 
+## 추천 뉴스 묶음 요약 및 북마크
+- Actor: 로그인 사용자
+- Entry point: AI 브리핑 추천 뉴스 패널
+- Preconditions: 추천 뉴스 목록 조회 성공
+- Steps:
+  1. 사용자가 `추천 뉴스 묶음 요약`을 누르면 현재 추천 목록의 뉴스 ID 목록으로 `POST /api/news/summary`를 호출한다.
+  2. 프론트는 응답의 `summary`와 `sources`를 추천 뉴스 패널 상단에 표시한다.
+  3. 사용자가 뉴스 카드의 `뉴스 저장` 또는 `저장 취소`를 누르면 현재 저장 여부에 따라 `POST /api/news/{newsId}/bookmarks` 또는 `DELETE /api/news/{newsId}/bookmarks`를 호출한다.
+  4. 저장 상태 변경 성공 후 `GET /api/news/bookmarks`를 호출해 저장 뉴스 목록을 다시 동기화한다.
+- Validation: 로그인 사용자, 추천 뉴스 ID 1개 이상
+- Empty state: 추천 뉴스가 없으면 묶음 요약 버튼 비활성화
+- Error state: 요약 또는 북마크 API 실패 시 `newsSyncMessage` 또는 `newsDashboardSyncMessage` 표시
+- Permission behavior: Bearer token과 `accessToken` cookie가 필요하다.
+- Retry or recovery: 같은 버튼을 다시 누르거나 대시보드 새로고침
+- Side effects: 백엔드 LLM 요약, 뉴스 북마크 생성/삭제
+- Related API: `POST /api/news/summary`, `POST /api/news/{newsId}/bookmarks`, `GET /api/news/bookmarks`, `DELETE /api/news/{newsId}/bookmarks`
+- Related DB tables: 백엔드 NewsArticle, AiSummary, NewsBookmark
+
+## 뉴스 대시보드 조회
+- Actor: 로그인 사용자
+- Entry point: 헤더 `뉴스 대시보드`
+- Preconditions: 현재 사용자 조회 성공, 키워드 동기화 완료
+- Steps:
+  1. `useTrendScopeWorkspace`가 로그인 사용자와 키워드 동기화 완료를 확인한다.
+  2. `newsService.fetchNewsDashboard()`가 back-docs 뉴스 대시보드 API 묶음을 호출한다.
+  3. 키워드별 브리핑, 키워드 빈도, 트렌드 점수, 오늘의 이슈, 추천 키워드, 일자별 뉴스 수, 뉴스 클러스터, 감성/리스크, 저장 뉴스를 UI view model로 변환한다.
+  4. `DashboardSection`은 백엔드 응답 또는 빈 상태만 표시한다.
+  5. 사용자가 `대시보드 새로고침`을 누르면 같은 API 묶음을 다시 호출한다.
+- Validation: 로그인 사용자 필요
+- Empty state: 각 API가 빈 배열을 반환하면 해당 패널에 빈 상태 메시지 표시
+- Error state: 하나 이상의 대시보드 API 호출 실패 시 `newsDashboardSyncStatus=error`, `newsDashboardSyncMessage` 표시
+- Permission behavior: Bearer token과 `accessToken` cookie가 필요하다.
+- Retry or recovery: 대시보드 새로고침 또는 재로그인
+- Side effects: `newsDashboard` projection 교체
+- Related API: `GET /api/news/keyword-briefings`, `GET /api/news/keyword-frequency`, `GET /api/news/trend-scores`, `GET /api/news/today-issues`, `GET /api/news/suggested-keywords`, `GET /api/news/statistics/daily-counts`, `GET /api/news/clusters`, `GET /api/news/sentiments`, `GET /api/news/bookmarks`
+- Related DB tables: 백엔드 Keyword, NewsArticle, TrendAnalysis, NewsBookmark
+
 ## AI 브리핑 확인
 - Actor: 로그인 사용자
 - Entry point: 헤더 `AI 브리핑`
@@ -181,14 +218,14 @@
 - Steps:
   1. 사용자가 AI 브리핑 탭으로 이동한다.
   2. 백엔드 트렌드 분석 요약 점수를 확인한다.
-  3. 백엔드 추천 뉴스 패널에서 내 키워드 기반 기사, 최신 뉴스 수집 버튼, 뉴스별 LLM 요약 버튼을 확인한다.
+  3. 백엔드 추천 뉴스 패널에서 내 키워드 기반 기사, 최신 뉴스 수집 버튼, 뉴스별 LLM 요약 버튼, 묶음 요약 버튼, 뉴스 저장 버튼을 확인한다.
 - Validation: 없음
 - Empty state: 키워드나 추천 뉴스가 없으면 각각의 빈 상태 메시지 표시
 - Error state: 뉴스 또는 트렌드 분석 API 실패 메시지 표시
 - Permission behavior: AI 브리핑 섹션은 authenticated. 비로그인 접근 시 alert 후 홈으로 돌아간다.
 - Retry or recovery: 새로고침, 키워드 등록, 최신 뉴스 가져오기 재시도
 - Side effects: active section 변경
-- Related API: `GET /api/trend-analysis/summary`, `GET /api/news/recommendations`, `POST /api/news/{newsId}/summary`
+- Related API: `GET /api/trend-analysis/summary`, `GET /api/news/recommendations`, `POST /api/news/{newsId}/summary`, `POST /api/news/summary`, `POST/DELETE /api/news/{newsId}/bookmarks`, `GET /api/news/bookmarks`
 - Related DB tables: 백엔드 `Keyword`, `TrendAnalysis`, `NewsArticle`, `AiSummary`
 
 ## 커뮤니티 게시판 탐색
@@ -244,12 +281,14 @@
   4. 게시글 상세, 댓글, 조회수, 좋아요 수, 좋아요 여부가 표시된다.
   5. 사용자가 댓글을 입력하면 `POST /api/posts/{postId}/comments`를 호출한 뒤 상세/댓글을 재조회한다.
   6. 사용자가 좋아요를 누르면 `likedByMe`, `likeCount`를 optimistic update하고 `POST /api/posts/{postId}/likes` 또는 `DELETE /api/posts/{postId}/likes`를 호출한다.
-  7. `목록으로` 버튼을 누르면 커뮤니티 목록으로 돌아간다.
+  7. 작성자 본인은 게시글 수정 form을 열어 `PATCH /api/posts/{postId}`를 호출하거나 `DELETE /api/posts/{postId}`로 게시글을 삭제할 수 있다.
+  8. 작성자 본인은 댓글 수정 form을 열어 `PATCH /api/comments/{commentId}`를 호출하거나 `DELETE /api/comments/{commentId}`로 댓글을 삭제할 수 있다.
+  9. `목록으로` 버튼을 누르면 커뮤니티 목록으로 돌아간다.
 - Validation: post id 존재, 댓글 내용 trim 후 빈 문자열 제외
 - Empty state: 댓글이 없으면 댓글 없음 메시지 표시
 - Error state: 상세/댓글/좋아요 API 실패 시 `communitySyncStatus=error`, `communitySyncMessage` 표시
 - Permission behavior: 게시글 상세 섹션은 authenticated. 상세/댓글 조회 API는 선택 인증이지만 UI 라우팅은 로그인 사용자에게만 허용하고, 댓글 작성과 좋아요 변경은 Bearer token과 `accessToken` cookie가 필요하다.
 - Retry or recovery: 목록으로 이동 후 다시 선택하거나 댓글/좋아요를 다시 시도
-- Side effects: active section과 active post state 변경, 상세 조회 시 백엔드 view count 증가, 댓글/좋아요 백엔드 변경
-- Related API: `GET /api/posts/{postId}`, `GET /api/posts/{postId}/comments`, `POST /api/posts/{postId}/comments`, `POST /api/posts/{postId}/likes`, `DELETE /api/posts/{postId}/likes`
+- Side effects: active section과 active post state 변경, 상세 조회 시 백엔드 view count 증가, 댓글/좋아요/수정/삭제 백엔드 변경
+- Related API: `GET /api/posts/{postId}`, `GET /api/posts/{postId}/comments`, `PATCH /api/posts/{postId}`, `DELETE /api/posts/{postId}`, `POST /api/posts/{postId}/comments`, `PATCH /api/comments/{commentId}`, `DELETE /api/comments/{commentId}`, `POST /api/posts/{postId}/likes`, `DELETE /api/posts/{postId}/likes`
 - Related DB tables: 백엔드 posts, comments, likes, users

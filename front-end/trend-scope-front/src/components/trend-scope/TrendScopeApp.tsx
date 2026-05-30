@@ -5,6 +5,7 @@ import { TrendScopeHeader } from "./TrendScopeHeader";
 import {
   BriefingSection,
   CommunitySection,
+  DashboardSection,
   HomeSection,
   MyPageSection,
   OnboardingSection,
@@ -41,6 +42,9 @@ export function TrendScopeApp() {
           onToggleKeyword={workspace.toggleOnboardingKeyword}
         />
         <BriefingSection
+          batchNewsSummary={workspace.batchNewsSummary}
+          bookmarkedNewsIds={workspace.bookmarkedNewsIds}
+          isSummarizingNewsBatch={workspace.isSummarizingNewsBatch}
           isActive={workspace.activeSection === "briefing"}
           newsRecommendation={workspace.newsRecommendation}
           newsSummariesByArticleId={workspace.newsSummariesByArticleId}
@@ -51,7 +55,16 @@ export function TrendScopeApp() {
           trendAnalysisSyncMessage={workspace.trendAnalysisSyncMessage}
           trendAnalysisSyncStatus={workspace.trendAnalysisSyncStatus}
           onRefreshNews={workspace.refreshNewsRecommendations}
+          onSummarizeNewsBatch={workspace.summarizeRecommendedNewsBatch}
           onSummarizeNews={workspace.summarizeRecommendedNews}
+          onToggleNewsBookmark={workspace.toggleNewsBookmark}
+        />
+        <DashboardSection
+          dashboard={workspace.newsDashboard}
+          isActive={workspace.activeSection === "dashboard"}
+          syncMessage={workspace.newsDashboardSyncMessage}
+          syncStatus={workspace.newsDashboardSyncStatus}
+          onRefreshDashboard={workspace.refreshNewsDashboard}
         />
         <MyPageSection
           currentUser={workspace.currentUser}
@@ -86,14 +99,30 @@ export function TrendScopeApp() {
         />
         <PostSection
           canSubmitComment={workspace.canSubmitPostComment}
+          canSubmitCommentEdit={workspace.canSubmitCommentEdit}
+          canSubmitPostEdit={workspace.canSubmitPostEdit}
           commentDraft={workspace.postCommentDraft}
+          commentEditDraft={workspace.commentEditDraft}
+          editingCommentId={workspace.editingCommentId}
+          isEditingPost={workspace.isEditingActivePost}
           syncMessage={workspace.communitySyncMessage}
           syncStatus={workspace.communitySyncStatus}
           isActive={workspace.activeSection === "post"}
           post={workspace.activePost}
+          postEditDraft={workspace.postEditDraft}
+          onCancelCommentEdit={workspace.cancelEditingComment}
+          onCancelPostEdit={workspace.cancelEditingActivePost}
           onCommentDraftChange={workspace.setPostCommentDraft}
+          onCommentEditDraftChange={workspace.setCommentEditDraft}
+          onDeleteComment={workspace.deleteComment}
+          onDeletePost={workspace.deleteActivePost}
+          onEditDraftFieldChange={workspace.setPostEditDraftField}
           onNavigate={workspace.goToSection}
+          onStartCommentEdit={workspace.startEditingComment}
+          onStartPostEdit={workspace.startEditingActivePost}
           onSubmitComment={workspace.submitPostComment}
+          onSubmitCommentEdit={workspace.submitCommentEdit}
+          onSubmitPostEdit={workspace.submitPostEdit}
           onToggleLike={workspace.toggleActivePostLike}
         />
       </main>

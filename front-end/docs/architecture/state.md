@@ -20,9 +20,15 @@
 | `keywordSyncMessage` | `useTrendScopeWorkspace` | React state | No | 키워드 동기화 성공/실패 메시지 |
 | `newsRecommendation` | `useTrendScopeWorkspace` | Backend `GET /api/news/recommendations` | Backend | 로그인 사용자의 키워드 기반 추천 뉴스 projection |
 | `newsSummariesByArticleId` | `useTrendScopeWorkspace` | Backend `POST /api/news/{newsId}/summary` | Backend | 뉴스 카드별 LLM 요약 결과 |
+| `batchNewsSummary` | `useTrendScopeWorkspace` | Backend `POST /api/news/summary` | Backend | 추천 뉴스 묶음 LLM 요약 결과 |
+| `newsDashboard` | `useTrendScopeWorkspace` | Backend News Dashboard APIs | Backend | 키워드 브리핑, 빈도, 트렌드 점수, 이슈, 추천 키워드, 일자별 뉴스 수, 클러스터, 감성, 북마크 projection |
+| `newsBookmarks` | `useTrendScopeWorkspace` | Backend `GET /api/news/bookmarks` | Backend | `newsDashboard.bookmarks`에서 파생한 저장 뉴스 projection |
+| `newsDashboardSyncStatus` | `useTrendScopeWorkspace` | React state + news service result | No | 뉴스 대시보드/북마크 조회 및 저장 상태 |
+| `newsDashboardSyncMessage` | `useTrendScopeWorkspace` | React state | No | 뉴스 대시보드 API 성공/실패 메시지 |
 | `newsSyncStatus` | `useTrendScopeWorkspace` | React state + news service result | No | 추천 뉴스 조회/수집/요약 동기화 상태 |
 | `newsSyncMessage` | `useTrendScopeWorkspace` | React state | No | 뉴스 API 성공/실패 메시지 |
 | `summarizingNewsId` | `useTrendScopeWorkspace` | React state | No | 현재 요약 요청 중인 뉴스 ID |
+| `isSummarizingNewsBatch` | `useTrendScopeWorkspace` | React state | No | 추천 뉴스 묶음 요약 요청 중 여부 |
 | `trendAnalysisSummary` | `useTrendScopeWorkspace` | Backend `GET /api/trend-analysis/summary` | Backend | 백엔드가 집계한 평균 트렌드 점수 projection |
 | `trendAnalysisSyncStatus` | `useTrendScopeWorkspace` | React state + trend analysis service result | No | 트렌드 분석 요약 조회 상태 |
 | `trendAnalysisSyncMessage` | `useTrendScopeWorkspace` | React state | No | 트렌드 분석 API 성공/실패 메시지 |
@@ -32,7 +38,10 @@
 | `communitySyncStatus` | `useTrendScopeWorkspace` | React state + community service result | No | 커뮤니티 API 조회/저장 동기화 상태 |
 | `communitySyncMessage` | `useTrendScopeWorkspace` | React state | No | 커뮤니티 API 성공/실패 메시지 |
 | `postDraft` | `useTrendScopeWorkspace` | React state | No | 별도 글쓰기 화면의 게시판, 제목, 내용 |
+| `postEditDraft` | `useTrendScopeWorkspace` | React state | No | 게시글 상세 화면의 수정 draft |
 | `postCommentDraft` | `useTrendScopeWorkspace` | React state | No | 게시글 상세 화면의 댓글 입력값 |
+| `editingCommentId` | `useTrendScopeWorkspace` | React state | No | 수정 중인 댓글 ID |
+| `commentEditDraft` | `useTrendScopeWorkspace` | React state | No | 댓글 수정 draft |
 
 ## Enum 값
 | Enum | Value | Meaning | Terminal | Notes |
@@ -40,6 +49,7 @@
 | `TrendScopeSection` | `home` | 첫 화면 | No | public 진입 화면 |
 | `TrendScopeSection` | `onboarding` | 신규 가입 키워드 선택 | No | OAuth 완료 후 신규 가입 후보에게 직접 입력 키워드 선택 표시 |
 | `TrendScopeSection` | `briefing` | AI 브리핑 | No | 로그인 사용자만 접근, 트렌드 분석 요약과 추천 뉴스 표시 |
+| `TrendScopeSection` | `dashboard` | 뉴스 대시보드 | No | 로그인 사용자만 접근, back-docs 뉴스 대시보드 API 응답 표시 |
 | `TrendScopeSection` | `mypage` | 마이페이지 | No | 로그인 사용자만 접근, 키워드 관리 |
 | `TrendScopeSection` | `community` | 커뮤니티 목록 | No | 로그인 사용자만 접근, 분야별 게시판 필터와 게시글 목록 |
 | `TrendScopeSection` | `writePost` | 게시글 작성 | No | 로그인 사용자만 접근, 별도 글쓰기 화면 |
@@ -67,6 +77,11 @@
 | `NewsSyncStatus` | `summarizing` | 뉴스 요약 생성 중 | No | `POST /api/news/{newsId}/summary` 진행 중 |
 | `NewsSyncStatus` | `ready` | 뉴스 API 반영 완료 | No | 추천 조회/수집/요약 성공 |
 | `NewsSyncStatus` | `error` | 뉴스 API 실패 | No | 공통 API 오류 메시지 표시 |
+| `NewsDashboardSyncStatus` | `idle` | 뉴스 대시보드 동기화 대기 | No | 익명 상태 |
+| `NewsDashboardSyncStatus` | `loading` | 뉴스 대시보드 조회 중 | No | 뉴스 대시보드 API 묶음 조회 진행 중 |
+| `NewsDashboardSyncStatus` | `saving` | 뉴스 저장 상태 변경 중 | No | 뉴스 북마크 생성/삭제 진행 중 |
+| `NewsDashboardSyncStatus` | `ready` | 뉴스 대시보드 반영 완료 | No | 조회/저장 성공 |
+| `NewsDashboardSyncStatus` | `error` | 뉴스 대시보드 API 실패 | No | 공통 API 오류 메시지 표시 |
 | `TrendAnalysisSyncStatus` | `idle` | 트렌드 분석 대기 | No | 익명 상태 |
 | `TrendAnalysisSyncStatus` | `loading` | 트렌드 분석 조회 중 | No | `GET /api/trend-analysis/summary` 진행 중 |
 | `TrendAnalysisSyncStatus` | `ready` | 트렌드 분석 반영 완료 | No | 조회 성공 |
@@ -99,19 +114,30 @@
 | `refreshing` news | `ready` news | 최신 뉴스 수집 성공 | 백엔드 응답 DTO 유효 | 추천 뉴스 목록 교체, 기존 요약 초기화 |
 | `ready` news | `summarizing` news | 뉴스 카드 AI 요약 클릭 | 로그인 사용자, news id 존재 | `POST /api/news/{newsId}/summary` |
 | `summarizing` news | `ready` news | 요약 성공 | 백엔드 응답 DTO 유효 | `newsSummariesByArticleId[newsId]` 저장 |
+| `ready` news | `summarizing` news | 추천 뉴스 묶음 요약 클릭 | 로그인 사용자, 추천 뉴스 1개 이상 | `POST /api/news/summary` |
+| `summarizing` news | `ready` news | 묶음 요약 성공 | 백엔드 응답 DTO 유효 | `batchNewsSummary` 저장 |
 | any news | `error` news | 추천/수집/요약 실패 | API error mapping | `newsSyncMessage` 설정, 기존 추천 목록 유지 |
+| `authenticated` auth + `ready` keywords | `loading` news dashboard | 로그인 사용자와 키워드 동기화 완료 | 로그인 사용자 존재 | `GET /api/news/keyword-briefings`, `GET /api/news/keyword-frequency`, `GET /api/news/trend-scores`, `GET /api/news/today-issues`, `GET /api/news/suggested-keywords`, `GET /api/news/statistics/daily-counts`, `GET /api/news/clusters`, `GET /api/news/sentiments`, `GET /api/news/bookmarks` |
+| `loading` news dashboard | `ready` news dashboard | 대시보드 조회 성공 | 백엔드 응답 DTO 유효 | `newsDashboard` 교체 |
+| `ready` news dashboard | `saving` news dashboard | 뉴스 저장/저장 취소 클릭 | 로그인 사용자, news id 존재 | `POST /api/news/{newsId}/bookmarks` 또는 `DELETE /api/news/{newsId}/bookmarks` |
+| `saving` news dashboard | `ready` news dashboard | 북마크 변경 성공 | 백엔드 응답 DTO 유효 | `GET /api/news/bookmarks`로 bookmarks 교체 |
+| any news dashboard | `error` news dashboard | 뉴스 대시보드 또는 북마크 API 실패 | API error mapping | `newsDashboardSyncMessage` 설정 |
 | `idle` community | `loading` community | 앱 진입 | 없음 | `GET /api/community/categories`, `GET /api/posts` |
 | `loading` community | `ready` community | 게시글 목록 조회 성공 | 백엔드 page DTO 유효 | `boardPosts`를 백엔드 목록으로 대체 |
 | `loading` community | `error` community | 커뮤니티 조회 실패 | API error mapping | `communitySyncMessage` 설정 |
 | any section | `home` | 홈 nav 또는 브랜드 클릭 | section enum 값 | `activePostId`, `activePost` 초기화, window scroll top |
-| any section | `briefing`, `mypage`, `community`, `writePost`, `post`, `onboarding` | 헤더 nav 또는 기능 버튼 클릭 | 로그인 사용자 존재 | 필요 시 `activePostId` 초기화, window scroll top |
+| any section | `briefing`, `dashboard`, `mypage`, `community`, `writePost`, `post`, `onboarding` | 헤더 nav 또는 기능 버튼 클릭 | 로그인 사용자 존재 | 필요 시 `activePostId` 초기화, window scroll top |
 | any section | `home` | 비로그인 사용자가 보호 섹션 접근 | 로그인 사용자 없음 | `alert("로그인이 필요한 기능입니다.")`, `activePostId`, `activePost` 초기화, window scroll top |
 | `onboarding` selected keywords | selected keywords +/- keyword | 직접 입력 추가 또는 선택 chip 클릭 | trim 후 빈 문자열 제외, 중복 제외 | React state 갱신 |
 | `community` | `post` | 게시글 row 클릭 | post id 존재 여부 | `activePostId` 설정, `GET /api/posts/{postId}`, `GET /api/posts/{postId}/comments`, window scroll top |
 | `post` | `community` | 목록으로 버튼 클릭 | 없음 | `activePostId`, `activePost` 초기화 |
 | `community` | `community` | 게시판 필터 클릭 | `CommunityBoardFilterId` | `visibleCommunityPosts` 재계산 |
 | `writePost` | `post` | 게시글 등록 submit | 로그인 사용자, 제목/내용 trim 후 빈 문자열 제외 | `POST /api/posts`, `GET /api/posts`, `GET /api/posts/{postId}`, draft 초기화 |
+| `post` active post | updated active post | 게시글 수정 submit | 로그인 사용자, 작성자, 제목/내용 trim 후 빈 문자열 제외 | `PATCH /api/posts/{postId}`, `GET /api/posts`, `GET /api/posts/{postId}` |
+| `post` | `community` | 게시글 삭제 confirm | 로그인 사용자, 작성자 | `DELETE /api/posts/{postId}`, `GET /api/posts`, active post 초기화 |
 | `post` active post | updated active post | 댓글 등록 submit | 로그인 사용자, 댓글 trim 후 빈 문자열 제외 | `POST /api/posts/{postId}/comments`, 상세/댓글 재조회 |
+| `post` active post | updated active post | 댓글 수정 submit | 로그인 사용자, 작성자, 댓글 trim 후 빈 문자열 제외 | `PATCH /api/comments/{commentId}`, 상세/댓글 재조회 |
+| `post` active post | updated active post | 댓글 삭제 confirm | 로그인 사용자, 작성자 | `DELETE /api/comments/{commentId}`, 상세/댓글 재조회 |
 | `post` active post | liked/unliked active post | 좋아요 버튼 클릭 | 로그인 사용자, active post 존재 | optimistic `likedByMe`/`likeCount` 변경, `POST/DELETE /api/posts/{postId}/likes`, 실패 시 rollback |
 | current keywords | keywords + new keyword | 키워드 등록 submit | trim 후 빈 문자열 제외, 인증 token 존재 | 백엔드 생성 후 `keywordDraft` 초기화 |
 
