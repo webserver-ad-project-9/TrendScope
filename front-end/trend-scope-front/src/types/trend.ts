@@ -2,6 +2,7 @@ export type TrendScopeSection =
   | "home"
   | "onboarding"
   | "briefing"
+  | "dashboard"
   | "mypage"
   | "community"
   | "writePost"
@@ -29,6 +30,8 @@ export type NewsSyncStatus =
   | "error";
 
 export type TrendAnalysisSyncStatus = "idle" | "loading" | "ready" | "error";
+
+export type NewsDashboardSyncStatus = "idle" | "loading" | "saving" | "ready" | "error";
 
 export interface KeywordViewModel {
   readonly id: string;
@@ -72,6 +75,101 @@ export interface NewsRecommendationViewModel {
   readonly keywords: readonly NewsRecommendationKeywordViewModel[];
   readonly articles: readonly RecommendedNewsArticleViewModel[];
   readonly refreshed: boolean;
+}
+
+export interface KeywordBriefingArticleViewModel {
+  readonly title: string;
+  readonly originUrl: string;
+  readonly publishedAt: string | null;
+  readonly publishedAtLabel: string;
+}
+
+export interface KeywordBriefingGroupViewModel {
+  readonly keyword: string;
+  readonly collectedCount: number;
+  readonly summary: string;
+  readonly articles: readonly KeywordBriefingArticleViewModel[];
+}
+
+export interface KeywordBriefingViewModel {
+  readonly date: string;
+  readonly summaryType: "KEYWORD_GROUP_SUMMARY";
+  readonly totalCollectedCount: number;
+  readonly summaries: readonly KeywordBriefingGroupViewModel[];
+}
+
+export interface KeywordFrequencyItemViewModel {
+  readonly keyword: string;
+  readonly count: number;
+  readonly weight: number;
+}
+
+export interface KeywordFrequencyViewModel {
+  readonly articleCount: number;
+  readonly keywords: readonly KeywordFrequencyItemViewModel[];
+}
+
+export interface NewsTrendScoreItemViewModel {
+  readonly keywordId: string;
+  readonly keyword: string;
+  readonly articleCount: number;
+  readonly trendScore: number;
+  readonly trendScoreLabel: string;
+}
+
+export interface TodayIssueViewModel {
+  readonly issues: readonly string[];
+}
+
+export interface DailyNewsCountItemViewModel {
+  readonly date: string;
+  readonly count: number;
+}
+
+export interface NewsClusterArticleViewModel {
+  readonly title: string;
+  readonly originUrl: string;
+  readonly publishedAt: string | null;
+  readonly publishedAtLabel: string;
+}
+
+export interface NewsClusterViewModel {
+  readonly topic: string;
+  readonly articleCount: number;
+  readonly articles: readonly NewsClusterArticleViewModel[];
+}
+
+export type NewsSentiment = "POSITIVE" | "NEUTRAL" | "NEGATIVE";
+
+export type NewsRiskLevel = "LOW" | "MEDIUM" | "HIGH";
+
+export interface NewsSentimentViewModel {
+  readonly keywordId: string;
+  readonly keyword: string;
+  readonly sentiment: NewsSentiment;
+  readonly riskLevel: NewsRiskLevel;
+  readonly reason: string;
+}
+
+export interface NewsBookmarkViewModel {
+  readonly bookmarkId: string;
+  readonly newsId: string;
+  readonly title: string;
+  readonly originUrl: string;
+  readonly publishedAt: string | null;
+  readonly publishedAtLabel: string;
+}
+
+export interface NewsDashboardViewModel {
+  readonly keywordBriefing: KeywordBriefingViewModel;
+  readonly keywordFrequency: KeywordFrequencyViewModel;
+  readonly trendScores: readonly NewsTrendScoreItemViewModel[];
+  readonly todayIssues: TodayIssueViewModel;
+  readonly suggestedKeywords: readonly KeywordFrequencyItemViewModel[];
+  readonly dailyNewsCounts: readonly DailyNewsCountItemViewModel[];
+  readonly clusters: readonly NewsClusterViewModel[];
+  readonly sentiments: readonly NewsSentimentViewModel[];
+  readonly bookmarks: readonly NewsBookmarkViewModel[];
 }
 
 export interface TrendAnalysisSummaryViewModel {

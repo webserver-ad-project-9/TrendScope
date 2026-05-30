@@ -6,11 +6,15 @@ import { ApiClientError } from "@/src/services/apiClient";
 import {
   createCommunityComment,
   createCommunityPost,
+  deleteCommunityComment,
+  deleteCommunityPost,
   fetchCommunityBoardSections,
   fetchCommunityPostThread,
   fetchCommunityPosts,
   likeCommunityPost,
   unlikeCommunityPost,
+  updateCommunityComment,
+  updateCommunityPost,
 } from "@/src/services/communityService";
 import {
   consumeOAuthSignupHint,
@@ -26,8 +30,13 @@ import {
   fetchOnboardingKeywords,
 } from "@/src/services/keywordService";
 import {
+  bookmarkNewsArticle,
+  deleteNewsBookmark,
+  fetchNewsBookmarks,
+  fetchNewsDashboard,
   fetchNewsRecommendations,
   summarizeNewsArticle,
+  summarizeNewsArticles,
 } from "@/src/services/newsService";
 import { fetchTrendAnalysisSummary } from "@/src/services/trendAnalysisService";
 import type { AuthStatus, CurrentUserViewModel, KeywordSyncStatus } from "@/src/types/auth";
@@ -39,6 +48,9 @@ import type {
   CommunityPostDraftViewModel,
   CommunitySyncStatus,
   KeywordViewModel,
+  NewsBookmarkViewModel,
+  NewsDashboardSyncStatus,
+  NewsDashboardViewModel,
   NewsRecommendationViewModel,
   NewsSummaryViewModel,
   NewsSyncStatus,
@@ -60,11 +72,22 @@ interface TrendScopeWorkspaceState {
   readonly currentUser: CurrentUserViewModel | null;
   readonly visibleCommunityPosts: readonly BoardPostViewModel[];
   readonly postDraft: CommunityPostDraftViewModel;
+  readonly postEditDraft: CommunityPostDraftViewModel;
   readonly postCommentDraft: string;
+  readonly commentEditDraft: string;
   readonly canSubmitPostDraft: boolean;
+  readonly canSubmitPostEdit: boolean;
   readonly canSubmitPostComment: boolean;
+  readonly canSubmitCommentEdit: boolean;
   readonly keywords: readonly KeywordViewModel[];
   readonly keywordDraft: string;
+  readonly bookmarkedNewsIds: readonly string[];
+  readonly batchNewsSummary: NewsSummaryViewModel | null;
+  readonly isSummarizingNewsBatch: boolean;
+  readonly newsBookmarks: readonly NewsBookmarkViewModel[];
+  readonly newsDashboard: NewsDashboardViewModel | null;
+  readonly newsDashboardSyncMessage: string | null;
+  readonly newsDashboardSyncStatus: NewsDashboardSyncStatus;
   readonly newsRecommendation: NewsRecommendationViewModel | null;
   readonly newsSummariesByArticleId: Readonly<Record<string, NewsSummaryViewModel>>;
   readonly newsSyncMessage: string | null;
@@ -77,23 +100,38 @@ interface TrendScopeWorkspaceState {
   readonly keywordSyncStatus: KeywordSyncStatus;
   readonly selectedOnboardingKeywordNames: readonly string[];
   readonly summarizingNewsId: string | null;
+  readonly editingCommentId: string | null;
+  readonly isEditingActivePost: boolean;
   readonly canSubmitOnboardingKeywords: boolean;
   readonly goToSection: (section: TrendScopeSection) => void;
   readonly login: () => void;
   readonly logout: () => Promise<void>;
   readonly setKeywordDraft: (value: string) => void;
   readonly setOnboardingKeywordDraft: (value: string) => void;
+  readonly setCommentEditDraft: (value: string) => void;
   readonly setPostCommentDraft: (value: string) => void;
   readonly addKeyword: () => Promise<void>;
   readonly addCustomOnboardingKeyword: () => void;
+  readonly refreshNewsDashboard: () => Promise<void>;
   readonly refreshNewsRecommendations: () => Promise<void>;
+  readonly summarizeRecommendedNewsBatch: () => Promise<void>;
   readonly summarizeRecommendedNews: (newsId: string) => Promise<void>;
+  readonly toggleNewsBookmark: (newsId: string) => Promise<void>;
   readonly startLoginWithOnboardingKeywords: () => Promise<void>;
   readonly startLoginWithoutOnboardingKeywords: () => void;
   readonly setCommunityBoardSection: (sectionId: CommunityBoardFilterId) => void;
   readonly setPostDraftField: (field: keyof CommunityPostDraftViewModel, value: string) => void;
+  readonly setPostEditDraftField: (field: keyof CommunityPostDraftViewModel, value: string) => void;
   readonly submitPostDraft: () => Promise<void>;
+  readonly startEditingActivePost: () => void;
+  readonly cancelEditingActivePost: () => void;
+  readonly submitPostEdit: () => Promise<void>;
+  readonly deleteActivePost: () => Promise<void>;
   readonly submitPostComment: () => Promise<void>;
+  readonly startEditingComment: (commentId: string) => void;
+  readonly cancelEditingComment: () => void;
+  readonly submitCommentEdit: () => Promise<void>;
+  readonly deleteComment: (commentId: string) => Promise<void>;
   readonly toggleActivePostLike: () => Promise<void>;
   readonly toggleOnboardingKeyword: (keywordName: string) => void;
   readonly openPost: (postId: string) => void;
@@ -127,7 +165,15 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     title: "",
     body: "",
   });
+  const [postEditDraft, setPostEditDraft] = useState<CommunityPostDraftViewModel>({
+    boardSectionId: "economy",
+    title: "",
+    body: "",
+  });
+  const [isEditingActivePost, setIsEditingActivePost] = useState(false);
   const [postCommentDraft, setPostCommentDraft] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [commentEditDraft, setCommentEditDraft] = useState("");
   const [keywordDraft, setKeywordDraft] = useState("");
   const [onboardingKeywordDraft, setOnboardingKeywordDraft] = useState("");
   const [selectedOnboardingKeywordNames, setSelectedOnboardingKeywordNames] = useState<
@@ -138,11 +184,19 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
   const [newsSummariesByArticleId, setNewsSummariesByArticleId] = useState<
     Readonly<Record<string, NewsSummaryViewModel>>
   >({});
+  const [batchNewsSummary, setBatchNewsSummary] = useState<NewsSummaryViewModel | null>(null);
+  const [isSummarizingNewsBatch, setIsSummarizingNewsBatch] = useState(false);
   const [newsSyncStatus, setNewsSyncStatus] = useState<NewsSyncStatus>("idle");
   const [newsSyncMessage, setNewsSyncMessage] = useState<string | null>(
     "로그인 후 추천 뉴스를 확인할 수 있습니다.",
   );
   const [summarizingNewsId, setSummarizingNewsId] = useState<string | null>(null);
+  const [newsDashboard, setNewsDashboard] = useState<NewsDashboardViewModel | null>(null);
+  const [newsDashboardSyncStatus, setNewsDashboardSyncStatus] =
+    useState<NewsDashboardSyncStatus>("idle");
+  const [newsDashboardSyncMessage, setNewsDashboardSyncMessage] = useState<string | null>(
+    "로그인 후 뉴스 대시보드를 확인할 수 있습니다.",
+  );
   const [trendAnalysisSummary, setTrendAnalysisSummary] =
     useState<TrendAnalysisSummaryViewModel | null>(null);
   const [trendAnalysisSyncStatus, setTrendAnalysisSyncStatus] =
@@ -349,6 +403,61 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
   useEffect(() => {
     let shouldUpdateState = true;
 
+    async function syncNewsDashboard() {
+      if (authStatus !== "authenticated" || currentUser === null) {
+        setNewsDashboard(null);
+        setBatchNewsSummary(null);
+        setIsSummarizingNewsBatch(false);
+        setNewsDashboardSyncStatus("idle");
+        setNewsDashboardSyncMessage("로그인 후 뉴스 대시보드를 확인할 수 있습니다.");
+        return;
+      }
+
+      if (keywordSyncStatus !== "ready") {
+        return;
+      }
+
+      setNewsDashboardSyncStatus("loading");
+      setNewsDashboardSyncMessage(null);
+
+      try {
+        const dashboard = await fetchNewsDashboard();
+
+        if (!shouldUpdateState) {
+          return;
+        }
+
+        setNewsDashboard(dashboard);
+        setNewsDashboardSyncStatus("ready");
+        setNewsDashboardSyncMessage(null);
+      } catch (error) {
+        if (!shouldUpdateState) {
+          return;
+        }
+
+        if (isMissingTokenError(error)) {
+          setAuthStatus("anonymous");
+          setCurrentUser(null);
+        }
+
+        setNewsDashboard(null);
+        setNewsDashboardSyncStatus("error");
+        setNewsDashboardSyncMessage(
+          getApiErrorMessage(error, "뉴스 대시보드를 불러오지 못했습니다."),
+        );
+      }
+    }
+
+    void syncNewsDashboard();
+
+    return () => {
+      shouldUpdateState = false;
+    };
+  }, [authStatus, currentUser, keywordSyncStatus, keywords]);
+
+  useEffect(() => {
+    let shouldUpdateState = true;
+
     async function loadCommunityCategories() {
       try {
         const remoteBoardSections = await fetchCommunityBoardSections();
@@ -413,13 +522,31 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     return boardPosts.filter((post) => post.boardSectionId === activeCommunityBoardSectionId);
   }, [activeCommunityBoardSectionId, boardPosts]);
 
+  const newsBookmarks = useMemo(
+    () => newsDashboard?.bookmarks ?? [],
+    [newsDashboard],
+  );
+  const bookmarkedNewsIds = useMemo(
+    () => newsBookmarks.map((bookmark) => bookmark.newsId),
+    [newsBookmarks],
+  );
+
   const canSubmitPostDraft =
     postDraft.title.trim().length > 0 &&
     postDraft.body.trim().length > 0 &&
     communitySyncStatus !== "saving";
+  const canSubmitPostEdit =
+    postEditDraft.title.trim().length > 0 &&
+    postEditDraft.body.trim().length > 0 &&
+    activePost !== null &&
+    communitySyncStatus !== "saving";
   const canSubmitPostComment =
     postCommentDraft.trim().length > 0 &&
     activePost !== null &&
+    communitySyncStatus !== "saving";
+  const canSubmitCommentEdit =
+    editingCommentId !== null &&
+    commentEditDraft.trim().length > 0 &&
     communitySyncStatus !== "saving";
   const canSubmitOnboardingKeywords = selectedOnboardingKeywordNames.length > 0;
 
@@ -444,6 +571,9 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     if (section !== "post") {
       setActivePostId(null);
       setActivePost(null);
+      setIsEditingActivePost(false);
+      setEditingCommentId(null);
+      setCommentEditDraft("");
     }
 
     scrollToTop();
@@ -514,11 +644,19 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     setActiveSection("home");
     setActivePostId(null);
     setActivePost(null);
+    setIsEditingActivePost(false);
+    setEditingCommentId(null);
+    setCommentEditDraft("");
     setNewsRecommendation(null);
     setNewsSummariesByArticleId({});
+    setBatchNewsSummary(null);
+    setIsSummarizingNewsBatch(false);
     setSummarizingNewsId(null);
     setNewsSyncStatus("idle");
     setNewsSyncMessage("로그인 후 추천 뉴스를 확인할 수 있습니다.");
+    setNewsDashboard(null);
+    setNewsDashboardSyncStatus("idle");
+    setNewsDashboardSyncMessage("로그인 후 뉴스 대시보드를 확인할 수 있습니다.");
     setTrendAnalysisSummary(null);
     setTrendAnalysisSyncStatus("idle");
     setTrendAnalysisSyncMessage("로그인 후 브리핑 지표를 확인할 수 있습니다.");
@@ -569,6 +707,15 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     }
   }
 
+  async function refreshNewsDashboard() {
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
+    await reloadNewsDashboard("뉴스 대시보드를 새로고침했습니다.");
+  }
+
   async function refreshNewsRecommendations() {
     if (currentUser === null) {
       returnToHomeForLoginRequiredFeature();
@@ -600,6 +747,7 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
           ? "아직 표시할 추천 뉴스가 없습니다."
           : "최신 뉴스를 수집했습니다.",
       );
+      void reloadNewsDashboard(null);
     } catch (error) {
       if (isMissingTokenError(error)) {
         setAuthStatus("anonymous");
@@ -640,6 +788,87 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
       setNewsSyncMessage(getApiErrorMessage(error, "뉴스 요약 생성에 실패했습니다."));
     } finally {
       setSummarizingNewsId(null);
+    }
+  }
+
+  async function summarizeRecommendedNewsBatch() {
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
+    const targetNewsIds = newsRecommendation?.articles.map((article) => article.id) ?? [];
+
+    if (targetNewsIds.length === 0) {
+      setNewsSyncStatus("idle");
+      setNewsSyncMessage("묶음 요약을 만들 추천 뉴스가 없습니다.");
+      return;
+    }
+
+    setIsSummarizingNewsBatch(true);
+    setNewsSyncStatus("summarizing");
+    setNewsSyncMessage(null);
+
+    try {
+      const summary = await summarizeNewsArticles({
+        newsIds: targetNewsIds,
+        maxSentenceCount: 3,
+      });
+
+      setBatchNewsSummary(summary);
+      setNewsSyncStatus("ready");
+      setNewsSyncMessage("추천 뉴스 묶음 요약을 생성했습니다.");
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setNewsSyncStatus("error");
+      setNewsSyncMessage(getApiErrorMessage(error, "추천 뉴스 묶음 요약에 실패했습니다."));
+    } finally {
+      setIsSummarizingNewsBatch(false);
+    }
+  }
+
+  async function toggleNewsBookmark(newsId: string) {
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
+    const isBookmarked = bookmarkedNewsIds.includes(newsId);
+
+    setNewsDashboardSyncStatus("saving");
+    setNewsDashboardSyncMessage(isBookmarked ? "북마크를 해제하고 있습니다." : "뉴스를 저장하고 있습니다.");
+
+    try {
+      if (isBookmarked) {
+        await deleteNewsBookmark(newsId);
+      } else {
+        await bookmarkNewsArticle(newsId);
+      }
+
+      const bookmarks = await fetchNewsBookmarks();
+
+      setNewsDashboard((currentDashboard) =>
+        currentDashboard === null
+          ? currentDashboard
+          : {
+              ...currentDashboard,
+              bookmarks,
+            },
+      );
+      setNewsDashboardSyncStatus("ready");
+      setNewsDashboardSyncMessage(isBookmarked ? "북마크를 해제했습니다." : "뉴스를 저장했습니다.");
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setNewsDashboardSyncStatus("error");
+      setNewsDashboardSyncMessage(getApiErrorMessage(error, "뉴스 저장 상태를 변경하지 못했습니다."));
     }
   }
 
@@ -737,6 +966,121 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     }
   }
 
+  function startEditingActivePost() {
+    if (activePost === null || !activePost.isMine) {
+      return;
+    }
+
+    setPostEditDraft({
+      boardSectionId: activePost.boardSectionId,
+      title: activePost.title,
+      body: activePost.body,
+    });
+    setIsEditingActivePost(true);
+  }
+
+  function cancelEditingActivePost() {
+    setIsEditingActivePost(false);
+  }
+
+  function setPostEditDraftField(field: keyof CommunityPostDraftViewModel, value: string) {
+    setPostEditDraft((currentDraft) => ({
+      ...currentDraft,
+      [field]:
+        field === "boardSectionId"
+          ? (value as CommunityBoardSectionId)
+          : value,
+    }));
+  }
+
+  async function submitPostEdit() {
+    const targetPost = activePost;
+    const normalizedTitle = postEditDraft.title.trim();
+    const normalizedBody = postEditDraft.body.trim();
+
+    if (targetPost === null || normalizedTitle.length === 0 || normalizedBody.length === 0) {
+      return;
+    }
+
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
+    setCommunitySyncStatus("saving");
+    setCommunitySyncMessage("게시글을 수정하고 있습니다.");
+
+    try {
+      await updateCommunityPost(targetPost.id, {
+        boardSectionId: postEditDraft.boardSectionId,
+        title: normalizedTitle,
+        body: normalizedBody,
+      });
+
+      const [remotePosts, refreshedPost] = await Promise.all([
+        fetchCommunityPosts("all"),
+        fetchCommunityPostThread(targetPost.id),
+      ]);
+
+      setBoardPosts(remotePosts);
+      setActivePost(refreshedPost);
+      setActiveCommunityBoardSectionId(refreshedPost.boardSectionId);
+      setIsEditingActivePost(false);
+      setCommunitySyncStatus("ready");
+      setCommunitySyncMessage("게시글을 수정했습니다.");
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setCommunitySyncStatus("error");
+      setCommunitySyncMessage(getApiErrorMessage(error, "게시글 수정에 실패했습니다."));
+    }
+  }
+
+  async function deleteActivePost() {
+    const targetPost = activePost;
+
+    if (targetPost === null) {
+      return;
+    }
+
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
+    if (!confirmBrowserAction("게시글을 삭제할까요?")) {
+      return;
+    }
+
+    setCommunitySyncStatus("saving");
+    setCommunitySyncMessage("게시글을 삭제하고 있습니다.");
+
+    try {
+      await deleteCommunityPost(targetPost.id);
+      const remotePosts = await fetchCommunityPosts("all");
+
+      setBoardPosts(remotePosts);
+      setActivePostId(null);
+      setActivePost(null);
+      setIsEditingActivePost(false);
+      setActiveSection("community");
+      setCommunitySyncStatus("ready");
+      setCommunitySyncMessage("게시글을 삭제했습니다.");
+      scrollToTop();
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setCommunitySyncStatus("error");
+      setCommunitySyncMessage(getApiErrorMessage(error, "게시글 삭제에 실패했습니다."));
+    }
+  }
+
   async function submitPostComment() {
     const targetPost = activePost;
     const normalizedComment = postCommentDraft.trim();
@@ -771,6 +1115,105 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
 
       setCommunitySyncStatus("error");
       setCommunitySyncMessage(getApiErrorMessage(error, "댓글 등록에 실패했습니다."));
+    }
+  }
+
+  function startEditingComment(commentId: string) {
+    const targetComment = activePost?.comments.find((comment) => comment.id === commentId);
+
+    if (targetComment === undefined || !targetComment.isMine) {
+      return;
+    }
+
+    setEditingCommentId(commentId);
+    setCommentEditDraft(targetComment.body);
+  }
+
+  function cancelEditingComment() {
+    setEditingCommentId(null);
+    setCommentEditDraft("");
+  }
+
+  async function submitCommentEdit() {
+    const targetPost = activePost;
+    const targetCommentId = editingCommentId;
+    const normalizedComment = commentEditDraft.trim();
+
+    if (targetPost === null || targetCommentId === null || normalizedComment.length === 0) {
+      return;
+    }
+
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
+    setCommunitySyncStatus("saving");
+    setCommunitySyncMessage("댓글을 수정하고 있습니다.");
+
+    try {
+      await updateCommunityComment(targetCommentId, normalizedComment);
+
+      const refreshedPost = await fetchCommunityPostThread(targetPost.id);
+
+      setEditingCommentId(null);
+      setCommentEditDraft("");
+      setActivePost(refreshedPost);
+      updateBoardPostFromDetail(refreshedPost);
+      setCommunitySyncStatus("ready");
+      setCommunitySyncMessage("댓글을 수정했습니다.");
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setCommunitySyncStatus("error");
+      setCommunitySyncMessage(getApiErrorMessage(error, "댓글 수정에 실패했습니다."));
+    }
+  }
+
+  async function deleteComment(commentId: string) {
+    const targetPost = activePost;
+
+    if (targetPost === null) {
+      return;
+    }
+
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
+    if (!confirmBrowserAction("댓글을 삭제할까요?")) {
+      return;
+    }
+
+    setCommunitySyncStatus("saving");
+    setCommunitySyncMessage("댓글을 삭제하고 있습니다.");
+
+    try {
+      await deleteCommunityComment(commentId);
+
+      const [remotePosts, refreshedPost] = await Promise.all([
+        fetchCommunityPosts("all"),
+        fetchCommunityPostThread(targetPost.id),
+      ]);
+
+      setBoardPosts(remotePosts);
+      setActivePost(refreshedPost);
+      setEditingCommentId(null);
+      setCommentEditDraft("");
+      setCommunitySyncStatus("ready");
+      setCommunitySyncMessage("댓글을 삭제했습니다.");
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setCommunitySyncStatus("error");
+      setCommunitySyncMessage(getApiErrorMessage(error, "댓글 삭제에 실패했습니다."));
     }
   }
 
@@ -841,6 +1284,9 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     setActivePost(localPost);
     setActiveSection("post");
     setPostCommentDraft("");
+    setIsEditingActivePost(false);
+    setEditingCommentId(null);
+    setCommentEditDraft("");
     scrollToTop();
     void reloadActivePost(postId);
   }
@@ -861,6 +1307,29 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     } catch (error) {
       setCommunitySyncStatus("error");
       setCommunitySyncMessage(getApiErrorMessage(error, "게시글 상세를 불러오지 못했습니다."));
+    }
+  }
+
+  async function reloadNewsDashboard(successMessage: string | null) {
+    setNewsDashboardSyncStatus("loading");
+    setNewsDashboardSyncMessage(null);
+
+    try {
+      const dashboard = await fetchNewsDashboard();
+
+      setNewsDashboard(dashboard);
+      setNewsDashboardSyncStatus("ready");
+      setNewsDashboardSyncMessage(successMessage);
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setNewsDashboardSyncStatus("error");
+      setNewsDashboardSyncMessage(
+        getApiErrorMessage(error, "뉴스 대시보드를 불러오지 못했습니다."),
+      );
     }
   }
 
@@ -907,11 +1376,22 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     currentUser,
     visibleCommunityPosts,
     postDraft,
+    postEditDraft,
     postCommentDraft,
+    commentEditDraft,
     canSubmitPostDraft,
+    canSubmitPostEdit,
     canSubmitPostComment,
+    canSubmitCommentEdit,
     keywords,
     keywordDraft,
+    bookmarkedNewsIds,
+    batchNewsSummary,
+    isSummarizingNewsBatch,
+    newsBookmarks,
+    newsDashboard,
+    newsDashboardSyncMessage,
+    newsDashboardSyncStatus,
     newsRecommendation,
     newsSummariesByArticleId,
     newsSyncMessage,
@@ -924,23 +1404,38 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     keywordSyncStatus,
     selectedOnboardingKeywordNames,
     summarizingNewsId,
+    editingCommentId,
+    isEditingActivePost,
     canSubmitOnboardingKeywords,
     goToSection,
     login,
     logout,
     setKeywordDraft,
     setOnboardingKeywordDraft,
+    setCommentEditDraft,
     setPostCommentDraft,
     addKeyword,
     addCustomOnboardingKeyword,
+    refreshNewsDashboard,
     refreshNewsRecommendations,
+    summarizeRecommendedNewsBatch,
     summarizeRecommendedNews,
+    toggleNewsBookmark,
     startLoginWithOnboardingKeywords,
     startLoginWithoutOnboardingKeywords,
     setCommunityBoardSection,
     setPostDraftField,
+    setPostEditDraftField,
     submitPostDraft,
+    startEditingActivePost,
+    cancelEditingActivePost,
+    submitPostEdit,
+    deleteActivePost,
     submitPostComment,
+    startEditingComment,
+    cancelEditingComment,
+    submitCommentEdit,
+    deleteComment,
     toggleActivePostLike,
     toggleOnboardingKeyword,
     openPost,
@@ -957,6 +1452,14 @@ function showLoginRequiredAlert() {
   if (typeof window !== "undefined") {
     window.alert("로그인이 필요한 기능입니다.");
   }
+}
+
+function confirmBrowserAction(message: string): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.confirm(message);
 }
 
 function shouldShowSignupOnboarding(

@@ -8,6 +8,12 @@ import type {
   CommunityPostDraftViewModel,
   CommunitySyncStatus,
   KeywordViewModel,
+  NewsBookmarkViewModel,
+  NewsClusterViewModel,
+  NewsDashboardSyncStatus,
+  NewsDashboardViewModel,
+  NewsSentiment,
+  NewsRiskLevel,
   NewsRecommendationViewModel,
   NewsSummaryViewModel,
   NewsSyncStatus,
@@ -23,6 +29,9 @@ interface HomeSectionProps {
 
 interface BriefingSectionProps {
   readonly isActive: boolean;
+  readonly batchNewsSummary: NewsSummaryViewModel | null;
+  readonly bookmarkedNewsIds: readonly string[];
+  readonly isSummarizingNewsBatch: boolean;
   readonly newsRecommendation: NewsRecommendationViewModel | null;
   readonly newsSummariesByArticleId: Readonly<Record<string, NewsSummaryViewModel>>;
   readonly newsSyncMessage: string | null;
@@ -32,7 +41,17 @@ interface BriefingSectionProps {
   readonly trendAnalysisSyncMessage: string | null;
   readonly trendAnalysisSyncStatus: TrendAnalysisSyncStatus;
   readonly onRefreshNews: () => Promise<void>;
+  readonly onSummarizeNewsBatch: () => Promise<void>;
   readonly onSummarizeNews: (newsId: string) => Promise<void>;
+  readonly onToggleNewsBookmark: (newsId: string) => Promise<void>;
+}
+
+interface DashboardSectionProps {
+  readonly isActive: boolean;
+  readonly dashboard: NewsDashboardViewModel | null;
+  readonly syncMessage: string | null;
+  readonly syncStatus: NewsDashboardSyncStatus;
+  readonly onRefreshDashboard: () => Promise<void>;
 }
 
 interface OnboardingSectionProps {
@@ -85,13 +104,29 @@ interface WritePostSectionProps {
 interface PostSectionProps {
   readonly isActive: boolean;
   readonly post: BoardPostViewModel | null;
+  readonly postEditDraft: CommunityPostDraftViewModel;
+  readonly isEditingPost: boolean;
   readonly canSubmitComment: boolean;
+  readonly canSubmitPostEdit: boolean;
+  readonly canSubmitCommentEdit: boolean;
   readonly commentDraft: string;
+  readonly commentEditDraft: string;
+  readonly editingCommentId: string | null;
   readonly syncMessage: string | null;
   readonly syncStatus: CommunitySyncStatus;
   readonly onCommentDraftChange: (value: string) => void;
+  readonly onCommentEditDraftChange: (value: string) => void;
+  readonly onEditDraftFieldChange: (field: keyof CommunityPostDraftViewModel, value: string) => void;
   readonly onNavigate: (section: TrendScopeSection) => void;
   readonly onSubmitComment: () => Promise<void>;
+  readonly onSubmitPostEdit: () => Promise<void>;
+  readonly onSubmitCommentEdit: () => Promise<void>;
+  readonly onStartPostEdit: () => void;
+  readonly onCancelPostEdit: () => void;
+  readonly onDeletePost: () => Promise<void>;
+  readonly onStartCommentEdit: (commentId: string) => void;
+  readonly onCancelCommentEdit: () => void;
+  readonly onDeleteComment: (commentId: string) => Promise<void>;
   readonly onToggleLike: () => Promise<void>;
 }
 
@@ -102,21 +137,38 @@ interface TrendAnalysisPanelProps {
 }
 
 interface RecommendedNewsPanelProps {
+  readonly batchSummary: NewsSummaryViewModel | null;
+  readonly bookmarkedNewsIds: readonly string[];
+  readonly isSummarizingBatch: boolean;
   readonly recommendation: NewsRecommendationViewModel | null;
   readonly summariesByArticleId: Readonly<Record<string, NewsSummaryViewModel>>;
   readonly syncMessage: string | null;
   readonly syncStatus: NewsSyncStatus;
   readonly summarizingNewsId: string | null;
   readonly onRefreshNews: () => Promise<void>;
+  readonly onSummarizeBatch: () => Promise<void>;
   readonly onSummarizeNews: (newsId: string) => Promise<void>;
+  readonly onToggleBookmark: (newsId: string) => Promise<void>;
 }
 
 interface RecommendedNewsCardProps {
   readonly article: RecommendedNewsArticleViewModel;
+  readonly isBookmarked: boolean;
   readonly isSummarizing: boolean;
   readonly summary: NewsSummaryViewModel | null;
   readonly onSummarizeNews: (newsId: string) => Promise<void>;
+  readonly onToggleBookmark: (newsId: string) => Promise<void>;
 }
+
+const communityBoardSectionOptions: readonly CommunityBoardSectionViewModel[] = [
+  { id: "politics", label: "정치" },
+  { id: "economy", label: "경제" },
+  { id: "society", label: "사회" },
+  { id: "it", label: "IT/과학" },
+  { id: "global", label: "세계" },
+  { id: "sports", label: "스포츠" },
+  { id: "entertainment", label: "연예" },
+];
 
 export function HomeSection({ isActive }: HomeSectionProps) {
   return (
@@ -170,13 +222,18 @@ export function HomeSection({ isActive }: HomeSectionProps) {
 }
 
 export function BriefingSection({
+  batchNewsSummary,
+  bookmarkedNewsIds,
+  isSummarizingNewsBatch,
   isActive,
   newsRecommendation,
   newsSummariesByArticleId,
   newsSyncMessage,
   newsSyncStatus,
   onRefreshNews,
+  onSummarizeNewsBatch,
   onSummarizeNews,
+  onToggleNewsBookmark,
   summarizingNewsId,
   trendAnalysisSummary,
   trendAnalysisSyncMessage,
@@ -196,14 +253,282 @@ export function BriefingSection({
       />
 
       <RecommendedNewsPanel
+        batchSummary={batchNewsSummary}
+        bookmarkedNewsIds={bookmarkedNewsIds}
+        isSummarizingBatch={isSummarizingNewsBatch}
         recommendation={newsRecommendation}
         summariesByArticleId={newsSummariesByArticleId}
         summarizingNewsId={summarizingNewsId}
         syncMessage={newsSyncMessage}
         syncStatus={newsSyncStatus}
         onRefreshNews={onRefreshNews}
+        onSummarizeBatch={onSummarizeNewsBatch}
         onSummarizeNews={onSummarizeNews}
+        onToggleBookmark={onToggleNewsBookmark}
       />
+    </section>
+  );
+}
+
+export function DashboardSection({
+  dashboard,
+  isActive,
+  onRefreshDashboard,
+  syncMessage,
+  syncStatus,
+}: DashboardSectionProps) {
+  const maxDailyCount = Math.max(
+    1,
+    ...(dashboard?.dailyNewsCounts.map((item) => item.count) ?? [0]),
+  );
+
+  return (
+    <section className="page" data-active={isActive} id="dashboard">
+      <div className="section-toolbar">
+        <div className="section-heading !mb-0">
+          <h2 className="section-title">뉴스 대시보드</h2>
+          <p className="body-copy">
+            back-docs의 뉴스 분석 API 응답을 기준으로 키워드별 흐름을 확인합니다.
+          </p>
+        </div>
+        <Button
+          disabled={syncStatus === "loading" || syncStatus === "saving"}
+          variant="primary"
+          onClick={() => void onRefreshDashboard()}
+        >
+          {syncStatus === "loading" ? "새로고침 중" : "대시보드 새로고침"}
+        </Button>
+      </div>
+
+      {syncMessage !== null ? (
+        <p className="sync-message dashboard-sync-message" data-state={syncStatus}>
+          {syncMessage}
+        </p>
+      ) : null}
+
+      {syncStatus === "loading" && dashboard === null ? (
+        <div className="empty-briefing">
+          <span className="badge">준비 중</span>
+          <h3 className="card-title mt-5">뉴스 대시보드를 불러오는 중입니다</h3>
+        </div>
+      ) : dashboard === null ? (
+        <div className="empty-briefing">
+          <span className="badge">API 응답 없음</span>
+          <h3 className="card-title mt-5">표시할 대시보드 데이터가 없습니다</h3>
+        </div>
+      ) : (
+        <div className="dashboard-layout">
+          <article className="card dashboard-card dashboard-card-wide">
+            <div className="dashboard-card-heading">
+              <div>
+                <span className="badge">Keyword briefings</span>
+                <h3 className="card-title">키워드별 뉴스 브리핑</h3>
+              </div>
+              <span className="muted">
+                {dashboard.keywordBriefing.date} · 기사 {dashboard.keywordBriefing.totalCollectedCount}
+              </span>
+            </div>
+
+            {dashboard.keywordBriefing.summaries.length === 0 ? (
+              <p className="body-copy">등록된 활성 키워드의 브리핑이 없습니다.</p>
+            ) : (
+              <div className="keyword-briefing-grid">
+                {dashboard.keywordBriefing.summaries.map((group) => (
+                  <section className="keyword-briefing-card" key={group.keyword}>
+                    <div className="recommended-news-meta">
+                      <span className="badge">{group.keyword}</span>
+                      <span>기사 {group.collectedCount}</span>
+                    </div>
+                    <p>{group.summary}</p>
+                    {group.articles.length > 0 ? (
+                      <div className="summary-source-list">
+                        {group.articles.map((article) => (
+                          <a
+                            href={article.originUrl}
+                            key={`${group.keyword}-${article.originUrl}`}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            {article.title} · {article.publishedAtLabel}
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
+                  </section>
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="card dashboard-card">
+            <div className="dashboard-card-heading">
+              <div>
+                <span className="badge">Frequency</span>
+                <h3 className="card-title">자주 나오는 키워드</h3>
+              </div>
+              <span className="muted">기사 {dashboard.keywordFrequency.articleCount}</span>
+            </div>
+            {dashboard.keywordFrequency.keywords.length === 0 ? (
+              <p className="body-copy">분석할 뉴스 데이터가 없습니다.</p>
+            ) : (
+              <div className="frequency-list">
+                {dashboard.keywordFrequency.keywords.map((item) => (
+                  <div className="frequency-row" key={item.keyword}>
+                    <div className="frequency-row-header">
+                      <strong>{item.keyword}</strong>
+                      <span>{item.count}</span>
+                    </div>
+                    <div className="bar-track" aria-hidden="true">
+                      <span style={{ width: `${Math.min(100, item.weight)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="card dashboard-card">
+            <div className="dashboard-card-heading">
+              <div>
+                <span className="badge">Trend scores</span>
+                <h3 className="card-title">키워드별 트렌드 점수</h3>
+              </div>
+            </div>
+            {dashboard.trendScores.length === 0 ? (
+              <p className="body-copy">트렌드 점수 응답이 없습니다.</p>
+            ) : (
+              <div className="dashboard-mini-grid">
+                {dashboard.trendScores.map((trend) => (
+                  <div className="trend-score-tile" key={trend.keywordId}>
+                    <strong>{trend.trendScoreLabel}</strong>
+                    <span>{trend.keyword}</span>
+                    <small>기사 {trend.articleCount}</small>
+                  </div>
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="card dashboard-card">
+            <div className="dashboard-card-heading">
+              <div>
+                <span className="badge">Today</span>
+                <h3 className="card-title">오늘의 핵심 이슈</h3>
+              </div>
+            </div>
+            {dashboard.todayIssues.issues.length === 0 ? (
+              <p className="body-copy">오늘의 핵심 이슈가 없습니다.</p>
+            ) : (
+              <ol className="issue-list">
+                {dashboard.todayIssues.issues.map((issue) => (
+                  <li key={issue}>{issue}</li>
+                ))}
+              </ol>
+            )}
+          </article>
+
+          <article className="card dashboard-card">
+            <div className="dashboard-card-heading">
+              <div>
+                <span className="badge">Suggested</span>
+                <h3 className="card-title">추천 키워드</h3>
+              </div>
+            </div>
+            {dashboard.suggestedKeywords.length === 0 ? (
+              <p className="body-copy">추천 키워드가 없습니다.</p>
+            ) : (
+              <div className="chip-row">
+                {dashboard.suggestedKeywords.map((keyword) => (
+                  <span className="chip" key={keyword.keyword}>
+                    {keyword.keyword} · {keyword.count}
+                  </span>
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="card dashboard-card">
+            <div className="dashboard-card-heading">
+              <div>
+                <span className="badge">Daily counts</span>
+                <h3 className="card-title">일자별 뉴스 수</h3>
+              </div>
+            </div>
+            {dashboard.dailyNewsCounts.length === 0 ? (
+              <p className="body-copy">일자별 뉴스 수가 없습니다.</p>
+            ) : (
+              <div className="daily-count-list">
+                {dashboard.dailyNewsCounts.map((item) => (
+                  <div className="daily-count-row" key={item.date}>
+                    <span>{item.date}</span>
+                    <div className="bar-track" aria-hidden="true">
+                      <span style={{ width: `${(item.count / maxDailyCount) * 100}%` }} />
+                    </div>
+                    <strong>{item.count}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="card dashboard-card dashboard-card-wide">
+            <div className="dashboard-card-heading">
+              <div>
+                <span className="badge">Clusters</span>
+                <h3 className="card-title">뉴스 클러스터</h3>
+              </div>
+            </div>
+            {dashboard.clusters.length === 0 ? (
+              <p className="body-copy">뉴스 클러스터가 없습니다.</p>
+            ) : (
+              <div className="cluster-grid">
+                {dashboard.clusters.map((cluster) => (
+                  <ClusterCard cluster={cluster} key={cluster.topic} />
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="card dashboard-card">
+            <div className="dashboard-card-heading">
+              <div>
+                <span className="badge">Sentiment</span>
+                <h3 className="card-title">감성/리스크</h3>
+              </div>
+            </div>
+            {dashboard.sentiments.length === 0 ? (
+              <p className="body-copy">감성 분석 응답이 없습니다.</p>
+            ) : (
+              <div className="sentiment-list">
+                {dashboard.sentiments.map((item) => (
+                  <div className="sentiment-row" key={item.keywordId}>
+                    <div>
+                      <strong>{item.keyword}</strong>
+                      <p>{item.reason}</p>
+                    </div>
+                    <span className="badge" data-sentiment={item.sentiment}>
+                      {getSentimentLabel(item.sentiment)}
+                    </span>
+                    <span className="badge badge-muted" data-risk={item.riskLevel}>
+                      {getRiskLevelLabel(item.riskLevel)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </article>
+
+          <article className="card dashboard-card">
+            <div className="dashboard-card-heading">
+              <div>
+                <span className="badge">Bookmarks</span>
+                <h3 className="card-title">저장한 뉴스</h3>
+              </div>
+            </div>
+            <BookmarkList bookmarks={dashboard.bookmarks} />
+          </article>
+        </div>
+      )}
     </section>
   );
 }
@@ -631,19 +956,45 @@ export function WritePostSection({
 
 export function PostSection({
   canSubmitComment,
+  canSubmitCommentEdit,
+  canSubmitPostEdit,
   commentDraft,
+  commentEditDraft,
+  editingCommentId,
   isActive,
+  isEditingPost,
+  onCancelCommentEdit,
+  onCancelPostEdit,
   onCommentDraftChange,
+  onCommentEditDraftChange,
+  onDeleteComment,
+  onDeletePost,
+  onEditDraftFieldChange,
   onNavigate,
+  onStartCommentEdit,
+  onStartPostEdit,
   onSubmitComment,
+  onSubmitCommentEdit,
+  onSubmitPostEdit,
   onToggleLike,
   post,
+  postEditDraft,
   syncMessage,
   syncStatus,
 }: PostSectionProps) {
   function submitComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void onSubmitComment();
+  }
+
+  function submitPostEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void onSubmitPostEdit();
+  }
+
+  function submitCommentEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void onSubmitCommentEdit();
   }
 
   if (post === null) {
@@ -669,20 +1020,86 @@ export function PostSection({
         </Button>
 
         <article className="post-detail">
-          <div className="post-detail-header">
-            <span className="badge">{post.category}</span>
-            <h2 className="section-title">{post.title}</h2>
-            <p className="muted">
-              {post.author} · 조회 {post.viewCount} · 댓글 {post.commentCount} ·{" "}
-              {post.createdAt}
-            </p>
-            <div className="post-action-row">
-              <Button variant={post.likedByMe ? "primary" : "ghost"} onClick={() => void onToggleLike()}>
-                좋아요 {post.likeCount}
-              </Button>
-            </div>
-          </div>
-          <p className="post-body">{post.body}</p>
+          {isEditingPost ? (
+            <form className="stack" onSubmit={submitPostEdit}>
+              <div className="form-grid">
+                <label className="field">
+                  <span>게시판</span>
+                  <select
+                    className="input"
+                    value={postEditDraft.boardSectionId}
+                    onChange={(event) =>
+                      onEditDraftFieldChange("boardSectionId", event.target.value)
+                    }
+                  >
+                    {communityBoardSectionOptions.map((section) => (
+                      <option key={section.id} value={section.id}>
+                        {section.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <label className="field">
+                <span>제목</span>
+                <input
+                  className="input"
+                  type="text"
+                  value={postEditDraft.title}
+                  onChange={(event) => onEditDraftFieldChange("title", event.target.value)}
+                />
+              </label>
+
+              <label className="field">
+                <span>내용</span>
+                <textarea
+                  className="textarea textarea-large"
+                  value={postEditDraft.body}
+                  onChange={(event) => onEditDraftFieldChange("body", event.target.value)}
+                />
+              </label>
+
+              <div className="form-actions">
+                <Button variant="ghost" onClick={onCancelPostEdit}>
+                  취소
+                </Button>
+                <Button disabled={!canSubmitPostEdit} type="submit" variant="primary">
+                  수정 저장
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <div className="post-detail-header">
+                <span className="badge">{post.category}</span>
+                <h2 className="section-title">{post.title}</h2>
+                <p className="muted">
+                  {post.author} · 조회 {post.viewCount} · 댓글 {post.commentCount} ·{" "}
+                  {post.createdAt}
+                </p>
+                <div className="post-action-row">
+                  <Button
+                    variant={post.likedByMe ? "primary" : "ghost"}
+                    onClick={() => void onToggleLike()}
+                  >
+                    좋아요 {post.likeCount}
+                  </Button>
+                  {post.isMine ? (
+                    <>
+                      <Button variant="ghost" onClick={onStartPostEdit}>
+                        수정
+                      </Button>
+                      <Button variant="danger" onClick={() => void onDeletePost()}>
+                        삭제
+                      </Button>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+              <p className="post-body">{post.body}</p>
+            </>
+          )}
         </article>
 
         <section className="comment-panel">
@@ -714,11 +1131,45 @@ export function PostSection({
             ) : (
               post.comments.map((comment) => (
                 <article className="comment-item" key={comment.id}>
-                  <div className="comment-meta">
-                    <strong>{comment.author}</strong>
-                    <span>{comment.createdAt}</span>
-                  </div>
-                  <p>{comment.body}</p>
+                  {editingCommentId === comment.id ? (
+                    <form className="comment-form" onSubmit={submitCommentEdit}>
+                      <textarea
+                        className="textarea"
+                        value={commentEditDraft}
+                        onChange={(event) => onCommentEditDraftChange(event.target.value)}
+                      />
+                      <div className="form-actions">
+                        <Button variant="ghost" onClick={onCancelCommentEdit}>
+                          취소
+                        </Button>
+                        <Button
+                          disabled={!canSubmitCommentEdit}
+                          type="submit"
+                          variant="primary"
+                        >
+                          댓글 수정
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="comment-meta">
+                        <strong>{comment.author}</strong>
+                        <span>{comment.createdAt}</span>
+                      </div>
+                      <p>{comment.body}</p>
+                      {comment.isMine ? (
+                        <div className="comment-actions">
+                          <Button variant="ghost" onClick={() => onStartCommentEdit(comment.id)}>
+                            수정
+                          </Button>
+                          <Button variant="danger" onClick={() => void onDeleteComment(comment.id)}>
+                            삭제
+                          </Button>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
                 </article>
               ))
             )}
@@ -727,6 +1178,80 @@ export function PostSection({
       </div>
     </section>
   );
+}
+
+function ClusterCard({ cluster }: { readonly cluster: NewsClusterViewModel }) {
+  return (
+    <section className="cluster-card">
+      <div className="recommended-news-meta">
+        <span className="badge">{cluster.topic}</span>
+        <span>기사 {cluster.articleCount}</span>
+      </div>
+      {cluster.articles.length === 0 ? (
+        <p className="body-copy">표시할 기사가 없습니다.</p>
+      ) : (
+        <div className="summary-source-list">
+          {cluster.articles.map((article) => (
+            <a
+              href={article.originUrl}
+              key={`${cluster.topic}-${article.originUrl}`}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {article.title} · {article.publishedAtLabel}
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function BookmarkList({ bookmarks }: { readonly bookmarks: readonly NewsBookmarkViewModel[] }) {
+  if (bookmarks.length === 0) {
+    return <p className="body-copy">저장한 뉴스가 없습니다.</p>;
+  }
+
+  return (
+    <div className="bookmark-list">
+      {bookmarks.map((bookmark) => (
+        <a
+          className="bookmark-row"
+          href={bookmark.originUrl}
+          key={bookmark.bookmarkId}
+          rel="noreferrer"
+          target="_blank"
+        >
+          <strong>{bookmark.title}</strong>
+          <span>{bookmark.publishedAtLabel}</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function getSentimentLabel(sentiment: NewsSentiment): string {
+  if (sentiment === "POSITIVE") {
+    return "긍정";
+  }
+
+  if (sentiment === "NEGATIVE") {
+    return "부정";
+  }
+
+  return "중립";
+}
+
+function getRiskLevelLabel(riskLevel: NewsRiskLevel): string {
+  if (riskLevel === "HIGH") {
+    return "위험 높음";
+  }
+
+  if (riskLevel === "MEDIUM") {
+    return "위험 보통";
+  }
+
+  return "위험 낮음";
 }
 
 function TrendAnalysisPanel({ summary, syncMessage, syncStatus }: TrendAnalysisPanelProps) {
@@ -758,13 +1283,18 @@ function TrendAnalysisPanel({ summary, syncMessage, syncStatus }: TrendAnalysisP
 }
 
 function RecommendedNewsPanel({
+  batchSummary,
+  bookmarkedNewsIds,
+  isSummarizingBatch,
   recommendation,
   summariesByArticleId,
   summarizingNewsId,
   syncMessage,
   syncStatus,
   onRefreshNews,
+  onSummarizeBatch,
   onSummarizeNews,
+  onToggleBookmark,
 }: RecommendedNewsPanelProps) {
   const articles = recommendation?.articles ?? [];
   const keywords = recommendation?.keywords ?? [];
@@ -786,6 +1316,13 @@ function RecommendedNewsPanel({
         >
           {isRefreshing ? "수집 중" : "최신 뉴스 가져오기"}
         </Button>
+        <Button
+          disabled={articles.length === 0 || isSummarizingBatch}
+          variant="ghost"
+          onClick={() => void onSummarizeBatch()}
+        >
+          {isSummarizingBatch ? "묶음 요약 중" : "추천 뉴스 묶음 요약"}
+        </Button>
       </div>
 
       {syncMessage !== null ? (
@@ -801,6 +1338,25 @@ function RecommendedNewsPanel({
               {keyword.label}
             </span>
           ))}
+        </div>
+      ) : null}
+
+      {batchSummary !== null ? (
+        <div className="news-summary-box batch-summary-box">
+          <h5>추천 뉴스 묶음 요약</h5>
+          <p>{batchSummary.summary}</p>
+          <div className="summary-source-list">
+            {batchSummary.sources.map((source) => (
+              <a
+                href={source.originUrl}
+                key={source.id}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {source.title}
+              </a>
+            ))}
+          </div>
         </div>
       ) : null}
 
@@ -831,10 +1387,12 @@ function RecommendedNewsPanel({
           {articles.map((article) => (
             <RecommendedNewsCard
               article={article}
+              isBookmarked={bookmarkedNewsIds.includes(article.id)}
               isSummarizing={summarizingNewsId === article.id}
               key={article.id}
               summary={summariesByArticleId[article.id] ?? null}
               onSummarizeNews={onSummarizeNews}
+              onToggleBookmark={onToggleBookmark}
             />
           ))}
         </div>
@@ -845,9 +1403,11 @@ function RecommendedNewsPanel({
 
 function RecommendedNewsCard({
   article,
+  isBookmarked,
   isSummarizing,
   summary,
   onSummarizeNews,
+  onToggleBookmark,
 }: RecommendedNewsCardProps) {
   return (
     <article className="recommended-news-card">
@@ -870,6 +1430,9 @@ function RecommendedNewsCard({
         >
           원문 열기
         </a>
+        <Button variant="ghost" onClick={() => void onToggleBookmark(article.id)}>
+          {isBookmarked ? "저장 취소" : "뉴스 저장"}
+        </Button>
         <Button
           disabled={isSummarizing}
           variant="primary"

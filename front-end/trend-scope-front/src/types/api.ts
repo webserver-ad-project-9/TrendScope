@@ -64,6 +64,105 @@ export interface NewsSummaryRequestDto {
   readonly maxSentenceCount?: number;
 }
 
+export interface KeywordBriefingArticleResponseDto {
+  readonly title: string;
+  readonly url: string;
+  readonly publishedAt: string | null;
+}
+
+export interface KeywordBriefingGroupResponseDto {
+  readonly keyword: string;
+  readonly collectedCount: number;
+  readonly summary: string;
+  readonly articles: readonly KeywordBriefingArticleResponseDto[];
+}
+
+export interface KeywordBriefingResponseDto {
+  readonly date: string;
+  readonly summaryType: "KEYWORD_GROUP_SUMMARY";
+  readonly totalCollectedCount: number;
+  readonly summaries: readonly KeywordBriefingGroupResponseDto[];
+}
+
+export interface KeywordFrequencyItemResponseDto {
+  readonly keyword: string;
+  readonly count: number;
+  readonly weight: number;
+}
+
+export interface KeywordFrequencyResponseDto {
+  readonly articleCount: number;
+  readonly keywords: readonly KeywordFrequencyItemResponseDto[];
+}
+
+export interface NewsTrendScoreItemResponseDto {
+  readonly keywordId: string;
+  readonly keyword: string;
+  readonly articleCount: number;
+  readonly trendScore: number;
+}
+
+export interface NewsTrendScoreResponseDto {
+  readonly trends: readonly NewsTrendScoreItemResponseDto[];
+}
+
+export interface TodayIssueResponseDto {
+  readonly issues: readonly string[];
+}
+
+export interface SuggestedKeywordResponseDto {
+  readonly keywords: readonly KeywordFrequencyItemResponseDto[];
+}
+
+export interface DailyNewsCountItemResponseDto {
+  readonly date: string;
+  readonly count: number;
+}
+
+export interface DailyNewsCountResponseDto {
+  readonly counts: readonly DailyNewsCountItemResponseDto[];
+}
+
+export interface NewsArticleSourceResponseDto {
+  readonly title: string;
+  readonly url: string;
+  readonly publishedAt: string | null;
+}
+
+export interface NewsClusterItemResponseDto {
+  readonly topic: string;
+  readonly articleCount: number;
+  readonly articles: readonly NewsArticleSourceResponseDto[];
+}
+
+export interface NewsClusterResponseDto {
+  readonly clusters: readonly NewsClusterItemResponseDto[];
+}
+
+export type NewsSentimentDto = "POSITIVE" | "NEUTRAL" | "NEGATIVE";
+
+export type NewsRiskLevelDto = "LOW" | "MEDIUM" | "HIGH";
+
+export interface NewsSentimentItemResponseDto {
+  readonly keywordId: string;
+  readonly keyword: string;
+  readonly sentiment: NewsSentimentDto;
+  readonly riskLevel: NewsRiskLevelDto;
+  readonly reason: string;
+}
+
+export interface NewsSentimentResponseDto {
+  readonly sentiments: readonly NewsSentimentItemResponseDto[];
+}
+
+export interface NewsBookmarkResponseDto {
+  readonly bookmarkId: string;
+  readonly newsId: string;
+  readonly title: string;
+  readonly url: string;
+  readonly publishedAt: string | null;
+}
+
 export interface TrendAnalysisSummaryResponseDto {
   readonly trendScore: number;
 }
@@ -134,6 +233,12 @@ export interface CreateCommunityPostRequestDto {
   readonly content: string;
 }
 
+export interface UpdateCommunityPostRequestDto {
+  readonly category: CommunityCategoryCodeDto;
+  readonly title: string;
+  readonly content: string;
+}
+
 export interface CreateCommunityPostResponseDto {
   readonly id: string;
 }
@@ -147,6 +252,10 @@ export interface CommunityCommentResponseDto {
 }
 
 export interface CreateCommunityCommentRequestDto {
+  readonly content: string;
+}
+
+export interface UpdateCommunityCommentRequestDto {
   readonly content: string;
 }
 
