@@ -41,6 +41,12 @@
 - 컴포넌트는 `fetch`, 외부 SDK, 인증 토큰 저장소에 직접 접근하지 않는다.
 - OAuth callback client는 query 읽기와 auth service 호출만 담당하고 token 및 signup hint 저장 구현은 service/client 경계에 둔다.
 
+## UI 표시 안정성
+- 긴 사용자 이름, 이메일, 뉴스 제목, 원문 링크, 게시글 제목, 댓글 본문은 레이아웃을 밀어내지 않도록 CSS에서 `min-width: 0`, `overflow-wrap`, responsive grid 전환으로 처리한다.
+- 헤더 navigation은 좁은 화면에서 가로 스크롤 가능한 탭으로 유지하고, 인증 버튼과 action 버튼은 모바일에서 한 줄 폭 버튼으로 전환한다.
+- Dashboard, briefing, community toolbar의 action 버튼은 `section-actions` 래퍼로 묶어 줄바꿈과 정렬을 표시 계층에서만 제어한다.
+- 색상과 타이포그래피는 실 서비스형 밝은 운영 UI 기준으로 관리하며, 기능 데이터가 없는 상태에서는 백엔드 응답 없음/빈 목록 상태만 표시한다.
+
 ## 상태 소유 경계
 - `useTrendScopeWorkspace`: active section, auth state, 보호 섹션 접근 guard, 신규 가입 온보딩 키워드 선택 state, keyword server state projection, news recommendation/summary/dashboard/bookmark server state projection, trend analysis server state projection, active post, keyword draft, community board filter, backend board posts projection, post draft/edit draft, comment draft/edit draft, community sync status를 소유한다.
 - `TrendScopeApp`: hook 결과를 섹션 컴포넌트에 전달한다.

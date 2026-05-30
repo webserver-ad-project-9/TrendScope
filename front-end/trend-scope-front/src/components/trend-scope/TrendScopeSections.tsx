@@ -291,13 +291,15 @@ export function DashboardSection({
             back-docs의 뉴스 분석 API 응답을 기준으로 키워드별 흐름을 확인합니다.
           </p>
         </div>
-        <Button
-          disabled={syncStatus === "loading" || syncStatus === "saving"}
-          variant="primary"
-          onClick={() => void onRefreshDashboard()}
-        >
-          {syncStatus === "loading" ? "새로고침 중" : "대시보드 새로고침"}
-        </Button>
+        <div className="section-actions">
+          <Button
+            disabled={syncStatus === "loading" || syncStatus === "saving"}
+            variant="primary"
+            onClick={() => void onRefreshDashboard()}
+          >
+            {syncStatus === "loading" ? "새로고침 중" : "대시보드 새로고침"}
+          </Button>
+        </div>
       </div>
 
       {syncMessage !== null ? (
@@ -1309,20 +1311,22 @@ function RecommendedNewsPanel({
           <h3 className="section-subtitle">내 키워드 추천 뉴스</h3>
           <p className="body-copy">관심 키워드와 맞닿은 기사 목록입니다.</p>
         </div>
-        <Button
-          disabled={isRecommendationLoading || isRefreshing}
-          variant="primary"
-          onClick={() => void onRefreshNews()}
-        >
-          {isRefreshing ? "수집 중" : "최신 뉴스 가져오기"}
-        </Button>
-        <Button
-          disabled={articles.length === 0 || isSummarizingBatch}
-          variant="ghost"
-          onClick={() => void onSummarizeBatch()}
-        >
-          {isSummarizingBatch ? "묶음 요약 중" : "추천 뉴스 묶음 요약"}
-        </Button>
+        <div className="section-actions">
+          <Button
+            disabled={isRecommendationLoading || isRefreshing}
+            variant="primary"
+            onClick={() => void onRefreshNews()}
+          >
+            {isRefreshing ? "수집 중" : "최신 뉴스 가져오기"}
+          </Button>
+          <Button
+            disabled={articles.length === 0 || isSummarizingBatch}
+            variant="ghost"
+            onClick={() => void onSummarizeBatch()}
+          >
+            {isSummarizingBatch ? "묶음 요약 중" : "추천 뉴스 묶음 요약"}
+          </Button>
+        </div>
       </div>
 
       {syncMessage !== null ? (
