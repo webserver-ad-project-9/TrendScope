@@ -1,20 +1,20 @@
 services:
   mysql:
-    image: mysql:8.0
-    container_name: trendpulse-mysql
-    restart: unless-stopped
+    image: ${MYSQL_IMAGE:-mysql:8.0}
+    container_name: ${MYSQL_CONTAINER_NAME:-trendpulse-mysql}
+    restart: ${MYSQL_RESTART_POLICY:-unless-stopped}
     environment:
-      MYSQL_DATABASE: trendpulse
-      MYSQL_USER: trendpulse
-      MYSQL_PASSWORD: trendpulse
-      MYSQL_ROOT_PASSWORD: root
-      TZ: Asia/Seoul
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-trendpulse}
+      MYSQL_USER: ${MYSQL_USERNAME:-trendpulse}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-trendpulse}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      TZ: ${TZ:-Asia/Seoul}
     ports:
       - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - trendpulse-mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -23,24 +23,25 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: trendpulse-backend
-    restart: unless-stopped
+    container_name: ${BACKEND_CONTAINER_NAME:-trendpulse-backend}
+    restart: ${BACKEND_RESTART_POLICY:-unless-stopped}
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SERVER_PORT: 8080
-      MYSQL_HOST: mysql
-      MYSQL_PORT: 3306
-      MYSQL_DATABASE: trendpulse
-      MYSQL_USERNAME: trendpulse
-      MYSQL_PASSWORD: trendpulse
-      JWT_SECRET: mjyw123123
-      JWT_ACCESS_TOKEN_EXPIRATION: 3600000
-      JWT_STATIC_TOKEN: mjyw123123123
-      JWT_STATIC_USER_EMAIL: dev@trendpulse.local
-      FRONTEND_REDIRECT_URL: https://trend-scope-seven.vercel.app/oauth/callback
+      SPRING_PROFILES_ACTIVE: ${DOCKER_SPRING_PROFILES_ACTIVE:-docker}
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      MYSQL_HOST: ${DOCKER_MYSQL_HOST:-mysql}
+      MYSQL_PORT: ${DOCKER_MYSQL_PORT:-3306}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-trendpulse}
+      MYSQL_USERNAME: ${MYSQL_USERNAME:-trendpulse}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-trendpulse}
+      JWT_SECRET: ${JWT_SECRET:-mjyw123123}
+      JWT_ACCESS_TOKEN_EXPIRATION: ${JWT_ACCESS_TOKEN_EXPIRATION:-3600000}
+      JWT_STATIC_TOKEN: ${JWT_STATIC_TOKEN:-mjyw123123123}
+      JWT_STATIC_USER_EMAIL: ${JWT_STATIC_USER_EMAIL:-dev@trendpulse.local}
+      FRONTEND_REDIRECT_URL: ${DOCKER_FRONTEND_REDIRECT_URL:-https://trend-scope-seven.vercel.app/oauth/callback}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-docker-google-client-id}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-docker-google-client-secret}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-{baseUrl}/api/auth/login/callback}
@@ -52,7 +53,7 @@ services:
       LOCAL_LLM_MODEL: ${LOCAL_LLM_MODEL:-gemma-3-4b-it-gguf}
       LOCAL_LLM_TIMEOUT_MS: ${LOCAL_LLM_TIMEOUT_MS:-60000}
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
 
 volumes:
   trendpulse-mysql-data:
