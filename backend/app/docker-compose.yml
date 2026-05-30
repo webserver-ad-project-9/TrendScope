@@ -43,6 +43,7 @@ services:
       FRONTEND_REDIRECT_URL: http://localhost:3000/oauth/callback
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-docker-google-client-id}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-docker-google-client-secret}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-{baseUrl}/api/auth/login/callback}
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
