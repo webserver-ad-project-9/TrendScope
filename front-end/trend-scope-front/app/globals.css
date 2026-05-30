@@ -379,9 +379,12 @@ a {
 
 .home-brief-card .hero-card-body {
   display: grid;
-  align-content: center;
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
   gap: 24px;
-  min-height: 320px;
+  min-height: 360px;
+  max-height: 520px;
+  overflow: hidden;
 }
 
 .card-title {
@@ -476,6 +479,80 @@ a {
   font-size: 14px;
   font-weight: 760;
   line-height: 1.5;
+}
+
+.home-briefing-state {
+  display: grid;
+  min-height: 300px;
+  align-content: center;
+  justify-items: start;
+  gap: 12px;
+}
+
+.home-briefing-message {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 1.25rem;
+  font-weight: 840;
+  line-height: 1.45;
+}
+
+.home-briefing-preview {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+  height: 100%;
+}
+
+.home-briefing-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.home-briefing-list {
+  display: grid;
+  min-height: 0;
+  gap: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 8px;
+  scrollbar-gutter: stable;
+}
+
+.home-briefing-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.home-briefing-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.home-briefing-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(100, 112, 134, 0.32);
+}
+
+.home-briefing-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 112, 134, 0.48);
+}
+
+.home-briefing-item {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #d7dde8;
+  border-radius: 8px;
+  background: var(--surface-3);
+  padding: 16px;
+}
+
+.home-briefing-item p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.7;
 }
 
 .keyword-list {
@@ -694,12 +771,17 @@ a {
 .dashboard-layout {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: var(--dashboard-card-height);
   gap: 18px;
+  --dashboard-card-height: 360px;
 }
 
 .dashboard-card {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 18px;
+  height: var(--dashboard-card-height);
+  overflow: hidden;
 }
 
 .dashboard-card-wide {
@@ -711,6 +793,31 @@ a {
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
+}
+
+.dashboard-card > :last-child {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 8px;
+  scrollbar-gutter: stable;
+}
+
+.dashboard-card > :last-child::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-card > :last-child::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-card > :last-child::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(100, 112, 134, 0.32);
+}
+
+.dashboard-card > :last-child::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 112, 134, 0.48);
 }
 
 .keyword-briefing-grid,

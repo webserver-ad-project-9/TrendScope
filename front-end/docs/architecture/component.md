@@ -15,7 +15,7 @@
 | `TrendScopeApp` | `src/components/trend-scope/TrendScopeApp.tsx` | 전체 화면 조립과 hook state 배선 |
 | `TrendScopeHeader` | `src/components/trend-scope/TrendScopeHeader.tsx` | 브랜드, 주요 탭, 로그인/시작 버튼 표시와 섹션 이동 이벤트 전달 |
 | `OAuthCallbackClient` | `src/components/auth/OAuthCallbackClient.tsx` | OAuth callback query token을 저장하고 홈으로 이동 |
-| `HomeSection` | `src/components/trend-scope/TrendScopeSections.tsx` | public 첫 화면 표시. API 데이터나 mock 지표를 렌더링하지 않음 |
+| `HomeSection` | `src/components/trend-scope/TrendScopeSections.tsx` | public 첫 화면 표시. 로그인 전 안내 문구와 로그인 후 기존 뉴스 대시보드 키워드별 브리핑 projection 표시 |
 | `OnboardingSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 신규 가입 후보의 직접 입력 키워드 선택과 첫 키워드 저장 CTA 표시 |
 | `BriefingSection` | `src/components/trend-scope/TrendScopeSections.tsx` | 백엔드 트렌드 분석 요약과 추천 뉴스/요약 패널 표시 |
 | `DashboardSection` | `src/components/trend-scope/TrendScopeSections.tsx` | back-docs 뉴스 대시보드/키워드 브리핑/북마크 API 응답 표시 |
@@ -45,6 +45,8 @@
 - 긴 사용자 이름, 이메일, 뉴스 제목, 원문 링크, 게시글 제목, 댓글 본문은 레이아웃을 밀어내지 않도록 CSS에서 `min-width: 0`, `overflow-wrap`, responsive grid 전환으로 처리한다.
 - 헤더 navigation은 좁은 화면에서 가로 스크롤 가능한 탭으로 유지하고, 인증 버튼과 action 버튼은 모바일에서 한 줄 폭 버튼으로 전환한다.
 - Dashboard, briefing, community toolbar의 action 버튼은 `section-actions` 래퍼로 묶어 줄바꿈과 정렬을 표시 계층에서만 제어한다.
+- 뉴스 대시보드의 최상위 카드 높이는 고정하고, 카드 본문이 넘치면 카드 내부 세로 스크롤로 읽도록 처리한다.
+- 홈 오늘의 브리핑 카드도 키워드별 브리핑 목록이 길어지면 카드 내부 목록 스크롤로 읽도록 처리한다.
 - 색상과 타이포그래피는 실 서비스형 밝은 운영 UI 기준으로 관리하며, 기능 데이터가 없는 상태에서는 백엔드 응답 없음/빈 목록 상태만 표시한다.
 
 ## 상태 소유 경계

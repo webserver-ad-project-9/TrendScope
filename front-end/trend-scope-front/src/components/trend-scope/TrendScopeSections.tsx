@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { Button } from "@/src/components/ui/Button";
-import type { CurrentUserViewModel, KeywordSyncStatus } from "@/src/types/auth";
+import type { AuthStatus, CurrentUserViewModel, KeywordSyncStatus } from "@/src/types/auth";
 import type {
   BoardPostViewModel,
   CommunityBoardFilterId,
@@ -25,6 +25,11 @@ import type {
 
 interface HomeSectionProps {
   readonly isActive: boolean;
+  readonly authStatus: AuthStatus;
+  readonly currentUser: CurrentUserViewModel | null;
+  readonly dashboard: NewsDashboardViewModel | null;
+  readonly dashboardSyncMessage: string | null;
+  readonly dashboardSyncStatus: NewsDashboardSyncStatus;
 }
 
 interface BriefingSectionProps {
@@ -160,6 +165,14 @@ interface RecommendedNewsCardProps {
   readonly onToggleBookmark: (newsId: string) => Promise<void>;
 }
 
+interface HomeKeywordBriefingPreviewProps {
+  readonly authStatus: AuthStatus;
+  readonly currentUser: CurrentUserViewModel | null;
+  readonly dashboard: NewsDashboardViewModel | null;
+  readonly syncMessage: string | null;
+  readonly syncStatus: NewsDashboardSyncStatus;
+}
+
 const communityBoardSectionOptions: readonly CommunityBoardSectionViewModel[] = [
   { id: "politics", label: "정치" },
   { id: "economy", label: "경제" },
@@ -170,7 +183,14 @@ const communityBoardSectionOptions: readonly CommunityBoardSectionViewModel[] = 
   { id: "entertainment", label: "연예" },
 ];
 
-export function HomeSection({ isActive }: HomeSectionProps) {
+export function HomeSection({
+  authStatus,
+  currentUser,
+  dashboard,
+  dashboardSyncMessage,
+  dashboardSyncStatus,
+  isActive,
+}: HomeSectionProps) {
   return (
     <section className="page" data-active={isActive} id="home">
       <div className="hero">
@@ -191,33 +211,121 @@ export function HomeSection({ isActive }: HomeSectionProps) {
           <div className="hero-card-header">
             <div>
               <h2 className="card-title">오늘의 브리핑</h2>
-              <p className="body-copy">관심사에 맞춘 뉴스 흐름을 정리합니다.</p>
+              <p className="body-copy">내 키워드별 당일 뉴스 흐름을 정리합니다.</p>
             </div>
-            <span className="badge">Personalized</span>
+            <span className="badge">Keyword briefings</span>
           </div>
           <div className="hero-card-body">
-            <div className="home-step-list" aria-label="브리핑 흐름">
-              <div className="home-step-item">
-                <span>01</span>
-                <strong>키워드</strong>
-              </div>
-              <div className="home-step-item">
-                <span>02</span>
-                <strong>뉴스</strong>
-              </div>
-              <div className="home-step-item">
-                <span>03</span>
-                <strong>요약</strong>
-              </div>
-            </div>
-            <div className="home-card-note">
-              <span className="signal-dot" aria-hidden="true" />
-              <span>브리핑은 로그인 후 개인 키워드를 기준으로 준비됩니다.</span>
-            </div>
+            <HomeKeywordBriefingPreview
+              authStatus={authStatus}
+              currentUser={currentUser}
+              dashboard={dashboard}
+              syncMessage={dashboardSyncMessage}
+              syncStatus={dashboardSyncStatus}
+            />
           </div>
         </article>
       </div>
     </section>
+  );
+}
+
+function HomeKeywordBriefingPreview({
+  authStatus,
+  currentUser,
+  dashboard,
+  syncMessage,
+  syncStatus,
+}: HomeKeywordBriefingPreviewProps) {
+  if (authStatus === "checking") {
+    return (
+      <div className="home-briefing-state">
+        <span className="badge">확인 중</span>
+        <p className="body-copy">로그인 상태를 확인하고 있습니다.</p>
+      </div>
+    );
+  }
+
+  if (currentUser === null) {
+    return (
+      <div className="home-briefing-state">
+        <span className="badge">로그인 필요</span>
+        <p className="home-briefing-message">로그인 후 사용 가능한 기능입니다</p>
+      </div>
+    );
+  }
+
+  if (syncStatus === "loading" && dashboard === null) {
+    return (
+      <div className="home-briefing-state">
+        <span className="badge">준비 중</span>
+        <p className="body-copy">오늘의 브리핑을 불러오는 중입니다.</p>
+      </div>
+    );
+  }
+
+  if (syncStatus === "error") {
+    return (
+      <div className="home-briefing-state">
+        <span className="badge">오류</span>
+        <p className="body-copy">{syncMessage ?? "오늘의 브리핑을 불러오지 못했습니다."}</p>
+      </div>
+    );
+  }
+
+  if (dashboard === null) {
+    return (
+      <div className="home-briefing-state">
+        <span className="badge">API 응답 없음</span>
+        <p className="body-copy">표시할 오늘의 브리핑이 없습니다.</p>
+      </div>
+    );
+  }
+
+  const keywordBriefing = dashboard.keywordBriefing;
+
+  if (keywordBriefing.summaries.length === 0) {
+    return (
+      <div className="home-briefing-state">
+        <span className="badge">{keywordBriefing.date}</span>
+        <p className="body-copy">등록된 키워드의 오늘 브리핑이 없습니다.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="home-briefing-preview">
+      <div className="home-briefing-summary">
+        <span className="badge">{keywordBriefing.date}</span>
+        <span className="muted">수집 기사 {keywordBriefing.totalCollectedCount}</span>
+      </div>
+
+      <div className="home-briefing-list">
+        {keywordBriefing.summaries.map((group) => (
+          <section className="home-briefing-item" key={group.keyword}>
+            <div className="recommended-news-meta">
+              <span className="badge">{group.keyword}</span>
+              <span>기사 {group.collectedCount}</span>
+            </div>
+            <p>{group.summary}</p>
+            {group.articles.length > 0 ? (
+              <div className="summary-source-list">
+                {group.articles.map((article) => (
+                  <a
+                    href={article.originUrl}
+                    key={`${group.keyword}-${article.originUrl}`}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {article.title} · {article.publishedAtLabel}
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ))}
+      </div>
+    </div>
   );
 }
 
