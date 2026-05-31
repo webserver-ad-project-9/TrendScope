@@ -307,6 +307,8 @@ Cookie: accessToken={token}
 
 ?꾩옱 濡쒓렇?명븳 ?ъ슜?먯쓽 愿???ㅼ썙?쒕? ?앹꽦?쒕떎.
 
+활성 온보딩 키워드는 사용자당 최대 6개까지 등록할 수 있다.
+
 ?ㅼ썙???섏쭛/遺꾩꽍 ??곸씠 ?섎뒗 ?곗씠?곗씠誘濡?Bearer Token怨?濡쒓렇??荑좏궎媛 紐⑤몢 ?꾩슂?섎떎.
 
 > Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
@@ -349,6 +351,7 @@ Content-Type: application/json
 | Status | ?곹솴 | Response |
 | --- | --- | --- |
 | `400` | ?ㅼ썙???꾨씫 | `{"success": false, "errorCode": "INVALID_REQUEST", "message": "?ㅼ썙?쒕뒗 ?꾩닔?낅땲??"}` |
+| `400` | 키워드 최대 등록 개수 초과 | `{"success": false, "errorCode": "KEYWORD_LIMIT_EXCEEDED", "message": "Keyword registration limit exceeded"}` |
 | `401` | ?몄쬆 ?ㅽ뙣 | `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "?좏슚?섏? ?딆? ?좏겙?낅땲??"}` |
 | `409` | 以묐났 ?ㅼ썙??| `{"success": false, "errorCode": "KEYWORD_DUPLICATED", "message": "?대? ?깅줉???ㅼ썙?쒖엯?덈떎."}` |
 
@@ -408,6 +411,7 @@ Cookie: accessToken={token}
 ?꾨줎???좉? UI?먯꽌 ?좏깮???щ윭 愿???ㅼ썙?쒕? ??踰덉뿉 ??ν븳??
 
 ?대? ??λ맂 ?ㅼ썙?쒕뒗 以묐났 ??ν븯吏 ?딄퀬 嫄대꼫?대떎.
+활성 온보딩 키워드는 사용자당 최대 6개까지 등록할 수 있다.
 
 > Bearer Token ?꾩슂, 濡쒓렇??荑좏궎 ?꾩슂
 
@@ -429,7 +433,7 @@ Content-Type: application/json
 
 | ?꾨뱶 | ???| ?꾩닔 | ?ㅻ챸 |
 | --- | --- | --- | --- |
-| `names` | string[] | O | ?ъ슜?먭? ?좉?濡??좏깮??愿???ㅼ썙??紐⑸줉 |
+| `names` | string[] | O | ?ъ슜?먭? ?좉?濡??좏깮??愿???ㅼ썙??紐⑸줉. 최대 6개 |
 
 ### Response `200`
 
@@ -479,6 +483,7 @@ curl.exe -i -X POST "http://localhost:8080/api/onboarding/keywords/bulk" `
 | Status | ?곹솴 | Response |
 | --- | --- | --- |
 | `400` | names媛 鍮꾩뼱 ?덉쓬 | `{"success": false, "errorCode": "INVALID_REQUEST", "message": "?ㅼ썙??紐⑸줉? ?꾩닔?낅땲??"}` |
+| `400` | 키워드 최대 등록 개수 초과 | `{"success": false, "errorCode": "KEYWORD_LIMIT_EXCEEDED", "message": "Keyword registration limit exceeded"}` |
 | `401` | ?몄쬆 ?ㅽ뙣 | `{"success": false, "errorCode": "INVALID_JWT_TOKEN", "message": "?좏슚?섏? ?딆? ?좏겙?낅땲??"}` |
 
 ---

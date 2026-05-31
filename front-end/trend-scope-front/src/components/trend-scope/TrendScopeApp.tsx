@@ -40,6 +40,9 @@ export function TrendScopeApp() {
           canSubmitKeywords={workspace.canSubmitOnboardingKeywords}
           isActive={workspace.activeSection === "onboarding"}
           keywordDraft={workspace.onboardingKeywordDraft}
+          keywordLimit={workspace.keywordLimit}
+          keywordSyncMessage={workspace.keywordSyncMessage}
+          keywordSyncStatus={workspace.keywordSyncStatus}
           selectedKeywordNames={workspace.selectedOnboardingKeywordNames}
           onAddCustomKeyword={workspace.addCustomOnboardingKeyword}
           onKeywordDraftChange={workspace.setOnboardingKeywordDraft}
@@ -77,10 +80,12 @@ export function TrendScopeApp() {
           currentUser={workspace.currentUser}
           isActive={workspace.activeSection === "mypage"}
           keywordDraft={workspace.keywordDraft}
+          keywordLimit={workspace.keywordLimit}
           keywordSyncMessage={workspace.keywordSyncMessage ?? workspace.authMessage}
           keywordSyncStatus={workspace.keywordSyncStatus}
           keywords={workspace.keywords}
           onAddKeyword={workspace.addKeyword}
+          onDeleteKeyword={workspace.deleteKeyword}
           onKeywordDraftChange={workspace.setKeywordDraft}
         />
         <CommunitySection

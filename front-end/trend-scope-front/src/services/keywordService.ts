@@ -56,6 +56,15 @@ export async function createOnboardingKeywordsBulk(
 }
 
 /**
+ * 현재 사용자의 온보딩 키워드를 삭제한다.
+ */
+export async function deleteOnboardingKeyword(keywordId: string): Promise<void> {
+  await requestBackendApi<null>(`/api/onboarding/keywords/${keywordId}`, {
+    method: "DELETE",
+  });
+}
+
+/**
  * OAuth 전 온보딩을 사용하던 이전 버전의 임시 저장값을 제거한다.
  */
 export function clearPendingOnboardingKeywordNames(): void {

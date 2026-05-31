@@ -27,6 +27,7 @@ import {
   clearPendingOnboardingKeywordNames,
   createOnboardingKeyword,
   createOnboardingKeywordsBulk,
+  deleteOnboardingKeyword,
   fetchOnboardingKeywords,
 } from "@/src/services/keywordService";
 import {
@@ -59,6 +60,8 @@ import type {
   TrendScopeSection,
 } from "@/src/types/trend";
 
+const maxOnboardingKeywordCount = 6;
+
 interface TrendScopeWorkspaceState {
   readonly activeSection: TrendScopeSection;
   readonly activePost: BoardPostViewModel | null;
@@ -80,6 +83,7 @@ interface TrendScopeWorkspaceState {
   readonly canSubmitPostComment: boolean;
   readonly canSubmitCommentEdit: boolean;
   readonly keywords: readonly KeywordViewModel[];
+  readonly keywordLimit: number;
   readonly keywordDraft: string;
   readonly bookmarkedNewsIds: readonly string[];
   readonly batchNewsSummary: NewsSummaryViewModel | null;
@@ -112,6 +116,7 @@ interface TrendScopeWorkspaceState {
   readonly setPostCommentDraft: (value: string) => void;
   readonly addKeyword: () => Promise<void>;
   readonly addCustomOnboardingKeyword: () => void;
+  readonly deleteKeyword: (keywordId: string) => Promise<void>;
   readonly refreshNewsDashboard: () => Promise<void>;
   readonly refreshNewsRecommendations: () => Promise<void>;
   readonly summarizeRecommendedNewsBatch: () => Promise<void>;
@@ -548,7 +553,9 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     editingCommentId !== null &&
     commentEditDraft.trim().length > 0 &&
     communitySyncStatus !== "saving";
-  const canSubmitOnboardingKeywords = selectedOnboardingKeywordNames.length > 0;
+  const canSubmitOnboardingKeywords =
+    selectedOnboardingKeywordNames.length > 0 &&
+    selectedOnboardingKeywordNames.length <= maxOnboardingKeywordCount;
 
   function beginGoogleOAuthLogin() {
     try {
@@ -585,6 +592,12 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
 
   async function startLoginWithOnboardingKeywords() {
     if (selectedOnboardingKeywordNames.length === 0) {
+      return;
+    }
+
+    if (selectedOnboardingKeywordNames.length > maxOnboardingKeywordCount) {
+      setKeywordSyncStatus("error");
+      setKeywordSyncMessage(keywordLimitMessage());
       return;
     }
 
@@ -678,6 +691,12 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
       return;
     }
 
+    if (keywords.length >= maxOnboardingKeywordCount) {
+      setKeywordSyncStatus("error");
+      setKeywordSyncMessage(keywordLimitMessage());
+      return;
+    }
+
     if (currentUser === null) {
       returnToHomeForLoginRequiredFeature();
       return;
@@ -704,6 +723,57 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
 
       setKeywordSyncStatus("error");
       setKeywordSyncMessage(getApiErrorMessage(error, "키워드 등록에 실패했습니다."));
+    }
+  }
+
+  async function deleteKeyword(keywordId: string) {
+    const targetKeyword = keywords.find((keyword) => keyword.id === keywordId);
+
+    if (targetKeyword === undefined) {
+      return;
+    }
+
+    if (currentUser === null) {
+      returnToHomeForLoginRequiredFeature();
+      return;
+    }
+
+    if (!confirmBrowserAction(`'${targetKeyword.label}' 키워드를 삭제할까요?`)) {
+      return;
+    }
+
+    setKeywordSyncStatus("saving");
+    setKeywordSyncMessage("키워드를 삭제하고 있습니다.");
+
+    try {
+      await deleteOnboardingKeyword(keywordId);
+
+      setKeywords((currentKeywords) =>
+        currentKeywords.filter((keyword) => keyword.id !== keywordId),
+      );
+      setNewsRecommendation((currentRecommendation) =>
+        currentRecommendation === null
+          ? currentRecommendation
+          : {
+              ...currentRecommendation,
+              keywords: currentRecommendation.keywords.filter((keyword) => keyword.id !== keywordId),
+              articles: currentRecommendation.articles.filter(
+                (article) => article.keywordId !== keywordId,
+              ),
+            },
+      );
+      setNewsSummariesByArticleId({});
+      setBatchNewsSummary(null);
+      setKeywordSyncStatus("ready");
+      setKeywordSyncMessage("키워드를 삭제했습니다.");
+    } catch (error) {
+      if (isMissingTokenError(error)) {
+        setAuthStatus("anonymous");
+        setCurrentUser(null);
+      }
+
+      setKeywordSyncStatus("error");
+      setKeywordSyncMessage(getApiErrorMessage(error, "키워드 삭제에 실패했습니다."));
     }
   }
 
@@ -879,6 +949,14 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
       return;
     }
 
+    const isSelected = selectedOnboardingKeywordNames.includes(normalizedKeyword);
+    if (!isSelected && selectedOnboardingKeywordNames.length >= maxOnboardingKeywordCount) {
+      setKeywordSyncStatus("error");
+      setKeywordSyncMessage(keywordLimitMessage());
+      return;
+    }
+
+    setKeywordSyncMessage(null);
     setSelectedOnboardingKeywordNames((currentKeywords) =>
       currentKeywords.includes(normalizedKeyword)
         ? currentKeywords.filter((keyword) => keyword !== normalizedKeyword)
@@ -893,12 +971,22 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
       return;
     }
 
+    if (
+      !selectedOnboardingKeywordNames.includes(normalizedKeyword) &&
+      selectedOnboardingKeywordNames.length >= maxOnboardingKeywordCount
+    ) {
+      setKeywordSyncStatus("error");
+      setKeywordSyncMessage(keywordLimitMessage());
+      return;
+    }
+
     setSelectedOnboardingKeywordNames((currentKeywords) =>
       currentKeywords.includes(normalizedKeyword)
         ? currentKeywords
         : [...currentKeywords, normalizedKeyword],
     );
     setOnboardingKeywordDraft("");
+    setKeywordSyncMessage(null);
   }
 
   function setCommunityBoardSection(sectionId: CommunityBoardFilterId) {
@@ -1384,6 +1472,7 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     canSubmitPostComment,
     canSubmitCommentEdit,
     keywords,
+    keywordLimit: maxOnboardingKeywordCount,
     keywordDraft,
     bookmarkedNewsIds,
     batchNewsSummary,
@@ -1416,6 +1505,7 @@ export function useTrendScopeWorkspace(): TrendScopeWorkspaceState {
     setPostCommentDraft,
     addKeyword,
     addCustomOnboardingKeyword,
+    deleteKeyword,
     refreshNewsDashboard,
     refreshNewsRecommendations,
     summarizeRecommendedNewsBatch,
@@ -1485,9 +1575,17 @@ function isLikeStateConflictError(error: unknown): boolean {
 }
 
 function getApiErrorMessage(error: unknown, fallbackMessage: string): string {
+  if (error instanceof ApiClientError && error.errorCode === "KEYWORD_LIMIT_EXCEEDED") {
+    return keywordLimitMessage();
+  }
+
   if (error instanceof ApiClientError || error instanceof EnvironmentConfigurationError) {
     return error.message;
   }
 
   return fallbackMessage;
+}
+
+function keywordLimitMessage(): string {
+  return `키워드는 최대 ${maxOnboardingKeywordCount}개까지 등록할 수 있습니다.`;
 }

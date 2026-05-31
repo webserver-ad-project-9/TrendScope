@@ -2,11 +2,11 @@
 
 ## 1. 개요
 
-사용자가 등록한 온보딩 키워드별로 오늘 수집된 뉴스를 묶고, 각 키워드 그룹의 뉴스 흐름을 로컬 LLM으로 요약해 반환한다.
+사용자가 등록한 온보딩 키워드별로 최근 뉴스 4개를 수집해 묶고, 각 키워드 그룹의 뉴스 흐름을 로컬 LLM으로 요약해 반환한다.
 
 프론트 사용 목적:
 
-1. 관심 키워드별 오늘 뉴스 흐름 표시
+1. 관심 키워드별 최근 뉴스 흐름 표시
 2. 키워드별 요약문 표시
 3. 요약 근거 기사 목록 표시
 4. 기사 원문 링크 이동
@@ -58,7 +58,7 @@ Cookie: accessToken={token}
 
 ### `GET /api/news/keyword-briefings`
 
-현재 로그인한 사용자의 활성 온보딩 키워드 기준으로 오늘 뉴스를 수집하고, 키워드별 뉴스 요약과 출처 기사 목록을 반환한다.
+현재 로그인한 사용자의 활성 온보딩 키워드 기준으로 키워드당 최근 뉴스 4개를 수집하고, 키워드별 뉴스 요약과 출처 기사 목록을 반환한다.
 
 > Bearer Token 필요, 로그인 쿠키 필요
 
@@ -85,11 +85,11 @@ Cookie: accessToken={token}
   "data": {
     "date": "2026-05-29",
     "summaryType": "KEYWORD_GROUP_SUMMARY",
-    "totalCollectedCount": 49,
+    "totalCollectedCount": 4,
     "summaries": [
       {
         "keyword": "ai 반도체",
-        "collectedCount": 49,
+        "collectedCount": 4,
         "summary": "AI 반도체 관련 뉴스는 메모리 반도체 가격 상승, SK하이닉스와 삼성전자 경쟁, 엔비디아 협력 기대감이 함께 부각되는 흐름입니다.",
         "articles": [
           {
@@ -128,7 +128,7 @@ Cookie: accessToken={token}
 | --- | --- | --- | --- |
 | `date` | string | N | 브리핑 기준 날짜. `YYYY-MM-DD` |
 | `summaryType` | string | N | 요약 타입. 현재는 `KEYWORD_GROUP_SUMMARY` |
-| `totalCollectedCount` | number | N | 전체 키워드에서 수집된 기사 수 합계 |
+| `totalCollectedCount` | number | N | 전체 키워드에서 수집된 기사 수 합계. 최대 24 |
 | `summaries` | `KeywordBriefingGroup[]` | N | 키워드별 브리핑 목록 |
 
 ### `KeywordBriefingGroup`
@@ -136,7 +136,7 @@ Cookie: accessToken={token}
 | 필드 | 타입 | nullable | 설명 |
 | --- | --- | --- | --- |
 | `keyword` | string | N | 온보딩 키워드명 |
-| `collectedCount` | number | N | 해당 키워드에서 수집 및 표시되는 기사 수 |
+| `collectedCount` | number | N | 해당 키워드에서 수집 및 표시되는 기사 수. 최대 4 |
 | `summary` | string | N | 로컬 LLM이 생성한 키워드별 뉴스 흐름 요약 |
 | `articles` | `KeywordBriefingArticle[]` | N | 요약 근거 기사 목록 |
 
@@ -185,7 +185,7 @@ Cookie: accessToken={token}
       {
         "keyword": "ai 반도체",
         "collectedCount": 0,
-        "summary": "오늘 해당 키워드의 주요 뉴스 흐름을 요약할 수 없습니다.",
+        "summary": "최근 해당 키워드의 주요 뉴스 흐름을 요약할 수 없습니다.",
         "articles": []
       }
     ]
@@ -196,7 +196,7 @@ Cookie: accessToken={token}
 
 프론트 처리:
 
-- 해당 키워드 카드에 “오늘 수집된 뉴스가 없습니다.” 표시
+- 해당 키워드 카드에 “최근 수집된 뉴스가 없습니다.” 표시
 - `articles.length === 0`이면 출처 목록 영역 숨김 가능
 
 ---
@@ -209,7 +209,8 @@ Cookie: accessToken={token}
 | 기사 정렬 | `publishedAt DESC` |
 | `totalCollectedCount` | 모든 `summaries[].collectedCount` 합계 |
 | `collectedCount` | 해당 키워드 그룹의 `articles.length`와 동일하게 사용 |
-| 요약 기준 | 해당 키워드의 기사 제목 목록을 로컬 LLM에 전달하여 생성 |
+| 키워드당 기사 수 | 최대 4개 |
+| 요약 기준 | 해당 키워드의 최근 기사 제목 목록을 로컬 LLM에 전달하여 생성 |
 
 프론트에서 별도 정렬하지 않고 서버 응답 순서를 그대로 사용한다.
 
@@ -228,7 +229,7 @@ Cookie: accessToken={token}
 현재 구현에서는 키워드별 요약 중 LLM 요약 실패가 발생하면, 해당 키워드의 `summary`에 fallback 문구가 들어갈 수 있다.
 
 ```text
-오늘 해당 키워드의 주요 뉴스 흐름을 요약할 수 없습니다.
+최근 해당 키워드의 주요 뉴스 흐름을 요약할 수 없습니다.
 ```
 
 프론트는 위 문구가 내려오면 요약 실패 상태로 표시해도 된다.
@@ -348,7 +349,7 @@ if (data.summaries.length === 0) {
 
 ```ts
 const isSummaryFallback =
-  group.summary === "오늘 해당 키워드의 주요 뉴스 흐름을 요약할 수 없습니다.";
+  group.summary === "최근 해당 키워드의 주요 뉴스 흐름을 요약할 수 없습니다.";
 ```
 
 ---

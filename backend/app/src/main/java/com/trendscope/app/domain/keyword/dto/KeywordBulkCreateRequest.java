@@ -10,7 +10,7 @@ import java.util.List;
 public record KeywordBulkCreateRequest(
         @Schema(description = "사용자가 선택한 관심 키워드 목록", example = "[\"AI 반도체\", \"경제\", \"스포츠\"]")
         @NotEmpty
-        @Size(max = 20)
+        @Size(max = 6)
         List<@NotBlank @Size(max = 80) String> names
 ) {
 }

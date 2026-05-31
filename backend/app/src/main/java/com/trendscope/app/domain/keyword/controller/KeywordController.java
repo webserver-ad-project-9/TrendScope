@@ -16,8 +16,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,6 +42,8 @@ public class KeywordController {
     @Operation(summary = "온보딩 키워드 생성", description = "현재 로그인한 사용자의 관심 키워드를 생성합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "키워드 생성 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "키워드 최대 등록 개수 초과",
+                    content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"errorCode\":\"KEYWORD_LIMIT_EXCEEDED\",\"message\":\"Keyword registration limit exceeded\"}"))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "사용자별 키워드 중복",
                     content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"errorCode\":\"KEYWORD_DUPLICATED\",\"message\":\"이미 등록된 키워드입니다.\"}")))
     })
@@ -58,7 +63,8 @@ public class KeywordController {
     @Operation(summary = "온보딩 키워드 일괄 생성", description = "프론트 토글 UI에서 선택한 여러 관심 키워드를 한 번에 저장합니다. 이미 저장된 키워드는 건너뜁니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "키워드 일괄 생성 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청값 검증 실패")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청값 검증 실패 또는 키워드 최대 등록 개수 초과",
+                    content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"errorCode\":\"KEYWORD_LIMIT_EXCEEDED\",\"message\":\"Keyword registration limit exceeded\"}")))
     })
     public ApiResponse<List<KeywordResponse>> createBulk(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails principal,
@@ -79,5 +85,21 @@ public class KeywordController {
     })
     public ApiResponse<List<KeywordResponse>> findMine(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails principal) {
         return ApiResponse.ok(keywordService.findMine(principal.userId()));
+    }
+
+    @DeleteMapping("/{keywordId}")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "온보딩 키워드 삭제", description = "현재 로그인한 사용자가 등록한 관심 키워드를 비활성화하여 뉴스 수집 및 추천 대상에서 제외합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "키워드 삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "키워드 없음 또는 현재 사용자의 키워드가 아님",
+                    content = @Content(examples = @ExampleObject(value = "{\"success\":false,\"errorCode\":\"KEYWORD_NOT_FOUND\",\"message\":\"Keyword not found\"}")))
+    })
+    public ApiResponse<Void> delete(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails principal,
+            @Parameter(description = "삭제할 온보딩 키워드 ID", required = true)
+            @PathVariable UUID keywordId) {
+        keywordService.delete(principal.userId(), keywordId);
+        return ApiResponse.ok();
     }
 }

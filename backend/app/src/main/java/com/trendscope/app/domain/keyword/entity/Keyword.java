@@ -35,7 +35,7 @@ public class Keyword extends BaseEntity {
     @Column(length = 40)
     private String category;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
     protected Keyword() {
@@ -60,5 +60,13 @@ public class Keyword extends BaseEntity {
 
     public boolean isActive() {
         return active;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
     }
 }
