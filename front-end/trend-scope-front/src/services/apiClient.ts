@@ -76,13 +76,14 @@ export async function requestBackendApi<TData>(
 ): Promise<TData> {
   const headers = new Headers();
   const authenticationMode = resolveAuthenticationMode(options);
+  let accessToken: string | null = null;
 
   if (options.body !== undefined) {
     headers.set("Content-Type", "application/json");
   }
 
   if (authenticationMode !== "none") {
-    const accessToken = readAvailableAccessToken();
+    accessToken = readAvailableAccessToken();
 
     if (accessToken === null && authenticationMode === "required") {
       throw new ApiClientError({
@@ -102,7 +103,7 @@ export async function requestBackendApi<TData>(
     method: options.method ?? "GET",
     headers,
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    credentials: "include",
+    credentials: accessToken === null ? "include" : "omit",
   });
 
   const payload = await readApiResponsePayload<TData>(response);
@@ -146,6 +147,13 @@ function readAvailableAccessToken(): string | null {
   }
 
   const { accessTokenStorageKey, developmentAccessToken } = getFrontendEnvironment();
+
+  if (developmentAccessToken !== null) {
+    storeAccessToken(developmentAccessToken);
+
+    return developmentAccessToken;
+  }
+
   const storedToken = window.localStorage.getItem(accessTokenStorageKey);
 
   if (storedToken !== null && storedToken.trim().length > 0) {
@@ -158,12 +166,6 @@ function readAvailableAccessToken(): string | null {
     window.localStorage.setItem(accessTokenStorageKey, cookieToken);
 
     return cookieToken;
-  }
-
-  if (developmentAccessToken !== null) {
-    storeAccessToken(developmentAccessToken);
-
-    return developmentAccessToken;
   }
 
   return null;
