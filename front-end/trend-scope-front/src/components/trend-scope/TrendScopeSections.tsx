@@ -63,6 +63,9 @@ interface OnboardingSectionProps {
   readonly isActive: boolean;
   readonly canSubmitKeywords: boolean;
   readonly keywordDraft: string;
+  readonly keywordLimit: number;
+  readonly keywordSyncMessage: string | null;
+  readonly keywordSyncStatus: KeywordSyncStatus;
   readonly selectedKeywordNames: readonly string[];
   readonly onAddCustomKeyword: () => void;
   readonly onKeywordDraftChange: (value: string) => void;
@@ -77,10 +80,12 @@ interface MyPageSectionProps {
   readonly currentUser: CurrentUserViewModel | null;
   readonly keywords: readonly KeywordViewModel[];
   readonly keywordDraft: string;
+  readonly keywordLimit: number;
   readonly keywordSyncMessage: string | null;
   readonly keywordSyncStatus: KeywordSyncStatus;
   readonly onKeywordDraftChange: (value: string) => void;
   readonly onAddKeyword: () => Promise<void>;
+  readonly onDeleteKeyword: (keywordId: string) => Promise<void>;
 }
 
 interface CommunitySectionProps {
@@ -210,8 +215,8 @@ export function HomeSection({
         <article className="hero-card home-brief-card">
           <div className="hero-card-header">
             <div>
-              <h2 className="card-title">오늘의 브리핑</h2>
-              <p className="body-copy">내 키워드별 당일 뉴스 흐름을 정리합니다.</p>
+              <h2 className="card-title">최근 브리핑</h2>
+              <p className="body-copy">내 키워드별 최근 뉴스 흐름을 정리합니다.</p>
             </div>
             <span className="badge">Keyword briefings</span>
           </div>
@@ -259,7 +264,7 @@ function HomeKeywordBriefingPreview({
     return (
       <div className="home-briefing-state">
         <span className="badge">준비 중</span>
-        <p className="body-copy">오늘의 브리핑을 불러오는 중입니다.</p>
+        <p className="body-copy">최근 브리핑을 불러오는 중입니다.</p>
       </div>
     );
   }
@@ -268,7 +273,7 @@ function HomeKeywordBriefingPreview({
     return (
       <div className="home-briefing-state">
         <span className="badge">오류</span>
-        <p className="body-copy">{syncMessage ?? "오늘의 브리핑을 불러오지 못했습니다."}</p>
+        <p className="body-copy">{syncMessage ?? "최근 브리핑을 불러오지 못했습니다."}</p>
       </div>
     );
   }
@@ -277,7 +282,7 @@ function HomeKeywordBriefingPreview({
     return (
       <div className="home-briefing-state">
         <span className="badge">API 응답 없음</span>
-        <p className="body-copy">표시할 오늘의 브리핑이 없습니다.</p>
+        <p className="body-copy">표시할 최근 브리핑이 없습니다.</p>
       </div>
     );
   }
@@ -288,7 +293,7 @@ function HomeKeywordBriefingPreview({
     return (
       <div className="home-briefing-state">
         <span className="badge">{keywordBriefing.date}</span>
-        <p className="body-copy">등록된 키워드의 오늘 브리핑이 없습니다.</p>
+        <p className="body-copy">등록된 키워드의 최근 브리핑이 없습니다.</p>
       </div>
     );
   }
@@ -647,6 +652,9 @@ export function OnboardingSection({
   canSubmitKeywords,
   isActive,
   keywordDraft,
+  keywordLimit,
+  keywordSyncMessage,
+  keywordSyncStatus,
   onAddCustomKeyword,
   onKeywordDraftChange,
   onNavigate,
@@ -669,7 +677,7 @@ export function OnboardingSection({
             First briefing
           </span>
           <h2 className="section-title">첫 브리핑 키워드</h2>
-          <p className="body-copy">관심 키워드를 입력해 첫 브리핑을 준비하세요.</p>
+          <p className="body-copy">관심 키워드는 최대 {keywordLimit}개까지 등록할 수 있습니다.</p>
         </div>
         <Button variant="ghost" onClick={() => onNavigate("home")}>
           돌아가기
@@ -687,14 +695,25 @@ export function OnboardingSection({
               value={keywordDraft}
               onChange={(event) => onKeywordDraftChange(event.target.value)}
             />
-            <Button type="submit" variant="ghost">
+            <Button
+              disabled={selectedKeywordNames.length >= keywordLimit}
+              type="submit"
+              variant="ghost"
+            >
               추가
             </Button>
           </form>
+          {keywordSyncMessage !== null ? (
+            <p className="sync-message" data-state={keywordSyncStatus}>
+              {keywordSyncMessage}
+            </p>
+          ) : null}
         </article>
 
         <aside className="onboarding-summary">
-          <span className="badge">선택 {selectedKeywordNames.length}</span>
+          <span className="badge">
+            선택 {selectedKeywordNames.length}/{keywordLimit}
+          </span>
           <h3 className="card-title">저장될 키워드</h3>
           <div className="selected-keyword-list">
             {selectedKeywordNames.length === 0 ? (
@@ -734,10 +753,12 @@ export function MyPageSection({
   currentUser,
   isActive,
   keywordDraft,
+  keywordLimit,
   keywordSyncMessage,
   keywordSyncStatus,
   keywords,
   onAddKeyword,
+  onDeleteKeyword,
   onKeywordDraftChange,
 }: MyPageSectionProps) {
   function submitKeyword(event: FormEvent<HTMLFormElement>) {
@@ -753,7 +774,9 @@ export function MyPageSection({
       </div>
 
       <article className="card manage-card">
-        <h3 className="card-title">내 키워드 관리</h3>
+        <h3 className="card-title">
+          내 키워드 관리 ({keywords.length}/{keywordLimit})
+        </h3>
         <div className="account-strip">
           {currentUser === null ? (
             <span className="muted">로그인이 필요합니다.</span>
@@ -772,8 +795,12 @@ export function MyPageSection({
             value={keywordDraft}
             onChange={(event) => onKeywordDraftChange(event.target.value)}
           />
-          <Button disabled={keywordSyncStatus === "saving"} type="submit" variant="primary">
-            {keywordSyncStatus === "saving" ? "등록 중" : "등록"}
+          <Button
+            disabled={keywordSyncStatus === "saving" || keywords.length >= keywordLimit}
+            type="submit"
+            variant="primary"
+          >
+            {keywordSyncStatus === "saving" ? "처리 중" : "등록"}
           </Button>
         </form>
 
@@ -792,9 +819,18 @@ export function MyPageSection({
             keywords.map((keyword) => (
               <div className="keyword-row" key={keyword.id}>
                 <strong>{keyword.label}</strong>
-                <span className="keyword-state">
-                  {keywordSyncStatus === "ready" ? "저장됨" : "처리 중"}
-                </span>
+                <div className="keyword-actions">
+                  <span className="keyword-state">
+                    {keywordSyncStatus === "ready" ? "저장됨" : "처리 중"}
+                  </span>
+                  <Button
+                    disabled={keywordSyncStatus === "saving"}
+                    variant="danger"
+                    onClick={() => void onDeleteKeyword(keyword.id)}
+                  >
+                    삭제
+                  </Button>
+                </div>
               </div>
             ))
           )}

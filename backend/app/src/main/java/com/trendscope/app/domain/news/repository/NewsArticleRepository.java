@@ -16,6 +16,8 @@ public interface NewsArticleRepository extends JpaRepository<NewsArticle, UUID> 
 
     List<NewsArticle> findByKeywordInOrderByPublishedAtDesc(List<Keyword> keywords, Pageable pageable);
 
+    List<NewsArticle> findByKeywordOrderByPublishedAtDesc(Keyword keyword, Pageable pageable);
+
     List<NewsArticle> findByKeywordAndPublishedAtGreaterThanEqualAndPublishedAtLessThanOrderByPublishedAtDesc(
             Keyword keyword,
             LocalDateTime start,

@@ -37,7 +37,7 @@ public class NewsSummaryPromptBuilder {
         StringBuilder builder = new StringBuilder();
         builder.append("아래 기사 제목 목록만 근거로 '")
                 .append(keyword)
-                .append("' 키워드의 오늘 뉴스 전체 흐름을 한국어 2문장 이내로 요약해줘.\n")
+                .append("' 키워드의 최근 뉴스 전체 흐름을 한국어 2문장 이내로 요약해줘.\n")
                 .append("개별 기사를 하나씩 요약하지 말고, 공통 이슈와 변화 흐름을 종합해서 말해줘.\n")
                 .append("본문을 읽었다고 추측하지 말고 제목에 드러난 정보만 사용해줘.\n\n");
 

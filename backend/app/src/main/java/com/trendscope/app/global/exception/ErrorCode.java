@@ -7,6 +7,7 @@ public enum ErrorCode {
     INVALID_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "Invalid JWT token"),
     EXPIRED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "Expired JWT token"),
     KEYWORD_DUPLICATED(HttpStatus.CONFLICT, "Keyword already exists"),
+    KEYWORD_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "Keyword registration limit exceeded"),
     KEYWORD_NOT_FOUND(HttpStatus.NOT_FOUND, "Keyword not found"),
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "Post not found"),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Comment not found"),
