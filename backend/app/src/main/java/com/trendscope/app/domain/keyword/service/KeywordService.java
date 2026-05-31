@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +50,17 @@ public class KeywordService {
         validateKeywordLimit(userId, 1);
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return KeywordResponse.from(keywordRepository.save(new Keyword(user, normalized)));
+        try {
+            return KeywordResponse.from(keywordRepository.saveAndFlush(new Keyword(user, normalized)));
+        } catch (DataIntegrityViolationException exception) {
+            Keyword keyword = keywordRepository.findByUserIdAndKeyword(userId, normalized)
+                    .orElseThrow(() -> exception);
+            if (!keyword.isActive()) {
+                validateKeywordLimit(userId, 1);
+                keyword.activate();
+            }
+            return KeywordResponse.from(keyword);
+        }
     }
 
     public List<KeywordResponse> createBulk(UUID userId, KeywordBulkCreateRequest request) {
@@ -95,7 +106,14 @@ public class KeywordService {
 
         validateKeywordLimit(userId, changedKeywords.size());
         reactivatedKeywords.forEach(Keyword::activate);
-        keywordRepository.saveAll(newKeywords);
+        try {
+            keywordRepository.saveAllAndFlush(newKeywords);
+        } catch (DataIntegrityViolationException exception) {
+            return keywordRepository.findByUserIdAndKeywordIn(userId, candidates).stream()
+                    .filter(Keyword::isActive)
+                    .map(KeywordResponse::from)
+                    .toList();
+        }
         return changedKeywords.stream()
                 .map(KeywordResponse::from)
                 .toList();
