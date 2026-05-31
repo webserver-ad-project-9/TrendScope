@@ -2,6 +2,7 @@ package com.trendscope.app.domain.keyword.controller;
 
 import com.trendscope.app.domain.keyword.dto.KeywordBulkCreateRequest;
 import com.trendscope.app.domain.keyword.dto.KeywordCreateRequest;
+import com.trendscope.app.domain.keyword.dto.KeywordReplaceRequest;
 import com.trendscope.app.domain.keyword.dto.KeywordResponse;
 import com.trendscope.app.domain.keyword.service.KeywordService;
 import com.trendscope.app.global.response.ApiResponse;
@@ -20,8 +21,10 @@ import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -75,6 +78,24 @@ public class KeywordController {
             )
             @Valid @RequestBody KeywordBulkCreateRequest request) {
         return ApiResponse.ok(keywordService.createBulk(principal.userId(), request));
+    }
+
+    @PutMapping
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "마이페이지 온보딩 키워드 목록 교체", description = "마이페이지에서 저장한 전체 키워드 목록으로 현재 활성 키워드를 교체합니다.")
+    public ApiResponse<List<KeywordResponse>> replaceAll(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails principal,
+            @Valid @RequestBody KeywordReplaceRequest request) {
+        return ApiResponse.ok(keywordService.replaceAll(principal.userId(), request));
+    }
+
+    @PatchMapping
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "마이페이지 온보딩 키워드 목록 교체", description = "PUT과 동일하게 전체 키워드 목록을 저장합니다.")
+    public ApiResponse<List<KeywordResponse>> patchAll(
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails principal,
+            @Valid @RequestBody KeywordReplaceRequest request) {
+        return ApiResponse.ok(keywordService.replaceAll(principal.userId(), request));
     }
 
     @GetMapping

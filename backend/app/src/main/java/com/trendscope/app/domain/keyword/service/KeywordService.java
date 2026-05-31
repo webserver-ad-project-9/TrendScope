@@ -2,6 +2,7 @@ package com.trendscope.app.domain.keyword.service;
 
 import com.trendscope.app.domain.keyword.dto.KeywordBulkCreateRequest;
 import com.trendscope.app.domain.keyword.dto.KeywordCreateRequest;
+import com.trendscope.app.domain.keyword.dto.KeywordReplaceRequest;
 import com.trendscope.app.domain.keyword.dto.KeywordResponse;
 import com.trendscope.app.domain.keyword.entity.Keyword;
 import com.trendscope.app.domain.keyword.repository.KeywordRepository;
@@ -119,6 +120,61 @@ public class KeywordService {
                 .toList();
     }
 
+    public List<KeywordResponse> replaceAll(UUID userId, KeywordReplaceRequest request) {
+        List<String> candidates = normalizedCandidates(request.names());
+        if (candidates.isEmpty()) {
+            return List.of();
+        }
+        if (candidates.size() > MAX_ACTIVE_KEYWORD_COUNT) {
+            throw new BusinessException(ErrorCode.KEYWORD_LIMIT_EXCEEDED);
+        }
+
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        Map<String, Keyword> existingByName = keywordRepository.findByUserId(userId).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        Keyword::getName,
+                        keyword -> keyword,
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+
+        List<Keyword> currentKeywords = keywordRepository.findByUserId(userId);
+        for (Keyword keyword : currentKeywords) {
+            if (keyword.isActive() && !candidates.contains(keyword.getName())) {
+                keyword.deactivate();
+            }
+        }
+
+        List<Keyword> activeKeywords = new ArrayList<>();
+        List<Keyword> newKeywords = new ArrayList<>();
+        for (String name : candidates) {
+            Keyword existing = existingByName.get(name);
+            if (existing == null) {
+                Keyword keyword = new Keyword(user, name);
+                newKeywords.add(keyword);
+                activeKeywords.add(keyword);
+                continue;
+            }
+            if (!existing.isActive()) {
+                existing.activate();
+            }
+            activeKeywords.add(existing);
+        }
+
+        try {
+            keywordRepository.saveAllAndFlush(newKeywords);
+        } catch (DataIntegrityViolationException exception) {
+            return keywordRepository.findByUserIdAndKeywordIn(userId, candidates).stream()
+                    .filter(Keyword::isActive)
+                    .map(KeywordResponse::from)
+                    .toList();
+        }
+        return activeKeywords.stream()
+                .map(KeywordResponse::from)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public List<KeywordResponse> findMine(UUID userId) {
         return keywordRepository.findByUserIdAndActiveTrueOrderByCreatedAtDesc(userId).stream()
@@ -143,5 +199,16 @@ public class KeywordService {
         if (activeKeywordCount + activationCount > MAX_ACTIVE_KEYWORD_COUNT) {
             throw new BusinessException(ErrorCode.KEYWORD_LIMIT_EXCEEDED);
         }
+    }
+
+    private List<String> normalizedCandidates(List<String> names) {
+        Set<String> normalizedNames = new LinkedHashSet<>();
+        for (String name : names) {
+            String normalized = KeywordNormalizer.normalize(name);
+            if (!normalized.isBlank()) {
+                normalizedNames.add(normalized);
+            }
+        }
+        return List.copyOf(normalizedNames);
     }
 }
