@@ -5,7 +5,6 @@ import com.trendscope.app.domain.user.repository.UserRepository;
 import com.trendscope.app.global.security.principal.CustomUserDetails;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class StaticTokenUserService {
@@ -22,7 +21,6 @@ public class StaticTokenUserService {
         return jwtProperties.staticToken() != null && jwtProperties.staticToken().equals(token);
     }
 
-    @Transactional
     public CustomUserDetails loadOrCreateStaticUser() {
         User user = userRepository.findByEmail(jwtProperties.staticUserEmail())
                 .orElseGet(this::createOrLoadStaticUser);

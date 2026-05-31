@@ -6,6 +6,7 @@ CREATE TABLE users (
     provider VARCHAR(30) NOT NULL,
     provider_id VARCHAR(120) NOT NULL,
     role VARCHAR(30) NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at DATETIME(6) NOT NULL,
     updated_at DATETIME(6) NOT NULL,
     PRIMARY KEY (id),

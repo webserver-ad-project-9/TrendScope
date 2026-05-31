@@ -48,6 +48,9 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 30)
     private Role role;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     protected User() {
     }
 
@@ -83,5 +86,9 @@ public class User extends BaseEntity {
 
     public Role getRole() {
         return role;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }
