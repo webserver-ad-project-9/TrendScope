@@ -197,40 +197,37 @@ export function HomeSection({
   isActive,
 }: HomeSectionProps) {
   return (
-    <section className="page" data-active={isActive} id="home">
-      <div className="hero">
-        <div className="hero-copy">
-          <span className="eyebrow">
-            <span className="signal-dot" aria-hidden="true" />
-            AI 기반 뉴스 트렌드 브리핑
-          </span>
-          <h1 className="hero-title">
-            관심 키워드의 뉴스 흐름을 <span className="accent-text">한 화면에서</span>
-          </h1>
-          <p className="body-copy">
-            키워드를 저장하고, 주요 뉴스와 요약, 커뮤니티 반응을 한곳에서 확인하세요.
-          </p>
-        </div>
-
-        <article className="hero-card home-brief-card">
-          <div className="hero-card-header">
-            <div>
-              <h2 className="card-title">최근 브리핑</h2>
-              <p className="body-copy">내 키워드별 최근 뉴스 흐름을 정리합니다.</p>
-            </div>
-            <span className="badge">Keyword briefings</span>
-          </div>
-          <div className="hero-card-body">
-            <HomeKeywordBriefingPreview
-              authStatus={authStatus}
-              currentUser={currentUser}
-              dashboard={dashboard}
-              syncMessage={dashboardSyncMessage}
-              syncStatus={dashboardSyncStatus}
-            />
-          </div>
-        </article>
+    <section className="page home-page" data-active={isActive} id="home">
+      <div className="home-tagline-block">
+        <span className="eyebrow">
+          <span className="signal-dot" aria-hidden="true" />
+          AI 기반 뉴스 트렌드 브리핑
+        </span>
+        <h1 className="hero-title">
+          관심 키워드의 뉴스 흐름을 <span className="accent-text">한 화면에서.</span>
+        </h1>
+        <p className="body-copy">
+          키워드를 저장하고, 주요 뉴스와 요약, 커뮤니티 반응을 한곳에서 확인하세요.
+        </p>
       </div>
+
+      <article className="hero-card home-brief-card-full">
+        <div className="hero-card-header home-brief-header">
+          <div className="home-brief-header-left">
+            <h2 className="card-title">최근 브리핑</h2>
+            <p className="home-brief-desc">내 키워드별 최근 뉴스 흐름을 정리합니다.</p>
+          </div>
+        </div>
+        <div className="home-brief-body-full">
+          <HomeKeywordBriefingPreview
+            authStatus={authStatus}
+            currentUser={currentUser}
+            dashboard={dashboard}
+            syncMessage={dashboardSyncMessage}
+            syncStatus={dashboardSyncStatus}
+          />
+        </div>
+      </article>
     </section>
   );
 }
