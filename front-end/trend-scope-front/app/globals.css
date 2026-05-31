@@ -222,17 +222,20 @@ a {
   padding: 44px 56px 32px;
 }
 
-.home-page {
+.page[data-active="true"] {
+  display: block;
+}
+
+.home-page[data-active="true"] {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   padding-top: 0;
-  padding-bottom: 0;
+  padding-bottom: 20px;
 }
 
 .home-page .home-tagline-block {
   padding: 24px 0 0;
-}
-
-.page[data-active="true"] {
-  display: block;
 }
 
 .hero {
@@ -247,13 +250,6 @@ a {
   max-width: 680px;
 }
 
-/* Home page: tagline centered + full-width briefing */
-.home-page {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-height: calc(100vh - 90px);
-}
 
 .home-tagline-block {
   text-align: center;
